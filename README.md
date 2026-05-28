@@ -119,10 +119,15 @@ Wattle commit:
 Harness commit:
 `f92fcc59a19ba6e705fc966469858cd7d7bb73f3`
 
-| Provider | Model | Trials | Pass rate | Input tokens | Output tokens | Cache tokens |
+The Terminal-Bench leaderboard reports `Accuracy` as a percentage with an
+uncertainty term. This table follows that convention: mean task pass rate
+`+- 1.96 * standard_error`, where the standard error is computed across the 89
+task-level pass rates from the 5 attempts per task.
+
+| Provider | Model | Trials | Accuracy | Input tokens | Output tokens | Cache tokens |
 |---|---|---:|---:|---:|---:|---:|
-| `codex` | `gpt-5.5` | 445 | 68.24% | 134,915,145 | 3,959,401 | 123,100,672 |
-| `deepseek` | `deepseek-v4-pro` | 445 | 37.53% | 134,835,223 | 2,817,532 | 130,606,208 |
+| `codex` | `gpt-5.5` | 445 | 68.3% +- 7.8 | 134,915,145 | 3,959,401 | 123,100,672 |
+| `deepseek` | `deepseek-v4-pro` | 445 | 37.5% +- 8.6 | 134,835,223 | 2,817,532 | 130,606,208 |
 
 ## Run IDs
 
