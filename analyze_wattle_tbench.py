@@ -33,6 +33,8 @@ class TaskMetrics:
     trial_name: str
     is_resolved: bool
     failure_mode: str
+    exception_type: str | None
+    exception_message: str | None
     agent_duration_seconds: float | None
     trial_duration_seconds: float | None
     test_duration_seconds: float | None
@@ -340,6 +342,47 @@ def trial_text_log_candidates(trial_dir: Path) -> list[Path]:
     ]
 
 
+def agent_exception_log_candidates(trial_dir: Path) -> list[Path]:
+    return [
+        trial_dir / "agent-logs" / "wattle-output.log",
+        trial_dir / "agent-logs" / "codex-output.log",
+        trial_dir / "sessions" / "agent.log",
+        trial_dir / "panes" / "post-agent.txt",
+    ]
+
+
+def trial_exception(trial_dir: Path) -> tuple[str | None, str | None]:
+    for path in agent_exception_log_candidates(trial_dir):
+        exception = exception_from_text_file(path)
+        if exception != (None, None):
+            return exception
+    return None, None
+
+
+def exception_from_text_file(path: Path) -> tuple[str | None, str | None]:
+    if not path.exists():
+        return None, None
+    return exception_from_text(path.read_text(encoding="utf-8", errors="replace"))
+
+
+def exception_from_text(text: str) -> tuple[str | None, str | None]:
+    matches = list(
+        re.finditer(
+            r"(?P<type>(?:[A-Za-z_][\w]*\.)*[A-Za-z_][\w]*(?:Error|Exception))"
+            r":\s*(?P<message>[^\n\r]+)",
+            strip_ansi(text),
+        )
+    )
+    if not matches:
+        return None, None
+    match = matches[-1]
+    return match.group("type").rsplit(".", 1)[-1], match.group("message").strip()
+
+
+def strip_ansi(text: str) -> str:
+    return re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", text)
+
+
 def int_value(value: object) -> int:
     if isinstance(value, bool):
         return int(value)
@@ -364,6 +407,7 @@ def analyze_run(run_dir: Path) -> list[TaskMetrics]:
             tokens = embedded_wattle_token_metrics(trial_dir)
         if not tokens["session_found"]:
             tokens = codex_token_metrics(trial_dir)
+        exception_type, exception_message = trial_exception(trial_dir)
         rows.append(
             TaskMetrics(
                 run_id=run_dir.name,
@@ -371,6 +415,8 @@ def analyze_run(run_dir: Path) -> list[TaskMetrics]:
                 trial_name=str(result["trial_name"]),
                 is_resolved=bool(result.get("is_resolved")),
                 failure_mode=str(result.get("failure_mode") or "unset"),
+                exception_type=exception_type,
+                exception_message=exception_message,
                 agent_duration_seconds=duration_seconds(
                     result.get("agent_started_at"),
                     result.get("agent_ended_at"),
@@ -433,6 +479,14 @@ def summarize(rows: list[TaskMetrics]) -> dict[str, Any]:
             "pass_rate": (resolved / count) if count else None,
             "sessions_found": sum(1 for row in run_rows if row.session_found),
             "sessions_with_usage": sum(1 for row in run_rows if row.session_has_usage),
+            "exceptions": {
+                exception_type: sum(
+                    1 for row in run_rows if row.exception_type == exception_type
+                )
+                for exception_type in sorted(
+                    {row.exception_type for row in run_rows if row.exception_type}
+                )
+            },
             "token_sources": {
                 source: sum(1 for row in run_rows if row.token_source == source)
                 for source in sorted({row.token_source for row in run_rows})
@@ -492,6 +546,7 @@ def write_outputs(rows: list[TaskMetrics], output_dir: Path) -> None:
                 f"- Pass rate: {item['resolved']} / {item['tasks']} ({rate_text})",
                 f"- Sessions found: {item['sessions_found']} / {item['tasks']}",
                 f"- Sessions with usage: {item['sessions_with_usage']} / {item['tasks']}",
+                f"- Exceptions: {json.dumps(item['exceptions'], sort_keys=True)}",
                 f"- Token sources: {json.dumps(item['token_sources'], sort_keys=True)}",
                 f"- Agent seconds avg/median/min/max: {format_stats(item['agent_duration_seconds'])}",
                 f"- Raw total tokens avg/median/min/max: {format_stats(item['raw_total_tokens'])}",
