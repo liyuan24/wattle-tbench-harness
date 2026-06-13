@@ -347,7 +347,6 @@ def agent_exception_log_candidates(trial_dir: Path) -> list[Path]:
         trial_dir / "agent-logs" / "wattle-output.log",
         trial_dir / "agent-logs" / "codex-output.log",
         trial_dir / "sessions" / "agent.log",
-        trial_dir / "panes" / "post-agent.txt",
     ]
 
 
@@ -366,11 +365,12 @@ def exception_from_text_file(path: Path) -> tuple[str | None, str | None]:
 
 
 def exception_from_text(text: str) -> tuple[str | None, str | None]:
+    text = agent_log_exception_text(text)
     matches = list(
         re.finditer(
             r"(?P<type>(?:[A-Za-z_][\w]*\.)*[A-Za-z_][\w]*(?:Error|Exception))"
             r":\s*(?P<message>[^\n\r]+)",
-            strip_ansi(text),
+            text,
         )
     )
     if not matches:
@@ -381,6 +381,16 @@ def exception_from_text(text: str) -> tuple[str | None, str | None]:
 
 def strip_ansi(text: str) -> str:
     return re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", text)
+
+
+def agent_log_exception_text(text: str) -> str:
+    lines: list[str] = []
+    for line in strip_ansi(text).splitlines():
+        stripped = line.lstrip()
+        if stripped.startswith('{"type":') or stripped.startswith('{"schema_version":'):
+            continue
+        lines.append(line)
+    return "\n".join(lines)
 
 
 def int_value(value: object) -> int:

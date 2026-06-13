@@ -66,3 +66,19 @@ def test_summary_counts_exception_types(tmp_path: Path) -> None:
     summary = analyzer.summarize(analyzer.analyze_run(run_dir))
 
     assert summary["runs"]["sample-run"]["exceptions"] == {"BadRequestError": 1}
+
+
+def test_analyze_run_ignores_tool_result_exceptions_in_embedded_jsonl(tmp_path: Path) -> None:
+    run_dir = _write_run(
+        tmp_path,
+        agent_log=(
+            '{"type":"message","message":{"role":"user","content":'
+            '[{"type":"tool_result","content":"Traceback (most recent call last):\\n'
+            'TypeError: task command failed"}]}}\n'
+        ),
+    )
+
+    rows = analyzer.analyze_run(run_dir)
+
+    assert rows[0].exception_type is None
+    assert rows[0].exception_message is None
