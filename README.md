@@ -30,9 +30,8 @@ python scripts/check_harbor_patch.py
 The patch makes Harbor copy directory contents into the task environment. This
 prevents verifier-test path corruption when an agent creates `/tests`.
 
-`--wattle-provider-request-timeout-sec` sets both Wattle's SDK request timeout
-and Wattle's stream-idle timeout by default. Use
-`--wattle-stream-idle-timeout-sec` only when those should differ.
+Harbor owns Terminal-Bench task deadlines and container cleanup. Wattle provider
+timeout flags are optional diagnostics; omit them for the default benchmark path.
 
 ## Auth
 
@@ -83,7 +82,6 @@ cd /home/liyuan/repos/wattle-tbench-harness
   --n-attempts 1 \
   --n-concurrent 2 \
   --force-build \
-  --wattle-provider-request-timeout-sec 120 \
   --source-dir /home/liyuan/repos/wattle \
   --wattle-auth-path /home/liyuan/.willow/auth.json
 ```
@@ -97,7 +95,6 @@ Run detached in tmux:
   --n-attempts 1 \
   --n-concurrent 2 \
   --force-build \
-  --wattle-provider-request-timeout-sec 120 \
   --source-dir /home/liyuan/repos/wattle \
   --wattle-auth-path /home/liyuan/.willow/auth.json \
   --tmux
@@ -223,7 +220,6 @@ The expected DeepSeek diagnostic command is:
   --n-attempts 1 \
   --n-concurrent 2 \
   --force-build \
-  --wattle-provider-request-timeout-sec 120 \
   --source-dir /home/liyuan/repos/wattle \
   --wattle-auth-path /home/liyuan/.willow/auth.json \
   --tmux

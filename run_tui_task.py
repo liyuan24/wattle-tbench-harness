@@ -44,7 +44,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--codex-config-path", type=Path, default=DEFAULT_CODEX_CONFIG_PATH)
     parser.add_argument("--harbor-bin", type=Path, default=Path(DEFAULT_HARBOR_BIN))
     parser.add_argument("--task-cache-dir", type=Path, default=DEFAULT_TASK_CACHE_DIR)
-    parser.add_argument("--wattle-provider-request-timeout-sec", type=float, default=120.0)
+    parser.add_argument("--wattle-provider-request-timeout-sec", type=float, default=None)
     parser.add_argument("--wattle-stream-idle-timeout-sec", type=float, default=None)
     parser.add_argument("--session-name", default=None)
     parser.add_argument("--attach", action="store_true")
@@ -78,7 +78,7 @@ def resolve_task_path(args: argparse.Namespace) -> Path:
 
 
 def build_start_env_command(args: argparse.Namespace, task_path: Path) -> list[str]:
-    return [
+    command = [
         str(args.harbor_bin),
         "task",
         "start-env",
@@ -101,33 +101,50 @@ def build_start_env_command(args: argparse.Namespace, task_path: Path) -> list[s
         f"thinking={str(args.effort != 'none').lower()}",
         "--ak",
         f"effort={args.effort}",
-        "--ak",
-        "provider_request_timeout_seconds="
-        f"{args.wattle_provider_request_timeout_sec}",
-        "--ak",
-        "stream_idle_timeout_seconds="
-        f"{args.wattle_stream_idle_timeout_sec or args.wattle_provider_request_timeout_sec}",
     ]
+    if args.wattle_provider_request_timeout_sec is not None:
+        command.extend(
+            [
+                "--ak",
+                "provider_request_timeout_seconds="
+                f"{args.wattle_provider_request_timeout_sec}",
+            ]
+        )
+    if args.wattle_stream_idle_timeout_sec is not None:
+        command.extend(
+            [
+                "--ak",
+                "stream_idle_timeout_seconds="
+                f"{args.wattle_stream_idle_timeout_sec}",
+            ]
+        )
+    return command
 
 
 def build_wattle_tui_command(args: argparse.Namespace) -> str:
     parsed = parse_provider_model(args.model, provider=args.provider)
-    stream_idle_timeout = args.wattle_stream_idle_timeout_sec or (
-        args.wattle_provider_request_timeout_sec
-    )
     parts = [
         "cd /app",
         "export PATH=\"$HOME/.local/bin:$PATH\"",
         "mkdir -p /logs/agent/wattle-tui-sessions",
         "export WATTLE_SESSION_DIR=/logs/agent/wattle-tui-sessions",
-        "export WATTLE_PROVIDER_REQUEST_TIMEOUT_SECONDS="
-        + shlex.quote(str(args.wattle_provider_request_timeout_sec)),
-        "export WATTLE_STREAM_IDLE_TIMEOUT_SECONDS=" + shlex.quote(str(stream_idle_timeout)),
         (
             "task_prompt=\"$(cat /task/instruction.md 2>/dev/null || "
             "sed -n '/^instruction:/,$p' /task/task.yaml)\""
         ),
     ]
+    if args.wattle_provider_request_timeout_sec is not None:
+        parts.insert(
+            4,
+            "export WATTLE_PROVIDER_REQUEST_TIMEOUT_SECONDS="
+            + shlex.quote(str(args.wattle_provider_request_timeout_sec)),
+        )
+    if args.wattle_stream_idle_timeout_sec is not None:
+        parts.insert(
+            5,
+            "export WATTLE_STREAM_IDLE_TIMEOUT_SECONDS="
+            + shlex.quote(str(args.wattle_stream_idle_timeout_sec)),
+        )
     command = [
         "wattle",
         "--provider",

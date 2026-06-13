@@ -17,7 +17,7 @@ def _args(**overrides: object) -> argparse.Namespace:
         "source_dir": Path("/src/wattle"),
         "task_name": "break-filter-js-from-html",
         "wattle_auth_path": Path("/home/user/.wattle/auth.json"),
-        "wattle_provider_request_timeout_sec": 120.0,
+        "wattle_provider_request_timeout_sec": None,
         "wattle_stream_idle_timeout_sec": None,
     }
     data.update(overrides)
@@ -34,8 +34,18 @@ def test_start_env_command_installs_wattle_agent() -> None:
     assert "-m" in command
     assert "deepseek/deepseek-v4-pro" in command
     assert "source_dir=/src/wattle" in command
+    assert "provider_request_timeout_seconds=120.0" not in command
+    assert "stream_idle_timeout_seconds=120.0" not in command
+
+
+def test_start_env_command_can_pass_explicit_provider_timeout() -> None:
+    command = build_start_env_command(
+        _args(wattle_provider_request_timeout_sec=120.0),
+        Path("/tasks/break-filter-js-from-html"),
+    )
+
     assert "provider_request_timeout_seconds=120.0" in command
-    assert "stream_idle_timeout_seconds=120.0" in command
+    assert "stream_idle_timeout_seconds=120.0" not in command
 
 
 def test_wattle_tui_command_uses_positional_prompt_not_headless_print() -> None:
@@ -48,3 +58,15 @@ def test_wattle_tui_command_uses_positional_prompt_not_headless_print() -> None:
     wattle_invocation = command.rsplit("; wattle ", 1)[1]
     assert " -p " not in f" {wattle_invocation} "
     assert "--print" not in command
+
+
+def test_wattle_tui_command_omits_timeout_exports_by_default() -> None:
+    command = build_wattle_tui_command(
+        _args(
+            wattle_provider_request_timeout_sec=None,
+            wattle_stream_idle_timeout_sec=None,
+        )
+    )
+
+    assert "WATTLE_PROVIDER_REQUEST_TIMEOUT_SECONDS" not in command
+    assert "WATTLE_STREAM_IDLE_TIMEOUT_SECONDS" not in command
