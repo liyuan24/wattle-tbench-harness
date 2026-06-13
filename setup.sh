@@ -3,6 +3,10 @@ set -euo pipefail
 
 export DEBIAN_FRONTEND=noninteractive
 export UV_CACHE_DIR="${UV_CACHE_DIR:-/tmp/uv-cache}"
+export UV_INSTALL_DIR="${UV_INSTALL_DIR:-/usr/local/bin}"
+export UV_TOOL_BIN_DIR="${UV_TOOL_BIN_DIR:-/usr/local/bin}"
+export UV_TOOL_DIR="${UV_TOOL_DIR:-/tmp/uv-tools}"
+export PATH="$UV_TOOL_BIN_DIR:$UV_INSTALL_DIR:$HOME/.local/bin:$PATH"
 
 retry() {
   local attempts="${RETRY_ATTEMPTS:-4}"
@@ -20,13 +24,13 @@ retry() {
 }
 
 install_uv() {
-  if command -v uv >/dev/null 2>&1; then
+  if command -v uv >/dev/null 2>&1 && [[ -x "$(command -v uv)" ]]; then
     return 0
   fi
 
+  mkdir -p "$UV_INSTALL_DIR" "$UV_TOOL_BIN_DIR"
   if retry bash -lc 'curl -LsSf https://astral.sh/uv/install.sh | sh'; then
-    export PATH="$HOME/.local/bin:$PATH"
-    command -v uv >/dev/null 2>&1
+    command -v uv >/dev/null 2>&1 && [[ -x "$(command -v uv)" ]]
     return
   fi
 
@@ -42,8 +46,8 @@ retry apt-get install -y --no-install-recommends \
 apt-get clean
 rm -rf /var/lib/apt/lists/*
 
+mkdir -p "$UV_CACHE_DIR" "$UV_TOOL_DIR" "$UV_TOOL_BIN_DIR" "$UV_INSTALL_DIR"
 install_uv
-export PATH="$HOME/.local/bin:$PATH"
 
 mkdir -p "$HOME/.wattle" "$HOME/.codex"
 chmod 700 "$HOME/.wattle" "$HOME/.codex"
