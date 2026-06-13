@@ -82,3 +82,22 @@ def test_analyze_run_ignores_tool_result_exceptions_in_embedded_jsonl(tmp_path: 
 
     assert rows[0].exception_type is None
     assert rows[0].exception_message is None
+
+
+def test_analyze_run_ignores_exceptions_in_recorded_shell_input(tmp_path: Path) -> None:
+    run_dir = _write_run(
+        tmp_path,
+        agent_log=(
+            "root@container:/app# bash -lc 'wattle -p '\\''Task text\\n"
+            "> Traceback (most recent call last):\n"
+            ">     raise ValueError('prompt example')\n"
+            "> ValueError: prompt example\n"
+            "> '\\''; tmux wait -S done\n"
+            "agent finished normally\n"
+        ),
+    )
+
+    rows = analyzer.analyze_run(run_dir)
+
+    assert rows[0].exception_type is None
+    assert rows[0].exception_message is None

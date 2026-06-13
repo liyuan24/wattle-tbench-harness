@@ -389,8 +389,16 @@ def agent_log_exception_text(text: str) -> str:
         stripped = line.lstrip()
         if stripped.startswith('{"type":') or stripped.startswith('{"schema_version":'):
             continue
+        if is_shell_input_line(stripped):
+            continue
         lines.append(line)
     return "\n".join(lines)
+
+
+def is_shell_input_line(stripped_line: str) -> bool:
+    if stripped_line.startswith("> "):
+        return True
+    return re.match(r"^[^@\s]+@[^:]+:[^#$]+[#$] ", stripped_line) is not None
 
 
 def int_value(value: object) -> int:
