@@ -129,6 +129,27 @@ task-level pass rates from the 5 attempts per task.
 | `codex` | `gpt-5.5` | 445 | 68.3% +- 7.8 | 134,915,145 | 3,959,401 | 123,100,672 |
 | `deepseek` | `deepseek-v4-pro` | 445 | 37.5% +- 8.6 | 134,835,223 | 2,817,532 | 130,606,208 |
 
+### DeepSeek Single-Attempt Diagnostic Run
+
+This run was started at `2026-06-12T17:49:49` against
+`terminal-bench-core==0.1.1`, with `n_attempts=1`, `n_concurrent=2`, Wattle
+provider `deepseek`, model `deepseek-v4-pro`, and effort `high`.
+
+Run ID:
+`20260612-174948-wattle-deepseek-deepseek-v4-pro-high`
+
+Wattle commit:
+`c95a9662df1994f15f3f8173df1cb78e06442331`
+
+The run completed all 80 tasks with harness exit status `0`.
+
+| Provider | Model | Trials | Resolved | Accuracy | Sessions with usage | Exception summary |
+|---|---|---:|---:|---:|---:|---|
+| `deepseek` | `deepseek-v4-pro` | 80 | 33 | 41.25% | 61 / 80 | `MalformedToolCallError`: 1 |
+
+Failure-mode summary: `agent_timeout`: 11, `unknown_agent_error`: 8,
+`test_timeout`: 2, `parse_error`: 1, `agent_installation_failed`: 1.
+
 ## Run IDs
 
 The runner creates a timestamped run id by default:
