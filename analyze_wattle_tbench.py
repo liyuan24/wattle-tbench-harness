@@ -368,6 +368,7 @@ def exception_from_text(text: str) -> tuple[str | None, str | None]:
     text = agent_log_exception_text(text)
     matches = list(
         re.finditer(
+            r"(?m)^\s*"
             r"(?P<type>(?:[A-Za-z_][\w]*\.)*[A-Za-z_][\w]*(?:Error|Exception))"
             r":\s*(?P<message>[^\n\r]+)",
             text,

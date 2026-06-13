@@ -101,3 +101,23 @@ def test_analyze_run_ignores_exceptions_in_recorded_shell_input(tmp_path: Path) 
 
     assert rows[0].exception_type is None
     assert rows[0].exception_message is None
+
+
+def test_analyze_run_ignores_pytest_assertion_failures_in_agent_log(
+    tmp_path: Path,
+) -> None:
+    run_dir = _write_run(
+        tmp_path,
+        agent_log=(
+            "\x1b[31mFAILED\x1b[0m ../tests/test_outputs.py::test_password_authentication"
+            " - AssertionError: Cannot find password hash in configuration\n"
+            ">       assert password_match, \"Cannot find password hash in configuration\"\n"
+            "\x1b[1m\x1b[31mE       AssertionError: Cannot find password hash in configuration\x1b[0m\n"
+            "\x1b[1m\x1b[31m/tests/test_outputs.py\x1b[0m:96: AssertionError\n"
+        ),
+    )
+
+    rows = analyzer.analyze_run(run_dir)
+
+    assert rows[0].exception_type is None
+    assert rows[0].exception_message is None
