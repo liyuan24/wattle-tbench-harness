@@ -1,242 +1,230 @@
 # Wattle Terminal-Bench Harness
 
-External Terminal-Bench harness for evaluating
-[Wattle](https://github.com/liyuan24/wattle) and OpenAI Codex without modifying
-the Wattle source tree.
+Harbor / Terminal-Bench 2.0 harness for evaluating
+[Wattle](https://github.com/liyuan24/wattle).
 
-The Wattle adapter installs a source archive into each task container, runs the
-`wattle` CLI, and records token usage from persisted Wattle session JSONL files.
+This repo intentionally uses Harbor, not the legacy `tb run
+terminal-bench-core==0.1.1` path. The runner invokes:
 
-## Install
+```bash
+harbor run -d terminal-bench@2.0 --agent-import-path wattle_harbor_agent:WattleAgent
+```
+
+## Setup
 
 ```bash
 cd /home/liyuan/repos/wattle-tbench-harness
 ./setup.sh
 ```
 
-For Codex-only runs:
+Harbor should be available either from this repo's `.venv/bin/harbor` or from
+`~/.local/bin/harbor`.
 
-```bash
-./setup-codex.sh
-```
-
-## Pi Test Directory Patch
-
-For Harbor / Terminal-Bench 2.0 runs, apply Pi's patch to Harbor's Docker
-`upload_dir` behavior before starting evals. Without the patch, Harbor can
-mis-copy the verifier tests folder when the agent creates `/tests` inside the
-trial container. The patch changes Docker copy behavior to copy directory
-contents with `/.` instead of copying the source directory itself.
-
-In the Harbor adapter repo this is checked with:
+Before full Docker evaluations, apply and verify the Harbor upload-dir patch:
 
 ```bash
 python scripts/patch_harbor_upload_dir.py
 python scripts/check_harbor_patch.py
 ```
 
-Run this once in the Python environment that provides `harbor` before launching
-the full Terminal-Bench jobs.
+The patch makes Harbor copy directory contents into the task environment. This
+prevents verifier-test path corruption when an agent creates `/tests`.
 
-## Running Wattle Evals
+`--wattle-provider-request-timeout-sec` sets both Wattle's SDK request timeout
+and Wattle's stream-idle timeout by default. Use
+`--wattle-stream-idle-timeout-sec` only when those should differ.
 
-Run Wattle on all Terminal-Bench core tasks with this harness:
+## Auth
+
+The Harbor adapter can use either a Wattle auth file or provider API key
+environment variables.
+
+Default auth file lookup:
+
+```text
+~/.wattle/auth.json
+~/.willow/auth.json
+```
+
+Explicit auth path:
+
+```bash
+./run_tbench.py \
+  --model deepseek/deepseek-v4-pro \
+  --wattle-auth-path /home/liyuan/.willow/auth.json
+```
+
+Environment alternatives:
+
+```bash
+export DEEPSEEK_API_KEY=...
+export KIMI_API_KEY=...
+export MINIMAX_API_KEY=...
+export OPENAI_API_KEY=...
+export CODEX_OAUTH_TOKEN=...
+```
+
+To save current env auth for repeated shell use:
+
+```bash
+python scripts/export_auth_env.py ~/.wattle-tbench-harness.env
+source ~/.wattle-tbench-harness.env
+```
+
+## One-Command Evaluation
+
+Run the whole Terminal-Bench 2.0 suite headlessly for a chosen model:
 
 ```bash
 cd /home/liyuan/repos/wattle-tbench-harness
 ./run_tbench.py \
-  --agent wattle \
-  --provider minimax \
-  --model MiniMax-M2.7 \
-  --effort high
-```
-
-Use a specific provider/model by changing `--provider` and `--model`:
-
-```bash
-./run_tbench.py \
-  --agent wattle \
-  --provider deepseek \
-  --model deepseek-v4-pro \
+  --model deepseek/deepseek-v4-pro \
   --effort high \
-  --n-attempts 5 \
-  --n-concurrent 2
+  --n-attempts 1 \
+  --n-concurrent 2 \
+  --force-build \
+  --wattle-provider-request-timeout-sec 120 \
+  --source-dir /home/liyuan/repos/wattle \
+  --wattle-auth-path /home/liyuan/.willow/auth.json
 ```
 
-Run OpenAI Codex directly for comparison:
+Run detached in tmux:
 
 ```bash
 ./run_tbench.py \
-  --agent codex \
-  --model gpt-5.5 \
-  --effort high
-```
-
-Run a single task:
-
-```bash
-./run_tbench.py \
-  --agent wattle \
-  --task-id hello-world \
-  --provider openai_codex \
-  --model gpt-5.5 \
-  --effort none
-```
-
-Run either command in a detached tmux session:
-
-```bash
-./run_tbench.py \
-  --agent wattle \
-  --task-id hello-world \
-  --provider openai_codex \
-  --model gpt-5.5 \
-  --effort none \
+  --model deepseek/deepseek-v4-pro \
+  --effort high \
+  --n-attempts 1 \
+  --n-concurrent 2 \
+  --force-build \
+  --wattle-provider-request-timeout-sec 120 \
+  --source-dir /home/liyuan/repos/wattle \
+  --wattle-auth-path /home/liyuan/.willow/auth.json \
   --tmux
 ```
 
-The command returns after creating the tmux session. Reattach with the printed
-`tmux attach -t ...` command; the run continues if the SSH session disconnects.
+The runner records:
 
-`--effort none` disables Wattle thinking and leaves Codex reasoning effort at
-the config default. Any other effort (`low`, `medium`, `high`, `xhigh`, `max`)
-is passed to the agent.
+- `manifest.json`: dataset, Wattle commit, harness commit, and arguments.
+- `commands/*.json`: exact Harbor command.
+- `logs/*.log`: stdout/stderr from Harbor.
+- `jobs/<job-name>/`: Harbor job output.
+- `reports/`: aggregate, per-task, and per-trial reports generated from Harbor
+  `result.json` files.
 
-`--provider` applies only to Wattle. Codex always uses the Codex/OpenAI auth
-path and only needs `--model` and `--effort`.
+## Focused Runs
 
-## Full Eval Results
+Run one task headlessly by Terminal-Bench task name:
 
-These results are from the full Harbor / Terminal-Bench 2.0 run started at
-`2026-05-25T17:32:16Z`, with `n_attempts=5` and `n_concurrent=2`.
-
-Terminal-Bench test commit:
-`69671fbaac6d67a7ef0dfec016cc38a64ef7a77c`
-
-Wattle commit:
-`4224c26cd7cc5439be4c232313ebbb50026e0528`
-
-Harness commit:
-`f92fcc59a19ba6e705fc966469858cd7d7bb73f3`
-
-The Terminal-Bench leaderboard reports `Accuracy` as a percentage with an
-uncertainty term. This table follows that convention: mean task pass rate
-`+- 1.96 * standard_error`, where the standard error is computed across the 89
-task-level pass rates from the 5 attempts per task.
-
-| Provider | Model | Trials | Accuracy | Input tokens | Output tokens | Cache tokens |
-|---|---|---:|---:|---:|---:|---:|
-| `codex` | `gpt-5.5` | 445 | 68.3% +- 7.8 | 134,915,145 | 3,959,401 | 123,100,672 |
-| `deepseek` | `deepseek-v4-pro` | 445 | 37.5% +- 8.6 | 134,835,223 | 2,817,532 | 130,606,208 |
-
-### DeepSeek Single-Attempt Diagnostic Run
-
-This run was started at `2026-06-12T17:49:49` against
-`terminal-bench-core==0.1.1`, with `n_attempts=1`, `n_concurrent=2`, Wattle
-provider `deepseek`, model `deepseek-v4-pro`, and effort `high`.
-
-Run ID:
-`20260612-174948-wattle-deepseek-deepseek-v4-pro-high`
-
-Wattle commit:
-`c95a9662df1994f15f3f8173df1cb78e06442331`
-
-The run completed all 80 tasks with harness exit status `0`.
-
-| Provider | Model | Trials | Resolved | Accuracy | Sessions with usage | Exception summary |
-|---|---|---:|---:|---:|---:|---|
-| `deepseek` | `deepseek-v4-pro` | 80 | 33 | 41.25% | 61 / 80 | `MalformedToolCallError`: 1 |
-
-Failure-mode summary: `agent_timeout`: 11, `unknown_agent_error`: 8,
-`test_timeout`: 2, `parse_error`: 1, `agent_installation_failed`: 1.
-
-## Run IDs
-
-The runner creates a timestamped run id by default:
-
-```text
-YYYYMMDD-HHMMSS-wattle-minimax-MiniMax-M2.7-high
-YYYYMMDD-HHMMSS-codex-gpt-5.5-high
+```bash
+./run_tbench.py \
+  --model deepseek/deepseek-v4-pro \
+  --include-task-name adaptive-rejection-sampler \
+  --n-attempts 1 \
+  --n-concurrent 1 \
+  --force-build
 ```
 
-Terminal-Bench uses this as the run directory name under `tb-runs/`, embeds it
-in trial names, and records it in `results.json`. The timestamp keeps repeated
-runs of the same config separate.
+`--task-id` is accepted as an alias for `--include-task-name` for convenience.
 
-## Output
+Run the first `N` tasks after Harbor filtering:
 
-Each invocation creates a batch directory under:
-
-```text
-/home/liyuan/repos/wattle-tbench-harness/runs/
+```bash
+./run_tbench.py \
+  --model deepseek/deepseek-v4-pro \
+  --n-tasks 10 \
+  --n-attempts 1 \
+  --n-concurrent 2
 ```
 
-Important files:
+Dry-run command generation:
 
-- `summary.md`: batch-level run table.
-- `commands/*.json`: exact `tb run` command.
-- `logs/*.log`: stdout/stderr from `tb run`.
-- `tb-runs/<run-id>/results.json`: raw Terminal-Bench result.
-- `analysis/<case>/summary.md`: pass rate and aggregate timing/token stats.
-- `analysis/<case>/tasks.csv`: per-task pass/fail, durations, and token metrics.
-
-Inside each Terminal-Bench trial:
-
-```text
-<run-dir>/<task-id>/<trial-name>/agent-logs/wattle-sessions/*.jsonl
-<run-dir>/<task-id>/<trial-name>/agent-logs/codex-events.jsonl
-<run-dir>/<task-id>/<trial-name>/agent-logs/codex-output.log
+```bash
+./run_tbench.py \
+  --model deepseek/deepseek-v4-pro \
+  --include-task-name break-filter-js-from-html \
+  --dry-run
 ```
 
-## Metrics
+## TUI Investigation
 
-Timing comes from Terminal-Bench `results.json`:
+Run one task in Wattle's native TUI:
 
-- `agent_duration_seconds`: `agent_ended_at - agent_started_at`
-- `trial_duration_seconds`: `trial_ended_at - trial_started_at`
-- `test_duration_seconds`: `test_ended_at - test_started_at`
-
-Wattle token usage comes from session JSONL assistant messages.
-
-Codex token usage is parsed from `codex exec --json` `turn_completed` events.
-Those events expose cumulative thread totals, so the analyzer uses the latest
-usage event for the task. If JSON usage is unavailable, the analyzer falls back
-to the Codex human footer:
-
-```text
-tokens used
-38,366
+```bash
+./run_tui_task.py \
+  --task-name break-filter-js-from-html \
+  --model deepseek/deepseek-v4-pro \
+  --effort high \
+  --source-dir /home/liyuan/repos/wattle \
+  --wattle-auth-path /home/liyuan/.willow/auth.json \
+  --attach
 ```
 
-That footer is Codex's blended/billable-style total:
+The launcher downloads the Terminal-Bench task if needed, starts Harbor's
+interactive Docker environment, installs the Wattle agent, and queues the
+interactive command inside the task shell:
 
-```text
-(input_tokens - cached_input_tokens) + output_tokens
+```bash
+wattle --provider deepseek --model deepseek-v4-pro --yolo --thinking --effort high "$task_prompt"
 ```
 
-The analyzer reports multiple token columns so we can choose later:
+The prompt comes from `/task/instruction.md` after the Docker environment is
+built, so the first message is populated inside the Wattle TUI for the exact
+task container being investigated. It does not use `-p/--print`, which is
+Wattle's headless mode.
 
-- `input_tokens`
-- `cached_tokens`
-- `output_tokens`
-- `reasoning_output_tokens`
-- `billable_input_tokens`: `input_tokens - cached_tokens`
-- `raw_total_tokens`: `input_tokens + output_tokens`
-- `billable_total_tokens`: `billable_input_tokens + output_tokens`
-- `codex_footer_billable_total_tokens`: fallback footer value when JSON usage is unavailable
-- `final_turn_input_tokens`
-- `max_turn_input_tokens`
+Use a local task checkout instead of downloading:
 
-## Auth
+```bash
+./run_tui_task.py \
+  --task-name break-filter-js-from-html \
+  --task-path /tmp/harbor-tasks/break-filter-js-from-html \
+  --model deepseek/deepseek-v4-pro \
+  --source-dir /home/liyuan/repos/wattle \
+  --wattle-auth-path /home/liyuan/.willow/auth.json \
+  --attach
+```
 
-Wattle:
+From the same interactive environment, run the verifier manually when ready:
 
-- Preferred: `~/.wattle/auth.json`
-- Fallback for `openai_codex`: `~/.codex/auth.json`, converted to Wattle's
-  `{"openai": {"oauth": ...}}` shape inside the container.
-- DeepSeek, Kimi, and MiniMax keys should be in `~/.wattle/auth.json`.
+```bash
+bash /tests/run-tests.sh
+```
 
-Codex:
+For post-run browsing, use Harbor's viewer:
 
-- Uses `~/.codex/auth.json`
-- Copies optional `~/.codex/config.toml`
+```bash
+harbor view runs/<run-label>/jobs --jobs
+```
+
+## Result Reports
+
+Generate reports for any Harbor result root:
+
+```bash
+python scripts/generate_reports.py runs/<run-label>
+```
+
+Important report files:
+
+- `reports/aggregate.json`
+- `reports/summary.md`
+- `reports/per_task.csv`
+- `reports/per_trial.csv`
+
+## Current DeepSeek Command
+
+The expected DeepSeek diagnostic command is:
+
+```bash
+./run_tbench.py \
+  --model deepseek/deepseek-v4-pro \
+  --effort high \
+  --n-attempts 1 \
+  --n-concurrent 2 \
+  --force-build \
+  --wattle-provider-request-timeout-sec 120 \
+  --source-dir /home/liyuan/repos/wattle \
+  --wattle-auth-path /home/liyuan/.willow/auth.json \
+  --tmux
+```

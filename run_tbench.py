@@ -5,80 +5,48 @@ import argparse
 import json
 import os
 import re
-import shutil
 import shlex
+import shutil
 import subprocess
 import sys
 from dataclasses import asdict, dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
-from analyze_wattle_tbench import analyze_run, write_outputs
-
+from model_config import parse_provider_model
 
 HARNESS_DIR = Path(__file__).resolve().parent
 DEFAULT_OUTPUT_DIR = HARNESS_DIR / "runs"
 DEFAULT_SOURCE_DIR = Path("/home/liyuan/repos/wattle")
-DEFAULT_WATTLE_AUTH_PATH = Path.home() / ".wattle/auth.json"
+DEFAULT_WATTLE_AUTH_PATHS = [
+    Path.home() / ".wattle/auth.json",
+    Path.home() / ".willow/auth.json",
+]
 DEFAULT_CODEX_AUTH_PATH = Path.home() / ".codex/auth.json"
 DEFAULT_CODEX_CONFIG_PATH = Path.home() / ".codex/config.toml"
+DEFAULT_DATASET = "terminal-bench@2.0"
+DEFAULT_HARBOR_BIN = shutil.which("harbor") or "/home/liyuan/.local/bin/harbor"
 EFFORTS = {"none", "low", "medium", "high", "xhigh", "max"}
-AGENTS = {"wattle", "codex"}
 
 
 @dataclass(frozen=True)
-class EvalCase:
+class HarborRun:
     name: str
-    agent: str
-    provider: str | None
+    job_name: str
     model: str
-    thinking: bool
-    effort: str | None
+    provider: str
+    model_name: str
 
 
 @dataclass
 class RunResult:
-    case: str
-    run_id: str
+    job_name: str
+    model: str
     exit_code: int
     command_path: str
     log_path: str
-    analysis_dir: str | None
-
-
-def build_source_archive(source_dir: Path, output_path: Path) -> None:
-    excludes = [
-        "--exclude=.git",
-        "--exclude=.venv",
-        "--exclude=__pycache__",
-        "--exclude=.pytest_cache",
-        "--exclude=.mypy_cache",
-        "--exclude=.ruff_cache",
-        "--exclude=runs",
-    ]
-    subprocess.run(
-        ["tar", *excludes, "-czf", str(output_path), "-C", str(source_dir), "."],
-        check=True,
-    )
-
-
-def build_case(args: argparse.Namespace) -> EvalCase:
-    effort = args.effort
-    resolved_effort = None if effort == "none" else effort
-    if args.agent == "wattle":
-        name = slug(f"wattle-{args.provider}-{args.model}-{effort}")
-        provider = args.provider
-    else:
-        name = slug(f"codex-{args.model}-{effort}")
-        provider = None
-    return EvalCase(
-        agent=args.agent,
-        name=name,
-        provider=provider,
-        model=args.model,
-        thinking=resolved_effort is not None,
-        effort=resolved_effort,
-    )
+    job_dir: str
+    report_dir: str | None
 
 
 def slug(value: str) -> str:
@@ -86,8 +54,58 @@ def slug(value: str) -> str:
     return (clean or "case").lower()
 
 
-def has_arg(raw_args: list[str], option: str) -> bool:
-    return any(arg == option or arg.startswith(f"{option}=") for arg in raw_args)
+def utc_now() -> str:
+    return datetime.now(UTC).isoformat(timespec="seconds").replace("+00:00", "Z")
+
+
+def first_existing(paths: list[Path]) -> Path:
+    for path in paths:
+        if path.expanduser().exists():
+            return path.expanduser()
+    return paths[0].expanduser()
+
+
+def build_run(args: argparse.Namespace) -> HarborRun:
+    parsed = parse_provider_model(args.model, provider=args.provider)
+    effort_part = args.effort if args.effort else "none"
+    name = slug(f"wattle-{parsed.provider}-{parsed.model}-{effort_part}")
+    if args.task:
+        name = slug(f"{name}-{args.task}")
+    elif args.include_task_name:
+        name = slug(f"{name}-subset")
+    job_name = slug(args.job_name or name)
+    return HarborRun(
+        name=name,
+        job_name=job_name,
+        model=parsed.raw,
+        provider=parsed.provider,
+        model_name=parsed.model,
+    )
+
+
+def build_tmux_child_args(
+    raw_args: list[str],
+    *,
+    args: argparse.Namespace,
+    label: str,
+) -> list[str]:
+    child_args = [arg for arg in raw_args if arg != "--tmux"]
+    has_run_label = "--run-label" in child_args or any(
+        arg.startswith("--run-label=") for arg in child_args
+    )
+    if not has_run_label:
+        child_args.extend(["--run-label", label])
+    for option, value in (
+        ("--output-dir", str(args.output_dir.expanduser().resolve())),
+        ("--source-dir", str(args.source_dir.expanduser().resolve())),
+        ("--harbor-bin", str(args.harbor_bin)),
+        ("--wattle-auth-path", str(args.wattle_auth_path.expanduser().resolve())),
+        ("--codex-auth-path", str(args.codex_auth_path.expanduser().resolve())),
+        ("--codex-config-path", str(args.codex_config_path.expanduser().resolve())),
+    ):
+        child_args = strip_option(child_args, option)
+        child_args.extend([option, value])
+    return child_args
 
 
 def strip_option(raw_args: list[str], option: str) -> list[str]:
@@ -106,45 +124,12 @@ def strip_option(raw_args: list[str], option: str) -> list[str]:
     return stripped
 
 
-def tmux_session_name(label: str) -> str:
-    return f"tbench-{slug(label)}"[:100]
-
-
-def build_tmux_child_args(raw_args: list[str], *, args: argparse.Namespace, label: str) -> list[str]:
-    child_args = [arg for arg in raw_args if arg != "--tmux"]
-    if not has_arg(child_args, "--run-label"):
-        child_args.extend(["--run-label", label])
-    for option in (
-        "--output-dir",
-        "--source-dir",
-        "--wattle-auth-path",
-        "--codex-auth-path",
-        "--codex-config-path",
-    ):
-        child_args = strip_option(child_args, option)
-    child_args.extend(
-        [
-            "--output-dir",
-            str(args.output_dir.expanduser().resolve()),
-            "--source-dir",
-            str(args.source_dir.expanduser().resolve()),
-            "--wattle-auth-path",
-            str(args.wattle_auth_path.expanduser().resolve()),
-            "--codex-auth-path",
-            str(args.codex_auth_path.expanduser().resolve()),
-            "--codex-config-path",
-            str(args.codex_config_path.expanduser().resolve()),
-        ]
-    )
-    return child_args
-
-
 def launch_tmux_run(*, raw_args: list[str], args: argparse.Namespace, label: str) -> int:
     if shutil.which("tmux") is None:
         print("[error] --tmux requested, but tmux was not found on PATH.", file=sys.stderr)
         return 2
 
-    session_name = tmux_session_name(label)
+    session_name = f"harbor-tbench-{slug(label)}"[:100]
     output_dir = args.output_dir.expanduser().resolve()
     child_args = build_tmux_child_args(raw_args, args=args, label=label)
     child_command = [sys.executable, str(Path(__file__).resolve()), *child_args]
@@ -157,21 +142,10 @@ def launch_tmux_run(*, raw_args: list[str], args: argparse.Namespace, label: str
     )
     try:
         subprocess.run(
-            [
-                "tmux",
-                "new-session",
-                "-d",
-                "-s",
-                session_name,
-                "-c",
-                str(HARNESS_DIR),
-            ],
+            ["tmux", "new-session", "-d", "-s", session_name, "-c", str(HARNESS_DIR)],
             check=True,
         )
-        subprocess.run(
-            ["tmux", "send-keys", "-t", session_name, shell_command, "C-m"],
-            check=True,
-        )
+        subprocess.run(["tmux", "send-keys", "-t", session_name, shell_command, "C-m"], check=True)
     except subprocess.CalledProcessError as exc:
         print(f"[error] Failed to create tmux session {session_name!r}: {exc}", file=sys.stderr)
         return exc.returncode or 1
@@ -182,151 +156,86 @@ def launch_tmux_run(*, raw_args: list[str], args: argparse.Namespace, label: str
     return 0
 
 
-def build_tb_command(
+def build_harbor_command(
     *,
     args: argparse.Namespace,
-    case: EvalCase,
-    run_id: str,
-    tb_output_path: Path,
-    source_tgz: Path,
+    run: HarborRun,
+    job_dir: Path,
 ) -> list[str]:
-    if case.agent == "codex":
-        return build_codex_tb_command(
-            args=args,
-            case=case,
-            run_id=run_id,
-            tb_output_path=tb_output_path,
-        )
-    return build_wattle_tb_command(
-        args=args,
-        case=case,
-        run_id=run_id,
-        tb_output_path=tb_output_path,
-        source_tgz=source_tgz,
-    )
-
-
-def build_wattle_tb_command(
-    *,
-    args: argparse.Namespace,
-    case: EvalCase,
-    run_id: str,
-    tb_output_path: Path,
-    source_tgz: Path,
-) -> list[str]:
-    assert case.provider is not None
     command = [
-        "tb",
+        str(args.harbor_bin),
         "run",
-        "--dataset",
+        "-d",
         args.dataset,
         "--agent-import-path",
-        "wattle_tbench_agent:WattleInstalledAgent",
-        "--model",
-        f"{case.provider}/{case.model}",
-        "--n-concurrent",
+        "wattle_harbor_agent:WattleAgent",
+        "-m",
+        run.model,
+        "--job-name",
+        run.job_name,
+        "--jobs-dir",
+        str(job_dir),
+        "-n",
         str(args.n_concurrent),
         "--n-attempts",
         str(args.n_attempts),
-        "--run-id",
-        run_id,
-        "--output-path",
-        str(tb_output_path),
-        "--no-upload-results",
-        "--log-level",
-        args.log_level,
-        "--agent-kwarg",
-        f"provider={case.provider}",
-        "--agent-kwarg",
-        f"model={case.model}",
-        "--agent-kwarg",
-        f"thinking={str(case.thinking).lower()}",
-        "--agent-kwarg",
-        f"effort={case.effort or 'none'}",
-        "--agent-kwarg",
-        f"max_tokens={args.max_tokens}",
-        "--agent-kwarg",
-        f"source_tgz_path={source_tgz}",
-        "--agent-kwarg",
+        "--yes",
+        "--ak",
+        f"source_dir={args.source_dir}",
+        "--ak",
         f"wattle_auth_path={args.wattle_auth_path}",
-        "--agent-kwarg",
+        "--ak",
         f"codex_auth_path={args.codex_auth_path}",
-        "--agent-kwarg",
+        "--ak",
         f"codex_config_path={args.codex_config_path}",
+        "--ak",
+        f"thinking={str(args.effort != 'none').lower()}",
+        "--ak",
+        f"effort={args.effort}",
     ]
+    if args.max_tokens is not None:
+        command.extend(["--ak", f"max_tokens={args.max_tokens}"])
     if args.wattle_provider_request_timeout_sec is not None:
         command.extend(
             [
-                "--agent-kwarg",
+                "--ak",
                 "provider_request_timeout_seconds="
                 f"{args.wattle_provider_request_timeout_sec}",
             ]
         )
-    append_common_tb_args(command, args)
-    return command
-
-
-def build_codex_tb_command(
-    *,
-    args: argparse.Namespace,
-    case: EvalCase,
-    run_id: str,
-    tb_output_path: Path,
-) -> list[str]:
-    command = [
-        "tb",
-        "run",
-        "--dataset",
-        args.dataset,
-        "--agent-import-path",
-        "codex_tbench_agent:CodexInstalledAgent",
-        "--model",
-        f"openai/{case.model}",
-        "--n-concurrent",
-        str(args.n_concurrent),
-        "--n-attempts",
-        str(args.n_attempts),
-        "--run-id",
-        run_id,
-        "--output-path",
-        str(tb_output_path),
-        "--no-upload-results",
-        "--log-level",
-        args.log_level,
-        "--agent-kwarg",
-        f"model={case.model}",
-        "--agent-kwarg",
-        f"effort={case.effort or 'none'}",
-        "--agent-kwarg",
-        f"auth_path={args.codex_auth_path}",
-        "--agent-kwarg",
-        f"codex_config_path={args.codex_config_path}",
-    ]
-    append_common_tb_args(command, args)
-    return command
-
-
-def append_common_tb_args(command: list[str], args: argparse.Namespace) -> None:
-    for task_id in args.task_id:
-        command.extend(["--task-id", task_id])
+    if args.wattle_stream_idle_timeout_sec is not None:
+        command.extend(
+            [
+                "--ak",
+                "stream_idle_timeout_seconds="
+                f"{args.wattle_stream_idle_timeout_sec}",
+            ]
+        )
+    if args.force_build:
+        command.append("--force-build")
+    if args.no_delete:
+        command.append("--no-delete")
+    if args.debug:
+        command.append("--debug")
+    if args.timeout_multiplier is not None:
+        command.extend(["--timeout-multiplier", str(args.timeout_multiplier)])
+    if args.agent_timeout_multiplier is not None:
+        command.extend(["--agent-timeout-multiplier", str(args.agent_timeout_multiplier)])
+    if args.verifier_timeout_multiplier is not None:
+        command.extend(["--verifier-timeout-multiplier", str(args.verifier_timeout_multiplier)])
     if args.n_tasks is not None:
         command.extend(["--n-tasks", str(args.n_tasks)])
-    for task_id in args.exclude_task_id:
-        command.extend(["--exclude-task-id", task_id])
-    if args.no_rebuild:
-        command.append("--no-rebuild")
-    if args.no_cleanup:
-        command.append("--no-cleanup")
-    if args.livestream:
-        command.append("--livestream")
-    if args.global_timeout_multiplier is not None:
-        command.extend(["--global-timeout-multiplier", str(args.global_timeout_multiplier)])
-    if args.global_agent_timeout_sec is not None:
-        command.extend(["--global-agent-timeout-sec", str(args.global_agent_timeout_sec)])
-    if args.global_test_timeout_sec is not None:
-        command.extend(["--global-test-timeout-sec", str(args.global_test_timeout_sec)])
-    for item in args.extra_tb_arg:
+    for task in args.task:
+        command.extend(["-t", task])
+    for task in args.include_task_name:
+        command.extend(["--include-task-name", task])
+    for task in args.exclude_task_name:
+        command.extend(["--exclude-task-name", task])
+    for item in args.agent_env:
+        command.extend(["--agent-env", item])
+    for item in args.extra_harbor_arg:
         command.append(item)
+    return command
 
 
 def run_logged(command: list[str], *, cwd: Path, env: dict[str, str], log_path: Path) -> int:
@@ -358,87 +267,141 @@ def write_json(path: Path, data: object) -> None:
 
 
 def validate_inputs(args: argparse.Namespace) -> None:
-    if args.agent == "wattle" and not args.source_dir.exists():
+    if not Path(args.harbor_bin).exists():
+        raise FileNotFoundError(f"Harbor binary not found: {args.harbor_bin}")
+    if not args.source_dir.exists():
         raise FileNotFoundError(f"Wattle source dir not found: {args.source_dir}")
-    if args.agent == "wattle" and not args.wattle_auth_path.exists() and not args.codex_auth_path.exists():
-        raise FileNotFoundError(
-            "No auth file found. Expected at least one of "
-            f"{args.wattle_auth_path} or {args.codex_auth_path}."
+    if not args.wattle_auth_path.exists() and not args.codex_auth_path.exists():
+        env_auth = any(
+            os.environ.get(name)
+            for name in (
+                "ANTHROPIC_API_KEY",
+                "CODEX_OAUTH_TOKEN",
+                "DEEPSEEK_API_KEY",
+                "KIMI_API_KEY",
+                "MINIMAX_API_KEY",
+                "OPENAI_API_KEY",
+            )
         )
-    if args.agent == "codex" and not args.codex_auth_path.exists():
-        raise FileNotFoundError(f"Codex auth file not found: {args.codex_auth_path}")
+        if not env_auth:
+            raise FileNotFoundError(
+                "No auth source found. Provide --wattle-auth-path, --codex-auth-path, "
+                "or provider API key environment variables."
+            )
 
 
-def write_batch_summary(batch_dir: Path, results: list[RunResult]) -> None:
+def write_summary(batch_dir: Path, results: list[RunResult]) -> None:
     lines = [
-        "# Terminal-Bench Batch",
+        "# Harbor Terminal-Bench Batch",
         "",
-        f"Generated: `{datetime.now().isoformat(timespec='seconds')}`",
+        f"Generated: `{utc_now()}`",
         "",
-        "| Case | Run ID | Exit | Analysis | Log |",
-        "|---|---|---:|---|---|",
+        "| Job | Model | Exit | Job Dir | Reports | Log |",
+        "|---|---|---:|---|---|---|",
     ]
     for result in results:
-        analysis = result.analysis_dir or ""
         lines.append(
-            f"| `{result.case}` | `{result.run_id}` | {result.exit_code} | "
-            f"`{analysis}` | `{result.log_path}` |"
+            f"| `{result.job_name}` | `{result.model}` | {result.exit_code} | "
+            f"`{result.job_dir}` | `{result.report_dir or ''}` | `{result.log_path}` |"
         )
     lines.append("")
     (batch_dir / "summary.md").write_text("\n".join(lines), encoding="utf-8")
     write_json(batch_dir / "results.json", [asdict(result) for result in results])
 
 
+def generate_reports(results_root: Path) -> Path | None:
+    script = HARNESS_DIR / "scripts/generate_reports.py"
+    if not script.exists():
+        return None
+    proc = subprocess.run([sys.executable, str(script), str(results_root)], cwd=HARNESS_DIR)
+    return results_root / "reports" if proc.returncode == 0 else None
+
+
+def git_commit_and_dirty(repo_dir: Path) -> tuple[str | None, bool | None]:
+    try:
+        commit = subprocess.check_output(
+            ["git", "-C", str(repo_dir), "rev-parse", "HEAD"],
+            text=True,
+        ).strip()
+        status = subprocess.check_output(
+            ["git", "-C", str(repo_dir), "status", "--porcelain"],
+            text=True,
+        )
+    except subprocess.CalledProcessError:
+        return None, None
+    return commit, bool(status.strip())
+
+
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Run Wattle or Codex against Terminal-Bench.")
-    parser.add_argument("--agent", choices=sorted(AGENTS), default="wattle")
-    parser.add_argument("--provider", default="openai_codex")
-    parser.add_argument("--model", default="gpt-5.5")
-    parser.add_argument("--effort", choices=sorted(EFFORTS), default="none")
-    parser.add_argument("--dataset", default="terminal-bench-core==0.1.1")
-    parser.add_argument("--task-id", action="append", default=[])
-    parser.add_argument("--exclude-task-id", action="append", default=[])
+    parser = argparse.ArgumentParser(
+        description="Run Wattle against Harbor / Terminal-Bench 2.0."
+    )
+    parser.add_argument("--provider", default=None, help="Provider alias for bare --model values.")
+    parser.add_argument("--model", default="deepseek/deepseek-v4-pro", help="provider/model")
+    parser.add_argument("--effort", choices=sorted(EFFORTS), default="high")
+    parser.add_argument("--dataset", default=DEFAULT_DATASET)
+    parser.add_argument("--task", action="append", default=[], help="Harbor registry task id.")
+    parser.add_argument(
+        "--task-id",
+        action="append",
+        default=[],
+        dest="include_task_name",
+        help="Compatibility alias for --include-task-name.",
+    )
+    parser.add_argument("--include-task-name", action="append", default=[])
+    parser.add_argument("--exclude-task-name", action="append", default=[])
     parser.add_argument("--n-tasks", type=int, default=None)
-    parser.add_argument("--n-concurrent", type=int, default=4)
+    parser.add_argument("--n-concurrent", type=int, default=2)
     parser.add_argument("--n-attempts", type=int, default=1)
-    parser.add_argument("--max-tokens", type=int, default=4096)
+    parser.add_argument("--max-tokens", type=int, default=None)
     parser.add_argument("--wattle-provider-request-timeout-sec", type=float, default=None)
+    parser.add_argument("--wattle-stream-idle-timeout-sec", type=float, default=None)
     parser.add_argument("--source-dir", type=Path, default=DEFAULT_SOURCE_DIR)
-    parser.add_argument("--wattle-auth-path", type=Path, default=DEFAULT_WATTLE_AUTH_PATH)
+    parser.add_argument(
+        "--wattle-auth-path",
+        type=Path,
+        default=first_existing(DEFAULT_WATTLE_AUTH_PATHS),
+    )
     parser.add_argument("--codex-auth-path", type=Path, default=DEFAULT_CODEX_AUTH_PATH)
     parser.add_argument("--codex-config-path", type=Path, default=DEFAULT_CODEX_CONFIG_PATH)
+    parser.add_argument("--harbor-bin", type=Path, default=Path(DEFAULT_HARBOR_BIN))
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--run-label", default=None)
-    parser.add_argument("--log-level", default="info")
-    parser.add_argument("--livestream", action="store_true")
-    parser.add_argument("--no-rebuild", action="store_true")
-    parser.add_argument("--no-cleanup", action="store_true")
+    parser.add_argument("--job-name", default=None)
+    parser.add_argument("--timeout-multiplier", type=float, default=None)
+    parser.add_argument("--agent-timeout-multiplier", type=float, default=None)
+    parser.add_argument("--verifier-timeout-multiplier", type=float, default=None)
+    parser.add_argument("--force-build", action="store_true")
+    parser.add_argument("--no-delete", action="store_true")
+    parser.add_argument("--debug", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
-    parser.add_argument(
-        "--tmux",
-        action="store_true",
-        help="Launch this run in a detached tmux session and return immediately.",
-    )
-    parser.add_argument("--skip-analysis", action="store_true")
-    parser.add_argument("--global-timeout-multiplier", type=float, default=None)
-    parser.add_argument("--global-agent-timeout-sec", type=float, default=None)
-    parser.add_argument("--global-test-timeout-sec", type=float, default=None)
-    parser.add_argument("--extra-tb-arg", action="append", default=[])
+    parser.add_argument("--tmux", action="store_true")
+    parser.add_argument("--skip-reports", action="store_true")
+    parser.add_argument("--agent-env", action="append", default=[])
+    parser.add_argument("--extra-harbor-arg", action="append", default=[])
     return parser.parse_args()
 
 
 def main() -> int:
     raw_args = sys.argv[1:]
     args = parse_args()
+    args.source_dir = args.source_dir.expanduser().resolve()
+    args.output_dir = args.output_dir.expanduser().resolve()
+    args.wattle_auth_path = args.wattle_auth_path.expanduser().resolve()
+    args.codex_auth_path = args.codex_auth_path.expanduser().resolve()
+    args.codex_config_path = args.codex_config_path.expanduser().resolve()
+    args.harbor_bin = args.harbor_bin.expanduser().resolve()
+    args.include_task_name = [*args.include_task_name]
+
     try:
         validate_inputs(args)
     except FileNotFoundError as exc:
         print(f"[error] {exc}", file=sys.stderr)
         return 2
 
-    case = build_case(args)
+    run = build_run(args)
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    label = slug(args.run_label) if args.run_label else f"{timestamp}-{case.name}"
+    label = slug(args.run_label) if args.run_label else f"{timestamp}-{run.name}"
     batch_dir = args.output_dir / label
     if batch_dir.exists():
         print(f"[error] Output directory already exists: {batch_dir}", file=sys.stderr)
@@ -446,18 +409,14 @@ def main() -> int:
     if args.tmux:
         return launch_tmux_run(raw_args=raw_args, args=args, label=label)
 
-    tb_output_path = batch_dir / "tb-runs"
+    jobs_root = batch_dir / "jobs"
     logs_dir = batch_dir / "logs"
     commands_dir = batch_dir / "commands"
-    assets_dir = batch_dir / "assets"
-    analysis_dir = batch_dir / "analysis"
-    for path in (tb_output_path, logs_dir, commands_dir, assets_dir, analysis_dir):
+    for path in (jobs_root, logs_dir, commands_dir):
         path.mkdir(parents=True, exist_ok=True)
 
-    source_tgz = assets_dir / "wattle-source.tgz"
-    if args.agent == "wattle":
-        print(f"Packing Wattle source: {args.source_dir} -> {source_tgz}")
-        build_source_archive(args.source_dir, source_tgz)
+    wattle_commit, wattle_dirty = git_commit_and_dirty(args.source_dir)
+    harness_commit, harness_dirty = git_commit_and_dirty(HARNESS_DIR)
 
     env = os.environ.copy()
     env["PYTHONPATH"] = (
@@ -467,12 +426,15 @@ def main() -> int:
     )
 
     write_json(
-        batch_dir / "config.json",
+        batch_dir / "manifest.json",
         {
-            "created_at": datetime.now().isoformat(timespec="seconds"),
-            "batch_dir": str(batch_dir),
-            "tb_output_path": str(tb_output_path),
-            "case": asdict(case),
+            "created_at": utc_now(),
+            "dataset": args.dataset,
+            "harness_commit": harness_commit,
+            "harness_dirty": harness_dirty,
+            "wattle_commit": wattle_commit,
+            "wattle_dirty": wattle_dirty,
+            "wattle_source_dir": str(args.source_dir),
             "args": {
                 key: str(value) if isinstance(value, Path) else value
                 for key, value in vars(args).items()
@@ -480,18 +442,10 @@ def main() -> int:
         },
     )
 
-    results: list[RunResult] = []
-    all_rows = []
-    run_id = label
-    command = build_tb_command(
-        args=args,
-        case=case,
-        run_id=run_id,
-        tb_output_path=tb_output_path,
-        source_tgz=source_tgz,
-    )
-    command_path = commands_dir / f"{case.name}.json"
-    log_path = logs_dir / f"{case.name}.log"
+    job_dir = jobs_root / run.job_name
+    command = build_harbor_command(args=args, run=run, job_dir=job_dir)
+    command_path = commands_dir / f"{run.job_name}.json"
+    log_path = logs_dir / f"{run.job_name}.log"
     write_json(
         command_path,
         {
@@ -500,36 +454,32 @@ def main() -> int:
             "command": command,
         },
     )
-    print(f"\n=== Running {case.name}: {run_id} ===")
+
+    print(f"\n=== Running {run.job_name}: {run.model} ===")
+    print(f"Dataset: {args.dataset}")
+    print(f"Wattle commit: {wattle_commit}")
+    print(f"Job dir: {job_dir}")
     if args.dry_run:
         print("Dry run; command written to", command_path)
-        exit_code = 0
         log_path.write_text("[dry-run] command not executed\n", encoding="utf-8")
-        case_analysis_dir = None
+        exit_code = 0
+        report_dir = None
     else:
         exit_code = run_logged(command, cwd=HARNESS_DIR, env=env, log_path=log_path)
-        run_dir = tb_output_path / run_id
-        case_analysis_dir = analysis_dir / case.name
-        if not args.skip_analysis and (run_dir / "results.json").exists():
-            rows = analyze_run(run_dir)
-            write_outputs(rows, case_analysis_dir)
-            all_rows.extend(rows)
+        report_dir = None if args.skip_reports else generate_reports(batch_dir)
+
     result = RunResult(
-        case=case.name,
-        run_id=run_id,
+        job_name=run.job_name,
+        model=run.model,
         exit_code=exit_code,
         command_path=str(command_path),
         log_path=str(log_path),
-        analysis_dir=str(case_analysis_dir) if case_analysis_dir is not None else None,
+        job_dir=str(job_dir),
+        report_dir=str(report_dir) if report_dir is not None else None,
     )
-    results.append(result)
-    write_json(batch_dir / "results.json", [asdict(item) for item in results])
-
-    if all_rows and not args.skip_analysis:
-        write_outputs(all_rows, analysis_dir / "combined")
-    write_batch_summary(batch_dir, results)
+    write_summary(batch_dir, [result])
     print(f"\nWrote batch summary: {batch_dir / 'summary.md'}")
-    return 0 if all(result.exit_code == 0 for result in results) else 1
+    return exit_code
 
 
 if __name__ == "__main__":
