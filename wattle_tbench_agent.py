@@ -29,6 +29,7 @@ class WattleInstalledAgent(AbstractInstalledAgent):
         wattle_auth_path: str = "/home/liyuan/.wattle/auth.json",
         codex_auth_path: str = "/home/liyuan/.codex/auth.json",
         codex_config_path: str = "/home/liyuan/.codex/config.toml",
+        provider_request_timeout_seconds: str | None = None,
         *args,
         **kwargs,
     ):
@@ -42,6 +43,7 @@ class WattleInstalledAgent(AbstractInstalledAgent):
         self.wattle_auth_path = Path(wattle_auth_path).expanduser()
         self.codex_auth_path = Path(codex_auth_path).expanduser()
         self.codex_config_path = Path(codex_config_path).expanduser()
+        self.provider_request_timeout_seconds = provider_request_timeout_seconds
 
     @property
     def _env(self) -> dict[str, str]:
@@ -129,11 +131,19 @@ class WattleInstalledAgent(AbstractInstalledAgent):
             cmd.extend(["--effort", self.effort])
         cmd.extend(["-p", instruction])
 
+        timeout_export = ""
+        if self.provider_request_timeout_seconds:
+            timeout_export = (
+                "export WATTLE_PROVIDER_REQUEST_TIMEOUT_SECONDS="
+                f"{shlex.quote(str(self.provider_request_timeout_seconds))}; "
+            )
+
         inner = (
             "set -o pipefail; "
             "mkdir -p /agent-logs/wattle-sessions; "
             "export PATH=\"$HOME/.local/bin:$PATH\"; "
             "export WATTLE_SESSION_DIR=/agent-logs/wattle-sessions; "
+            f"{timeout_export}"
             "date -Iseconds > /agent-logs/wattle-started-at.txt; "
             f"{shlex.join(cmd)} 2>&1 | tee /agent-logs/wattle-output.log; "
             "status=${PIPESTATUS[0]}; "

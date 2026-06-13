@@ -254,6 +254,14 @@ def build_wattle_tb_command(
         "--agent-kwarg",
         f"codex_config_path={args.codex_config_path}",
     ]
+    if args.wattle_provider_request_timeout_sec is not None:
+        command.extend(
+            [
+                "--agent-kwarg",
+                "provider_request_timeout_seconds="
+                f"{args.wattle_provider_request_timeout_sec}",
+            ]
+        )
     append_common_tb_args(command, args)
     return command
 
@@ -394,6 +402,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--n-concurrent", type=int, default=4)
     parser.add_argument("--n-attempts", type=int, default=1)
     parser.add_argument("--max-tokens", type=int, default=4096)
+    parser.add_argument("--wattle-provider-request-timeout-sec", type=float, default=None)
     parser.add_argument("--source-dir", type=Path, default=DEFAULT_SOURCE_DIR)
     parser.add_argument("--wattle-auth-path", type=Path, default=DEFAULT_WATTLE_AUTH_PATH)
     parser.add_argument("--codex-auth-path", type=Path, default=DEFAULT_CODEX_AUTH_PATH)
