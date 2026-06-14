@@ -23,6 +23,7 @@ from run_tbench import (
 
 HARNESS_DIR = Path(__file__).resolve().parent
 DEFAULT_TASK_CACHE_DIR = HARNESS_DIR / "runs/tui-tasks"
+DEFAULT_HARBOR_PACKAGE_CACHE_DIR = Path.home() / ".cache/harbor/tasks/packages"
 
 
 def parse_args() -> argparse.Namespace:
@@ -44,6 +45,24 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--codex-config-path", type=Path, default=DEFAULT_CODEX_CONFIG_PATH)
     parser.add_argument("--harbor-bin", type=Path, default=Path(DEFAULT_HARBOR_BIN))
     parser.add_argument("--task-cache-dir", type=Path, default=DEFAULT_TASK_CACHE_DIR)
+    parser.add_argument(
+        "--harbor-package-cache-dir",
+        type=Path,
+        default=DEFAULT_HARBOR_PACKAGE_CACHE_DIR,
+        help="Harbor package cache used as a fallback when registry download fails.",
+    )
+    parser.add_argument(
+        "--download-attempts",
+        type=int,
+        default=3,
+        help="Number of Harbor task download attempts before failing.",
+    )
+    parser.add_argument(
+        "--download-retry-delay-sec",
+        type=float,
+        default=5.0,
+        help="Seconds to wait between Harbor task download attempts.",
+    )
     parser.add_argument("--wattle-provider-request-timeout-sec", type=float, default=None)
     parser.add_argument("--wattle-stream-idle-timeout-sec", type=float, default=None)
     parser.add_argument("--session-name", default=None)
@@ -51,6 +70,25 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--no-download", action="store_true")
     return parser.parse_args()
+
+
+def cached_harbor_package_task(args: argparse.Namespace) -> Path | None:
+    package_dir = (
+        args.harbor_package_cache_dir.expanduser().resolve()
+        / "terminal-bench"
+        / args.task_name
+    )
+    if not package_dir.exists():
+        return None
+
+    candidates = [
+        path
+        for path in package_dir.iterdir()
+        if path.is_dir() and (path / "task.toml").exists()
+    ]
+    if not candidates:
+        return None
+    return max(candidates, key=lambda path: path.stat().st_mtime)
 
 
 def resolve_task_path(args: argparse.Namespace) -> Path:
@@ -62,18 +100,55 @@ def resolve_task_path(args: argparse.Namespace) -> Path:
         return task_dir
 
     args.task_cache_dir.mkdir(parents=True, exist_ok=True)
-    subprocess.run(
-        [
-            str(args.harbor_bin),
-            "task",
-            "download",
-            f"terminal-bench/{args.task_name}",
-            "--output-dir",
-            str(args.task_cache_dir),
-        ],
-        cwd=HARNESS_DIR,
-        check=True,
-    )
+    download_command = [
+        str(args.harbor_bin),
+        "task",
+        "download",
+        f"terminal-bench/{args.task_name}",
+        "--output-dir",
+        str(args.task_cache_dir),
+    ]
+    attempts = max(1, args.download_attempts)
+    download_error = None
+    for attempt in range(1, attempts + 1):
+        try:
+            result = subprocess.run(
+                download_command,
+                cwd=HARNESS_DIR,
+                check=True,
+                stderr=subprocess.STDOUT,
+                stdout=subprocess.PIPE,
+                text=True,
+            )
+            if result.stdout:
+                print(result.stdout, end="")
+            download_error = None
+            break
+        except subprocess.CalledProcessError as error:
+            download_error = error
+            if attempt == attempts:
+                break
+            print(
+                "[warn] Harbor task download failed "
+                f"(attempt {attempt}/{attempts}); retrying in "
+                f"{args.download_retry_delay_sec:g}s...",
+                file=sys.stderr,
+            )
+            time.sleep(max(0.0, args.download_retry_delay_sec))
+
+    if download_error is not None and not task_dir.exists():
+        cached_task = cached_harbor_package_task(args)
+        if cached_task is not None:
+            print(
+                "[warn] Harbor task download failed; using cached package task at "
+                f"{cached_task}",
+                file=sys.stderr,
+            )
+            shutil.copytree(cached_task, task_dir)
+        else:
+            if download_error.stdout:
+                print(download_error.stdout, end="", file=sys.stderr)
+            raise download_error
     return task_dir
 
 
