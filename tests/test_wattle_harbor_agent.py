@@ -21,6 +21,10 @@ def test_wattle_command_uses_provider_timeout_and_no_prompt_suffix() -> None:
     assert "--model deepseek-v4-pro" in command
     assert "--thinking" in command
     assert "--effort high" in command
+    assert "WATTLE_RUN_DEADLINE_EPOCH_MS" in command
+    assert "wattle-deadline-epoch-ms.txt" in command
+    assert "Path('/task/task.toml')" in command
+    assert "(data.get('agent') or {}).get('timeout_sec')" in command
     assert "solve it" in command
     assert "prompt suffix" not in command.lower()
 

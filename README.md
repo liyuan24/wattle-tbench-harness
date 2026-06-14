@@ -32,6 +32,9 @@ prevents verifier-test path corruption when an agent creates `/tests`.
 
 Harbor owns Terminal-Bench task deadlines and container cleanup. Wattle provider
 timeout flags are optional diagnostics; omit them for the default benchmark path.
+The harness computes `WATTLE_RUN_DEADLINE_EPOCH_MS` from each task's
+`[agent].timeout_sec` immediately before Wattle starts, so Wattle can tell the
+model the remaining wall-clock budget without changing the task prompt.
 
 ## Auth
 
@@ -152,23 +155,22 @@ Run one task in Wattle's native TUI:
   --task-name break-filter-js-from-html \
   --model deepseek/deepseek-v4-pro \
   --effort high \
-  --source-dir /home/liyuan/repos/wattle \
-  --wattle-auth-path /home/liyuan/.willow/auth.json \
-  --attach
+  --source-dir /home/liyuan/repos/wattle
 ```
 
-The launcher downloads the Terminal-Bench task if needed, starts Harbor's
-interactive Docker environment, installs the Wattle agent, and queues the
-interactive command inside the task shell:
+The launcher downloads the Terminal-Bench task if needed, reads the task
+instruction from the resolved task directory, and starts Wattle directly in the
+local terminal:
 
 ```bash
-wattle --provider deepseek --model deepseek-v4-pro --yolo --thinking --effort high "$task_prompt"
+uv run --project /home/liyuan/repos/wattle wattle --provider deepseek --model deepseek-v4-pro --yolo --thinking --effort high "$task_prompt"
 ```
 
-The prompt comes from `/task/instruction.md` after the Docker environment is
-built, so the first message is populated inside the Wattle TUI for the exact
-task container being investigated. It does not use `-p/--print`, which is
-Wattle's headless mode.
+The prompt comes from `instruction.md`, with a `task.yaml` fallback for older
+task layouts, and is passed as Wattle's first positional TUI prompt. The TUI
+runs with the task directory as its working directory. It does not use
+`-p/--print`, which is Wattle's headless mode, and it does not start a Harbor
+environment or tmux session.
 
 Use a local task checkout instead of downloading:
 
@@ -177,16 +179,11 @@ Use a local task checkout instead of downloading:
   --task-name break-filter-js-from-html \
   --task-path /tmp/harbor-tasks/break-filter-js-from-html \
   --model deepseek/deepseek-v4-pro \
-  --source-dir /home/liyuan/repos/wattle \
-  --wattle-auth-path /home/liyuan/.willow/auth.json \
-  --attach
+  --source-dir /home/liyuan/repos/wattle
 ```
 
-From the same interactive environment, run the verifier manually when ready:
-
-```bash
-bash /tests/run-tests.sh
-```
+This TUI launcher is for human inspection. Use the Harbor-backed harness when
+you need the task container, verifier, or scored run behavior.
 
 For post-run browsing, use Harbor's viewer:
 

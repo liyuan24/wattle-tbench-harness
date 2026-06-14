@@ -250,6 +250,7 @@ command -v wattle >/dev/null
             'export PATH="$HOME/.local/bin:$PATH"; '
             f"export WATTLE_SESSION_DIR={self._REMOTE_SESSION_DIR}; "
             f"{timeout_export}"
+            f"{_wattle_run_deadline_export_command()}"
             "date -Iseconds > /logs/agent/wattle-started-at.txt; "
             f"{shlex.join(cmd)} 2>&1 | tee /logs/agent/{self._OUTPUT_FILENAME}; "
             "run_status=${PIPESTATUS[0]}; "
@@ -294,6 +295,7 @@ command -v wattle >/dev/null
             "max_tokens": self.max_tokens,
             "provider_request_timeout_seconds": self.provider_request_timeout_seconds,
             "stream_idle_timeout_seconds": self.stream_idle_timeout_seconds,
+            "run_deadline_env": "WATTLE_RUN_DEADLINE_EPOCH_MS",
             "session_files": [str(path) for path in session_files],
         }
 
@@ -339,6 +341,31 @@ def _resolve_optional_path(value: str | None) -> Path | None:
         return None
     path = Path(value).expanduser()
     return path if path.exists() else None
+
+
+def _wattle_run_deadline_export_command() -> str:
+    return (
+        "wattle_deadline_epoch_ms=$(python3 - <<'PY'\n"
+        "import time\n"
+        "from pathlib import Path\n"
+        "try:\n"
+        "    import tomllib\n"
+        "    data = tomllib.loads(Path('/task/task.toml').read_text(encoding='utf-8'))\n"
+        "    timeout = (data.get('agent') or {}).get('timeout_sec')\n"
+        "    if timeout is None:\n"
+        "        print('')\n"
+        "    else:\n"
+        "        print(int((time.time() + float(timeout)) * 1000))\n"
+        "except Exception:\n"
+        "    print('')\n"
+        "PY\n"
+        "); "
+        "if [ -n \"$wattle_deadline_epoch_ms\" ]; then "
+        "export WATTLE_RUN_DEADLINE_EPOCH_MS=\"$wattle_deadline_epoch_ms\"; "
+        "printf '%s\\n' \"$wattle_deadline_epoch_ms\" "
+        "> /logs/agent/wattle-deadline-epoch-ms.txt; "
+        "fi; "
+    )
 
 
 def _build_wattle_auth_from_environment() -> dict[str, Any]:

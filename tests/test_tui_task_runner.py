@@ -4,7 +4,12 @@ import argparse
 import subprocess
 from pathlib import Path
 
-from run_tui_task import build_start_env_command, build_wattle_tui_command, resolve_task_path
+from run_tui_task import (
+    build_wattle_environment,
+    build_wattle_tui_command,
+    read_task_prompt,
+    resolve_task_path,
+)
 
 
 def _args(**overrides: object) -> argparse.Namespace:
@@ -31,52 +36,76 @@ def _args(**overrides: object) -> argparse.Namespace:
     return argparse.Namespace(**data)
 
 
-def test_start_env_command_installs_wattle_agent() -> None:
-    command = build_start_env_command(_args(), Path("/tasks/break-filter-js-from-html"))
+def test_wattle_tui_command_uses_positional_prompt_not_headless_print() -> None:
+    command = build_wattle_tui_command(_args(), "Do the task.")
 
-    assert command[:4] == ["/bin/harbor", "task", "start-env", "--path"]
-    assert "--interactive" in command
-    assert "--agent-import-path" in command
-    assert "wattle_harbor_agent:WattleAgent" in command
-    assert "-m" in command
-    assert "deepseek/deepseek-v4-pro" in command
-    assert "source_dir=/src/wattle" in command
-    assert "provider_request_timeout_seconds=120.0" not in command
-    assert "stream_idle_timeout_seconds=120.0" not in command
+    assert command == [
+        "wattle",
+        "--provider",
+        "deepseek",
+        "--model",
+        "deepseek-v4-pro",
+        "--yolo",
+        "--thinking",
+        "--effort",
+        "high",
+        "Do the task.",
+    ]
+    assert "--print" not in command
+    assert "-p" not in command
 
 
-def test_start_env_command_can_pass_explicit_provider_timeout() -> None:
-    command = build_start_env_command(
-        _args(wattle_provider_request_timeout_sec=120.0),
-        Path("/tasks/break-filter-js-from-html"),
+def test_wattle_tui_command_uses_source_checkout_when_available(tmp_path: Path) -> None:
+    source_dir = tmp_path / "wattle"
+    source_dir.mkdir()
+    (source_dir / "pyproject.toml").write_text("[project]\nname = 'wattle'\n", encoding="utf-8")
+
+    command = build_wattle_tui_command(_args(source_dir=source_dir), "Do the task.")
+
+    assert command[:4] == ["uv", "run", "--project", str(source_dir)]
+    assert command[4] == "wattle"
+
+
+def test_read_task_prompt_uses_instruction_md(tmp_path: Path) -> None:
+    (tmp_path / "instruction.md").write_text("Do the task.\n", encoding="utf-8")
+
+    assert read_task_prompt(tmp_path) == "Do the task."
+
+
+def test_read_task_prompt_falls_back_to_task_yaml_block(tmp_path: Path) -> None:
+    (tmp_path / "task.yaml").write_text(
+        "name: example\ninstruction: |\n  First line.\n  Second line.\n",
+        encoding="utf-8",
     )
 
-    assert "provider_request_timeout_seconds=120.0" in command
-    assert "stream_idle_timeout_seconds=120.0" not in command
+    assert read_task_prompt(tmp_path) == "First line.\nSecond line."
 
 
-def test_wattle_tui_command_uses_positional_prompt_not_headless_print() -> None:
-    command = build_wattle_tui_command(_args())
-
-    assert "cat /task/instruction.md" in command
-    assert "wattle --provider deepseek --model deepseek-v4-pro --yolo" in command
-    assert "--thinking --effort high" in command
-    assert '"$task_prompt"' in command
-    wattle_invocation = command.rsplit("; wattle ", 1)[1]
-    assert " -p " not in f" {wattle_invocation} "
-    assert "--print" not in command
-
-
-def test_wattle_tui_command_omits_timeout_exports_by_default() -> None:
-    command = build_wattle_tui_command(
+def test_wattle_environment_sets_timeout_only_when_requested() -> None:
+    env = build_wattle_environment(
         _args(
-            wattle_provider_request_timeout_sec=None,
+            wattle_provider_request_timeout_sec=120.0,
             wattle_stream_idle_timeout_sec=None,
         )
     )
 
-    assert "WATTLE_PROVIDER_REQUEST_TIMEOUT_SECONDS" not in command
-    assert "WATTLE_STREAM_IDLE_TIMEOUT_SECONDS" not in command
+    assert env["WATTLE_PROVIDER_REQUEST_TIMEOUT_SECONDS"] == "120.0"
+    assert "WATTLE_STREAM_IDLE_TIMEOUT_SECONDS" not in env
+
+
+def test_wattle_environment_sets_run_deadline_from_task(
+    monkeypatch: object,
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "task.toml").write_text(
+        "[agent]\ntimeout_sec = 900.0\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr("run_tui_task.time.time", lambda: 1000.0)
+
+    env = build_wattle_environment(_args(), tmp_path)
+
+    assert env["WATTLE_RUN_DEADLINE_EPOCH_MS"] == "1900000"
 
 
 def test_resolve_task_path_uses_existing_cached_task(tmp_path: Path) -> None:
