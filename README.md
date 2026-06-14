@@ -20,15 +20,19 @@ cd /home/liyuan/repos/wattle-tbench-harness
 Harbor should be available either from this repo's `.venv/bin/harbor` or from
 `~/.local/bin/harbor`.
 
-Before full Docker evaluations, apply and verify the Harbor upload-dir patch:
+Before full Docker evaluations, apply and verify the Harbor patches:
 
 ```bash
 python scripts/patch_harbor_upload_dir.py
+python scripts/patch_harbor_agent_timeout.py
 python scripts/check_harbor_patch.py
 ```
 
-The patch makes Harbor copy directory contents into the task environment. This
-prevents verifier-test path corruption when an agent creates `/tests`.
+The upload-dir patch makes Harbor copy directory contents into the task
+environment. This prevents verifier-test path corruption when an agent creates
+`/tests`. The agent-timeout patch passes Harbor's computed per-task agent
+timeout to installed agents, which lets Wattle tell the model the remaining
+wall-clock budget.
 
 Harbor owns Terminal-Bench task deadlines and container cleanup. Wattle provider
 timeout flags are optional diagnostics; omit them for the default benchmark path.

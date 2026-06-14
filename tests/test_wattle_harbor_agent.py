@@ -50,3 +50,18 @@ def test_wattle_command_omits_max_tokens_by_default() -> None:
     command = agent._build_wattle_command("solve it")
 
     assert "--max-tokens" not in command
+
+
+def test_wattle_command_uses_harbor_agent_timeout_for_deadline() -> None:
+    agent = WattleAgent(
+        logs_dir=Path("."),
+        model_name="deepseek/deepseek-v4-pro",
+        agent_timeout_sec=900,
+    )
+
+    command = agent._build_wattle_command("solve it")
+
+    assert "timeout = 900.0" in command
+    assert "WATTLE_RUN_DEADLINE_EPOCH_MS" in command
+    assert "wattle-deadline-epoch-ms.txt" in command
+    assert "Path('/task/task.toml')" not in command

@@ -48,6 +48,7 @@ class WattleAgent(BaseInstalledAgent):
         wattle_auth_path: str | None = None,
         codex_auth_path: str | None = None,
         codex_config_path: str | None = None,
+        agent_timeout_sec: int | float | str | None = None,
         wattle_git_url: str = "https://github.com/liyuan24/wattle.git",
         wattle_git_ref: str | None = None,
         **kwargs: Any,
@@ -75,6 +76,10 @@ class WattleAgent(BaseInstalledAgent):
         )
         self.codex_config_path = _resolve_optional_path(
             codex_config_path or os.environ.get("CODEX_CONFIG_PATH")
+        )
+        self.agent_timeout_sec = _normalize_optional_number(
+            agent_timeout_sec,
+            "agent_timeout_sec",
         )
         self.wattle_git_url = wattle_git_url
         self.wattle_git_ref = wattle_git_ref
@@ -250,7 +255,7 @@ command -v wattle >/dev/null
             'export PATH="$HOME/.local/bin:$PATH"; '
             f"export WATTLE_SESSION_DIR={self._REMOTE_SESSION_DIR}; "
             f"{timeout_export}"
-            f"{_wattle_run_deadline_export_command()}"
+            f"{_wattle_run_deadline_export_command(self.agent_timeout_sec)}"
             "date -Iseconds > /logs/agent/wattle-started-at.txt; "
             f"{shlex.join(cmd)} 2>&1 | tee /logs/agent/{self._OUTPUT_FILENAME}; "
             "run_status=${PIPESTATUS[0]}; "
@@ -295,6 +300,7 @@ command -v wattle >/dev/null
             "max_tokens": self.max_tokens,
             "provider_request_timeout_seconds": self.provider_request_timeout_seconds,
             "stream_idle_timeout_seconds": self.stream_idle_timeout_seconds,
+            "agent_timeout_sec": self.agent_timeout_sec,
             "run_deadline_env": "WATTLE_RUN_DEADLINE_EPOCH_MS",
             "session_files": [str(path) for path in session_files],
         }
@@ -343,7 +349,9 @@ def _resolve_optional_path(value: str | None) -> Path | None:
     return path if path.exists() else None
 
 
-def _wattle_run_deadline_export_command() -> str:
+def _wattle_run_deadline_export_command(agent_timeout_sec: float | None = None) -> str:
+    if agent_timeout_sec is not None:
+        return _deadline_export_from_timeout_seconds(agent_timeout_sec)
     return (
         "wattle_deadline_epoch_ms=$(python3 - <<'PY'\n"
         "import time\n"
@@ -365,6 +373,20 @@ def _wattle_run_deadline_export_command() -> str:
         "printf '%s\\n' \"$wattle_deadline_epoch_ms\" "
         "> /logs/agent/wattle-deadline-epoch-ms.txt; "
         "fi; "
+    )
+
+
+def _deadline_export_from_timeout_seconds(timeout_sec: float) -> str:
+    return (
+        "wattle_deadline_epoch_ms=$(python3 - <<'PY'\n"
+        "import time\n"
+        f"timeout = {float(timeout_sec)!r}\n"
+        "print(int((time.time() + timeout) * 1000))\n"
+        "PY\n"
+        "); "
+        "export WATTLE_RUN_DEADLINE_EPOCH_MS=\"$wattle_deadline_epoch_ms\"; "
+        "printf '%s\\n' \"$wattle_deadline_epoch_ms\" "
+        "> /logs/agent/wattle-deadline-epoch-ms.txt; "
     )
 
 
