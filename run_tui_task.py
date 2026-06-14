@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import shlex
 import shutil
 import subprocess
@@ -26,7 +27,7 @@ DEFAULT_HARBOR_PACKAGE_CACHE_DIR = Path.home() / ".cache/harbor/tasks/packages"
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Start one Terminal-Bench task in Wattle's interactive TUI."
+        description="Start one Terminal-Bench task container in Wattle's interactive TUI."
     )
     parser.add_argument("--task-name", required=True, help="Terminal-Bench task name.")
     parser.add_argument("--task-path", type=Path, default=None, help="Use an existing local task.")
@@ -38,7 +39,7 @@ def parse_args() -> argparse.Namespace:
         "--wattle-auth-path",
         type=Path,
         default=first_existing(DEFAULT_WATTLE_AUTH_PATHS),
-        help="Deprecated compatibility option; local TUI runs use Wattle's local auth.",
+        help="Wattle auth file to mount into the task container.",
     )
     parser.add_argument(
         "--codex-auth-path",
@@ -86,6 +87,21 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--no-download", action="store_true")
+    parser.add_argument(
+        "--local",
+        action="store_true",
+        help="Run Wattle on the host in the task directory instead of a task container.",
+    )
+    parser.add_argument(
+        "--no-build",
+        action="store_true",
+        help="Do not build environment/Dockerfile; pull/use the task.toml docker_image instead.",
+    )
+    parser.add_argument(
+        "--remove-container",
+        action="store_true",
+        help="Remove the task container when the TUI exits.",
+    )
     return parser.parse_args()
 
 
@@ -234,6 +250,159 @@ def build_wattle_executable(args: argparse.Namespace) -> list[str]:
     return ["wattle"]
 
 
+def slug(value: str) -> str:
+    clean = re.sub(r"[^A-Za-z0-9_.-]+", "-", value).strip("-")
+    return (clean or "task").lower()
+
+
+def read_task_docker_image(task_path: Path) -> str | None:
+    task_toml = task_path / "task.toml"
+    if not task_toml.exists():
+        return None
+    data = tomllib.loads(task_toml.read_text(encoding="utf-8"))
+    image = (data.get("environment") or {}).get("docker_image")
+    return image if isinstance(image, str) and image else None
+
+
+def local_task_image_tag(args: argparse.Namespace) -> str:
+    return f"wattle-tui-{slug(args.task_name)}:latest"
+
+
+def build_task_image_command(args: argparse.Namespace, task_path: Path) -> list[str] | None:
+    dockerfile = task_path / "environment" / "Dockerfile"
+    if args.no_build or not dockerfile.exists():
+        return None
+    return [
+        "docker",
+        "build",
+        "-t",
+        local_task_image_tag(args),
+        str(dockerfile.parent),
+    ]
+
+
+def pull_task_image_command(task_path: Path) -> list[str] | None:
+    image = read_task_docker_image(task_path)
+    if image is None:
+        return None
+    return ["docker", "pull", image]
+
+
+def task_container_image(args: argparse.Namespace, task_path: Path) -> str:
+    if not args.no_build and (task_path / "environment" / "Dockerfile").exists():
+        return local_task_image_tag(args)
+    image = read_task_docker_image(task_path)
+    if image is None:
+        raise FileNotFoundError(
+            f"No Dockerfile at {task_path / 'environment' / 'Dockerfile'} "
+            f"and no environment.docker_image in {task_path / 'task.toml'}"
+        )
+    return image
+
+
+def build_container_wattle_command(args: argparse.Namespace, task_prompt: str) -> str:
+    parsed = parse_provider_model(args.model, provider=args.provider)
+    command = [
+        "wattle",
+        "--provider",
+        parsed.provider,
+        "--model",
+        parsed.model,
+        "--yolo",
+    ]
+    if args.effort != "none":
+        command.extend(["--thinking", "--effort", args.effort])
+    command.append(task_prompt)
+    return shlex.join(command)
+
+
+def container_bootstrap_command(args: argparse.Namespace, task_prompt: str) -> str:
+    wattle_command = build_container_wattle_command(args, task_prompt)
+    return "\n".join(
+        [
+            "set -euo pipefail",
+            "export DEBIAN_FRONTEND=noninteractive",
+            "apt-get update",
+            "apt-get install -y --no-install-recommends ca-certificates curl git python3 python3-venv tar gzip",
+            "apt-get clean",
+            "rm -rf /var/lib/apt/lists/*",
+            "if ! command -v uv >/dev/null 2>&1; then curl -LsSf https://astral.sh/uv/install.sh | sh; fi",
+            'export PATH="$HOME/.local/bin:$PATH"',
+            "mkdir -p /root/.wattle /logs/agent/wattle-sessions",
+            "cp /tmp/wattle-auth.json /root/.wattle/auth.json",
+            "chmod 700 /root/.wattle",
+            "chmod 600 /root/.wattle/auth.json",
+            "uv --no-cache tool install --force -e /wattle-src",
+            "rm -rf /tmp/uv-cache",
+            "cd /app",
+            wattle_command,
+        ]
+    )
+
+
+def build_docker_run_command(
+    args: argparse.Namespace,
+    *,
+    task_path: Path,
+    task_prompt: str,
+    container_name: str,
+) -> list[str]:
+    args.wattle_auth_path = args.wattle_auth_path.expanduser().resolve()
+    args.source_dir = args.source_dir.expanduser().resolve()
+    session_dir = (HARNESS_DIR / "runs/tui-sessions").resolve()
+    session_dir.mkdir(parents=True, exist_ok=True)
+    command = ["docker", "run"]
+    if args.remove_container:
+        command.append("--rm")
+    command.extend(
+        [
+            "-it",
+            "--name",
+            container_name,
+            "-v",
+            f"{args.source_dir}:/wattle-src:ro",
+            "-v",
+            f"{args.wattle_auth_path}:/tmp/wattle-auth.json:ro",
+            "-v",
+            f"{session_dir}:/logs/agent/wattle-sessions",
+            "-e",
+            "WATTLE_SESSION_DIR=/logs/agent/wattle-sessions",
+        ]
+    )
+    deadline_epoch_ms = _run_deadline_epoch_ms_for_task(task_path)
+    if deadline_epoch_ms is not None:
+        command.extend(["-e", f"WATTLE_RUN_DEADLINE_EPOCH_MS={deadline_epoch_ms}"])
+    if args.wattle_provider_request_timeout_sec is not None:
+        command.extend(
+            [
+                "-e",
+                "WATTLE_PROVIDER_REQUEST_TIMEOUT_SECONDS="
+                f"{args.wattle_provider_request_timeout_sec}",
+            ]
+        )
+    if args.wattle_stream_idle_timeout_sec is not None:
+        command.extend(
+            [
+                "-e",
+                "WATTLE_STREAM_IDLE_TIMEOUT_SECONDS="
+                f"{args.wattle_stream_idle_timeout_sec}",
+            ]
+        )
+    command.extend([task_container_image(args, task_path), "bash", "-lc"])
+    command.append(container_bootstrap_command(args, task_prompt))
+    return command
+
+
+def prepare_task_container_image(args: argparse.Namespace, task_path: Path) -> None:
+    build_command = build_task_image_command(args, task_path)
+    if build_command is not None:
+        subprocess.run(build_command, cwd=HARNESS_DIR, check=True)
+        return
+    pull_command = pull_task_image_command(task_path)
+    if pull_command is not None:
+        subprocess.run(pull_command, cwd=HARNESS_DIR, check=True)
+
+
 def build_wattle_environment(
     args: argparse.Namespace,
     task_path: Path | None = None,
@@ -269,6 +438,29 @@ def launch_wattle_tui(
     )
 
 
+def launch_container_wattle_tui(
+    args: argparse.Namespace,
+    *,
+    task_path: Path,
+    task_prompt: str,
+    container_name: str,
+) -> int:
+    prepare_task_container_image(args, task_path)
+    docker_command = build_docker_run_command(
+        args,
+        task_path=task_path,
+        task_prompt=task_prompt,
+        container_name=container_name,
+    )
+    print(f"Container name: {container_name}")
+    if args.remove_container:
+        print("Container will be removed when the TUI exits.")
+    else:
+        print(f"Copy output after exit with: docker cp {container_name}:/app/move.txt ./move.txt")
+        print(f"Remove container with: docker rm {container_name}")
+    return subprocess.call(docker_command, cwd=HARNESS_DIR)
+
+
 def _run_deadline_epoch_ms_for_task(task_path: Path) -> int | None:
     task_toml = task_path / "task.toml"
     if not task_toml.exists():
@@ -293,22 +485,57 @@ def main() -> int:
         args.codex_config_path = args.codex_config_path.expanduser().resolve()
     args.harbor_bin = args.harbor_bin.expanduser().resolve()
     args.task_cache_dir = args.task_cache_dir.expanduser().resolve()
+    args.wattle_auth_path = args.wattle_auth_path.expanduser().resolve()
 
     task_path = resolve_task_path(args)
     if not task_path.exists():
         print(f"[error] Task path does not exist: {task_path}", file=sys.stderr)
         return 2
+    if not args.local and not args.wattle_auth_path.exists():
+        print(f"[error] Wattle auth file does not exist: {args.wattle_auth_path}", file=sys.stderr)
+        return 2
 
     task_prompt = read_task_prompt(task_path)
-    wattle_command = build_wattle_tui_command(args, task_prompt)
+    container_name = slug(args.session_name or f"wattle-tui-{args.task_name}-{int(time.time())}")
     if args.dry_run:
         print(f"Task path: {task_path}")
-        print(f"Working directory: {task_path}")
-        print("Wattle TUI command:")
-        print(shlex.join(wattle_command))
+        if args.local:
+            wattle_command = build_wattle_tui_command(args, task_prompt)
+            print(f"Working directory: {task_path}")
+            print("Wattle TUI command:")
+            print(shlex.join(wattle_command))
+        else:
+            build_command = build_task_image_command(args, task_path)
+            pull_command = pull_task_image_command(task_path) if build_command is None else None
+            if build_command is not None:
+                print("Task image build command:")
+                print(shlex.join(build_command))
+            elif pull_command is not None:
+                print("Task image pull command:")
+                print(shlex.join(pull_command))
+            print("Container TUI command:")
+            print(
+                shlex.join(
+                    build_docker_run_command(
+                        args,
+                        task_path=task_path,
+                        task_prompt=task_prompt,
+                        container_name=container_name,
+                    )
+                )
+            )
         return 0
 
-    return launch_wattle_tui(args, task_path=task_path, wattle_command=wattle_command)
+    if args.local:
+        wattle_command = build_wattle_tui_command(args, task_prompt)
+        return launch_wattle_tui(args, task_path=task_path, wattle_command=wattle_command)
+
+    return launch_container_wattle_tui(
+        args,
+        task_path=task_path,
+        task_prompt=task_prompt,
+        container_name=container_name,
+    )
 
 
 if __name__ == "__main__":

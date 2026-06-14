@@ -5,8 +5,10 @@ import subprocess
 from pathlib import Path
 
 from run_tui_task import (
+    build_docker_run_command,
     build_wattle_environment,
     build_wattle_tui_command,
+    build_task_image_command,
     read_task_prompt,
     resolve_task_path,
 )
@@ -28,6 +30,10 @@ def _args(**overrides: object) -> argparse.Namespace:
         "task_name": "break-filter-js-from-html",
         "task_path": None,
         "no_download": False,
+        "local": False,
+        "no_build": False,
+        "remove_container": False,
+        "session_name": None,
         "wattle_auth_path": Path("/home/user/.wattle/auth.json"),
         "wattle_provider_request_timeout_sec": None,
         "wattle_stream_idle_timeout_sec": None,
@@ -64,6 +70,57 @@ def test_wattle_tui_command_uses_source_checkout_when_available(tmp_path: Path) 
 
     assert command[:4] == ["uv", "run", "--project", str(source_dir)]
     assert command[4] == "wattle"
+
+
+def test_task_image_build_command_uses_environment_dockerfile(tmp_path: Path) -> None:
+    task_path = tmp_path / "task"
+    environment = task_path / "environment"
+    environment.mkdir(parents=True)
+    (environment / "Dockerfile").write_text("FROM ubuntu:24.04\n", encoding="utf-8")
+
+    command = build_task_image_command(_args(task_name="chess-best-move"), task_path)
+
+    assert command == [
+        "docker",
+        "build",
+        "-t",
+        "wattle-tui-chess-best-move:latest",
+        str(environment),
+    ]
+
+
+def test_container_tui_command_mounts_auth_and_source(tmp_path: Path) -> None:
+    task_path = tmp_path / "task"
+    environment = task_path / "environment"
+    environment.mkdir(parents=True)
+    (environment / "Dockerfile").write_text("FROM ubuntu:24.04\n", encoding="utf-8")
+    (task_path / "task.toml").write_text(
+        "[agent]\ntimeout_sec = 900\n[environment]\ndocker_image = 'example/task:latest'\n",
+        encoding="utf-8",
+    )
+    source_dir = tmp_path / "wattle"
+    source_dir.mkdir()
+    auth_path = tmp_path / "auth.json"
+    auth_path.write_text("{}", encoding="utf-8")
+
+    command = build_docker_run_command(
+        _args(source_dir=source_dir, wattle_auth_path=auth_path),
+        task_path=task_path,
+        task_prompt="Do the task.",
+        container_name="wattle-tui-test",
+    )
+
+    assert command[:2] == ["docker", "run"]
+    assert "--rm" not in command
+    assert "wattle-tui-test" in command
+    assert f"{source_dir.resolve()}:/wattle-src:ro" in command
+    assert f"{auth_path.resolve()}:/tmp/wattle-auth.json:ro" in command
+    assert "wattle-tui-break-filter-js-from-html:latest" in command
+    assert command[-4] == "wattle-tui-break-filter-js-from-html:latest"
+    assert command[-3:] == ["bash", "-lc", command[-1]]
+    assert command[-1].startswith("set -euo pipefail")
+    assert "cp /tmp/wattle-auth.json /root/.wattle/auth.json" in command[-1]
+    assert "wattle --provider deepseek --model deepseek-v4-pro --yolo --thinking --effort high 'Do the task.'" in command[-1]
 
 
 def test_read_task_prompt_uses_instruction_md(tmp_path: Path) -> None:
