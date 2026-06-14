@@ -25,7 +25,12 @@ DEFAULT_WATTLE_AUTH_PATHS = [
 DEFAULT_CODEX_AUTH_PATH = Path.home() / ".codex/auth.json"
 DEFAULT_CODEX_CONFIG_PATH = Path.home() / ".codex/config.toml"
 DEFAULT_DATASET = "terminal-bench@2.0"
-DEFAULT_HARBOR_BIN = shutil.which("harbor") or "/home/liyuan/.local/bin/harbor"
+_LOCAL_HARBOR_BIN = HARNESS_DIR / ".venv/bin/harbor"
+DEFAULT_HARBOR_BIN = (
+    str(_LOCAL_HARBOR_BIN)
+    if _LOCAL_HARBOR_BIN.exists()
+    else shutil.which("harbor") or "/home/liyuan/.local/bin/harbor"
+)
 EFFORTS = {"none", "low", "medium", "high", "xhigh", "max"}
 
 
