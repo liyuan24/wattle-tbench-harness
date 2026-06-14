@@ -209,6 +209,46 @@ Important report files:
 - `reports/per_task.csv`
 - `reports/per_trial.csv`
 
+## Benchmark Results
+
+### DeepSeek V4 Pro, high effort, 2026-06-13
+
+Run label:
+`harbor-wattle-deepseek-v4-pro-high-20260613-harbor-deadlines`
+
+Command shape:
+
+```bash
+./run_tbench.py \
+  --model deepseek/deepseek-v4-pro \
+  --effort high \
+  --n-attempts 1 \
+  --n-concurrent 2 \
+  --force-build \
+  --source-dir /home/liyuan/repos/wattle \
+  --wattle-auth-path /home/liyuan/.willow/auth.json \
+  --run-label harbor-wattle-deepseek-v4-pro-high-20260613-harbor-deadlines \
+  --tmux
+```
+
+Evaluated commits:
+
+- Wattle: `3d1927b2670c604dee796d7809e6e25a9f0020d4`
+- Harness: `dbf61d988509330f6400e40484423dd74f9f49cb`
+
+Results:
+
+- Dataset: `terminal-bench@2.0`
+- Trials: 89
+- Reward 1.0: 53
+- Reward 0.0: 34
+- Agent timeouts without verifier reward: 2
+- Agent timeout exceptions total: 7
+- Mean reward: 59.55%
+- Runtime: 6h 41m 18s
+- Reports:
+  `runs/harbor-wattle-deepseek-v4-pro-high-20260613-harbor-deadlines/reports`
+
 ## Current DeepSeek Command
 
 The expected DeepSeek diagnostic command is:

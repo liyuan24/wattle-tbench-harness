@@ -55,6 +55,7 @@ def _iter_trials(results_dir: Path) -> list[dict[str, Any]]:
         metadata = agent_result.get("metadata") or {}
 
         reward = _number_or_none(rewards.get("reward"))
+        score_reward = reward if reward is not None else 0.0
         row = {
             "job_name": _job_name_from_trial_path(path),
             "trial_name": data.get("trial_name"),
@@ -63,9 +64,10 @@ def _iter_trials(results_dir: Path) -> list[dict[str, Any]]:
             "model": model_info.get("name") or metadata.get("model"),
             "raw_model": metadata.get("raw_model"),
             "reward": reward,
+            "score_reward": score_reward,
             "resolved": reward == 1.0 if reward is not None else None,
-            "exception_type": _exception_field(exception_info, "type"),
-            "exception_message": _exception_field(exception_info, "message"),
+            "exception_type": _exception_field(exception_info, "type", "exception_type"),
+            "exception_message": _exception_field(exception_info, "message", "exception_message"),
             "n_input_tokens": int(agent_result.get("n_input_tokens") or 0),
             "n_cache_tokens": int(agent_result.get("n_cache_tokens") or 0),
             "n_output_tokens": int(agent_result.get("n_output_tokens") or 0),
@@ -86,7 +88,6 @@ def _build_per_task_rows(trials: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
     rows: list[dict[str, Any]] = []
     for (provider, model, task_name), items in sorted(grouped.items()):
-        rewards = [item["reward"] for item in items if item["reward"] is not None]
         rows.append(
             {
                 "provider": provider,
@@ -94,7 +95,9 @@ def _build_per_task_rows(trials: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 "task_name": task_name,
                 "n_trials": len(items),
                 "n_errors": sum(1 for item in items if item["exception_type"]),
-                "mean_reward": sum(rewards) / len(rewards) if rewards else None,
+                "mean_reward": sum(item["score_reward"] for item in items) / len(items)
+                if items
+                else None,
                 "n_input_tokens": sum(item["n_input_tokens"] for item in items),
                 "n_cache_tokens": sum(item["n_cache_tokens"] for item in items),
                 "n_output_tokens": sum(item["n_output_tokens"] for item in items),
@@ -114,7 +117,6 @@ def _build_aggregate(
 
     model_rows = []
     for (provider, model), items in sorted(by_model.items()):
-        rewards = [item["reward"] for item in items if item["reward"] is not None]
         exceptions = Counter(item["exception_type"] or "none" for item in items)
         model_rows.append(
             {
@@ -122,7 +124,9 @@ def _build_aggregate(
                 "model": model,
                 "n_trials": len(items),
                 "n_errors": sum(1 for item in items if item["exception_type"]),
-                "mean_reward": sum(rewards) / len(rewards) if rewards else None,
+                "mean_reward": sum(item["score_reward"] for item in items) / len(items)
+                if items
+                else None,
                 "n_input_tokens": sum(item["n_input_tokens"] for item in items),
                 "n_cache_tokens": sum(item["n_cache_tokens"] for item in items),
                 "n_output_tokens": sum(item["n_output_tokens"] for item in items),
@@ -131,13 +135,14 @@ def _build_aggregate(
             }
         )
 
-    rewards = [item["reward"] for item in trials if item["reward"] is not None]
     exceptions = Counter(item["exception_type"] or "none" for item in trials)
     return {
         "generated_at": datetime.now(UTC).isoformat(timespec="seconds").replace("+00:00", "Z"),
         "n_trials": len(trials),
         "n_errors": sum(1 for item in trials if item["exception_type"]),
-        "mean_reward": sum(rewards) / len(rewards) if rewards else None,
+        "mean_reward": sum(item["score_reward"] for item in trials) / len(trials)
+        if trials
+        else None,
         "n_input_tokens": sum(item["n_input_tokens"] for item in trials),
         "n_cache_tokens": sum(item["n_cache_tokens"] for item in trials),
         "n_output_tokens": sum(item["n_output_tokens"] for item in trials),
@@ -203,11 +208,14 @@ def _job_name_from_trial_path(path: Path) -> str:
     return parents[2].name if len(parents) > 2 else ""
 
 
-def _exception_field(exception_info: Any, field: str) -> str | None:
+def _exception_field(exception_info: Any, *fields: str) -> str | None:
     if not isinstance(exception_info, dict):
         return None
-    value = exception_info.get(field)
-    return str(value) if value else None
+    for field in fields:
+        value = exception_info.get(field)
+        if value:
+            return str(value)
+    return None
 
 
 def _number_or_none(value: Any) -> float | None:
