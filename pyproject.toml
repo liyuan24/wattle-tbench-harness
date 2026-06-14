@@ -21,6 +21,7 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 only-include = [
     "model_config.py",
+    "codex_harbor_agent.py",
     "run_tbench.py",
     "run_tui_task.py",
     "wattle_harbor_agent.py",

@@ -20,6 +20,7 @@ DEFAULT_MODELS = {
     "minimax": "minimax-m2.7",
     "openai_codex": "gpt-5.5",
 }
+DEFAULT_CODEX_MODEL = "gpt-5.5"
 
 
 @dataclass(frozen=True)
@@ -50,3 +51,18 @@ def parse_provider_model(model_name: str | None, *, provider: str | None = None)
         raise ValueError(f"Model name is empty in Harbor -m value '{raw}'")
     return ParsedModel(raw=raw, provider=parsed_provider, model=model)
 
+
+def parse_codex_model(model_name: str | None) -> ParsedModel:
+    raw = model_name or DEFAULT_CODEX_MODEL
+    if "/" in raw:
+        provider_raw, model = raw.split("/", 1)
+        if provider_raw not in {"codex", "openai", "openai_codex"}:
+            raise ValueError(
+                "Codex agent model must be a bare model or codex/openai_codex model, "
+                f"got {raw!r}"
+            )
+    else:
+        model = raw
+    if not model:
+        raise ValueError(f"Codex model name is empty in value {raw!r}")
+    return ParsedModel(raw=model, provider="codex", model=model)

@@ -152,7 +152,8 @@ Dry-run command generation:
 
 ## TUI Investigation
 
-Run one task in Wattle's native TUI:
+Run one task in a container-backed interactive TUI. Wattle remains the default
+agent:
 
 ```bash
 ./run_tui_task.py \
@@ -162,19 +163,20 @@ Run one task in Wattle's native TUI:
   --source-dir /home/liyuan/repos/wattle
 ```
 
-The launcher downloads the Terminal-Bench task if needed, reads the task
-instruction from the resolved task directory, and starts Wattle directly in the
-local terminal:
+Run the same task with Codex CLI directly instead of Wattle:
 
 ```bash
-uv run --project /home/liyuan/repos/wattle wattle --provider deepseek --model deepseek-v4-pro --yolo --thinking --effort high "$task_prompt"
+./run_tui_task.py \
+  --agent codex \
+  --task-name break-filter-js-from-html \
+  --model gpt-5.5
 ```
 
-The prompt comes from `instruction.md`, with a `task.yaml` fallback for older
-task layouts, and is passed as Wattle's first positional TUI prompt. The TUI
-runs with the task directory as its working directory. It does not use
-`-p/--print`, which is Wattle's headless mode, and it does not start a Harbor
-environment or tmux session.
+The launcher downloads the Terminal-Bench task if needed, builds
+`environment/Dockerfile` or uses `environment.docker_image`, reads the task
+instruction, and starts the selected agent inside the task container with
+`/app` as the working directory. For `--agent codex`, only Codex auth/config are
+copied into the container.
 
 Use a local task checkout instead of downloading:
 
@@ -187,7 +189,7 @@ Use a local task checkout instead of downloading:
 ```
 
 This TUI launcher is for human inspection. Use the Harbor-backed harness when
-you need the task container, verifier, or scored run behavior.
+you need the verifier or scored run behavior.
 
 For post-run browsing, use Harbor's viewer:
 
@@ -263,5 +265,31 @@ The expected DeepSeek diagnostic command is:
   --force-build \
   --source-dir /home/liyuan/repos/wattle \
   --wattle-auth-path /home/liyuan/.willow/auth.json \
+  --tmux
+```
+
+## Current Codex Command
+
+Run one scored Terminal-Bench task with Codex CLI directly:
+
+```bash
+./run_tbench.py \
+  --agent codex \
+  --model gpt-5.5 \
+  --include-task-name train-fasttext \
+  --n-attempts 1 \
+  --n-concurrent 1 \
+  --force-build
+```
+
+Run a full scored suite with Codex CLI directly:
+
+```bash
+./run_tbench.py \
+  --agent codex \
+  --model gpt-5.5 \
+  --n-attempts 1 \
+  --n-concurrent 2 \
+  --force-build \
   --tmux
 ```

@@ -72,3 +72,20 @@ def test_reports_count_harbor_exception_schema_and_missing_rewards_as_zero(tmp_p
     assert timeout_row["reward"] is None
     assert timeout_row["score_reward"] == 0.0
     assert timeout_row["exception_type"] == "AgentTimeoutError"
+
+
+def test_reports_recognize_codex_job_name_prefix(tmp_path):
+    run_dir = tmp_path / "run"
+    _write_result(
+        run_dir
+        / "jobs"
+        / "codex-codex-gpt-5.5-high"
+        / "codex-codex-gpt-5.5-high"
+        / "train-fasttext__abc"
+        / "result.json",
+        _trial("train-fasttext", "train-fasttext__abc", 1.0),
+    )
+
+    trials = _iter_trials(run_dir)
+
+    assert trials[0]["job_name"] == "codex-codex-gpt-5.5-high"

@@ -12,8 +12,11 @@ import time
 import tomllib
 from pathlib import Path
 
-from model_config import parse_provider_model
+from model_config import parse_codex_model, parse_provider_model
 from run_tbench import (
+    AGENTS,
+    DEFAULT_CODEX_AUTH_PATH,
+    DEFAULT_CODEX_CONFIG_PATH,
     DEFAULT_HARBOR_BIN,
     DEFAULT_SOURCE_DIR,
     DEFAULT_WATTLE_AUTH_PATHS,
@@ -27,12 +30,17 @@ DEFAULT_HARBOR_PACKAGE_CACHE_DIR = Path.home() / ".cache/harbor/tasks/packages"
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Start one Terminal-Bench task container in Wattle's interactive TUI."
+        description="Start one Terminal-Bench task container in an interactive agent TUI."
     )
+    parser.add_argument("--agent", choices=sorted(AGENTS), default="wattle")
     parser.add_argument("--task-name", required=True, help="Terminal-Bench task name.")
     parser.add_argument("--task-path", type=Path, default=None, help="Use an existing local task.")
-    parser.add_argument("--model", default="deepseek/deepseek-v4-pro", help="provider/model")
-    parser.add_argument("--provider", default=None, help="Provider alias for bare --model values.")
+    parser.add_argument("--model", default=None, help="Model name. Defaults by --agent.")
+    parser.add_argument(
+        "--provider",
+        default=None,
+        help="Wattle provider alias for bare --model values.",
+    )
     parser.add_argument("--effort", default="high")
     parser.add_argument("--source-dir", type=Path, default=DEFAULT_SOURCE_DIR)
     parser.add_argument(
@@ -44,14 +52,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--codex-auth-path",
         type=Path,
-        default=None,
-        help="Deprecated compatibility option; local TUI runs use Wattle's local auth.",
+        default=DEFAULT_CODEX_AUTH_PATH,
+        help="Codex auth file to copy into the task container for --agent codex.",
     )
     parser.add_argument(
         "--codex-config-path",
         type=Path,
-        default=None,
-        help="Deprecated compatibility option; local TUI runs use Wattle's local config.",
+        default=DEFAULT_CODEX_CONFIG_PATH,
+        help="Codex config file to copy into the task container for --agent codex.",
     )
     parser.add_argument("--harbor-bin", type=Path, default=Path(DEFAULT_HARBOR_BIN))
     parser.add_argument("--task-cache-dir", type=Path, default=DEFAULT_TASK_CACHE_DIR)
@@ -230,7 +238,7 @@ def _read_instruction_from_task_yaml(task_yaml_path: Path) -> str:
 
 
 def build_wattle_tui_command(args: argparse.Namespace, task_prompt: str) -> list[str]:
-    parsed = parse_provider_model(args.model, provider=args.provider)
+    parsed = parse_provider_model(args.model or "deepseek/deepseek-v4-pro", provider=args.provider)
     command = build_wattle_executable(args) + [
         "--provider",
         parsed.provider,
@@ -265,7 +273,7 @@ def read_task_docker_image(task_path: Path) -> str | None:
 
 
 def local_task_image_tag(args: argparse.Namespace) -> str:
-    return f"wattle-tui-{slug(args.task_name)}:latest"
+    return f"{args.agent}-tui-{slug(args.task_name)}:latest"
 
 
 def build_task_image_command(args: argparse.Namespace, task_path: Path) -> list[str] | None:
@@ -301,7 +309,7 @@ def task_container_image(args: argparse.Namespace, task_path: Path) -> str:
 
 
 def build_container_wattle_command(args: argparse.Namespace, task_prompt: str) -> str:
-    parsed = parse_provider_model(args.model, provider=args.provider)
+    parsed = parse_provider_model(args.model or "deepseek/deepseek-v4-pro", provider=args.provider)
     command = [
         "wattle",
         "--provider",
@@ -323,10 +331,12 @@ def container_bootstrap_command(args: argparse.Namespace, task_prompt: str) -> s
             "set -euo pipefail",
             "export DEBIAN_FRONTEND=noninteractive",
             "apt-get update",
-            "apt-get install -y --no-install-recommends ca-certificates curl git python3 python3-venv tar gzip",
+            "apt-get install -y --no-install-recommends "
+            "ca-certificates curl git python3 python3-venv tar gzip",
             "apt-get clean",
             "rm -rf /var/lib/apt/lists/*",
-            "if ! command -v uv >/dev/null 2>&1; then curl -LsSf https://astral.sh/uv/install.sh | sh; fi",
+            "if ! command -v uv >/dev/null 2>&1; then "
+            "curl -LsSf https://astral.sh/uv/install.sh | sh; fi",
             'export PATH="$HOME/.local/bin:$PATH"',
             "mkdir -p /root/.wattle /logs/agent/wattle-sessions",
             "cp /tmp/wattle-auth.json /root/.wattle/auth.json",
@@ -340,6 +350,47 @@ def container_bootstrap_command(args: argparse.Namespace, task_prompt: str) -> s
     )
 
 
+def build_container_codex_command(args: argparse.Namespace, task_prompt: str) -> str:
+    parsed = parse_codex_model(args.model)
+    command = [
+        "codex",
+        "-m",
+        parsed.model,
+        "--dangerously-bypass-approvals-and-sandbox",
+        "-C",
+        "/app",
+        task_prompt,
+    ]
+    return shlex.join(command)
+
+
+def codex_container_bootstrap_command(args: argparse.Namespace, task_prompt: str) -> str:
+    codex_command = build_container_codex_command(args, task_prompt)
+    return "\n".join(
+        [
+            "set -euo pipefail",
+            "export DEBIAN_FRONTEND=noninteractive",
+            "apt-get update",
+            "apt-get install -y --no-install-recommends ca-certificates curl git gnupg",
+            "curl -fsSL https://deb.nodesource.com/setup_22.x | bash -",
+            "apt-get install -y --no-install-recommends nodejs",
+            "npm install -g @openai/codex",
+            "apt-get clean",
+            "rm -rf /var/lib/apt/lists/*",
+            "mkdir -p /root/.codex",
+            "cp /tmp/codex-auth.json /root/.codex/auth.json",
+            "chmod 700 /root/.codex",
+            "chmod 600 /root/.codex/auth.json",
+            "if [ -f /tmp/codex-config.toml ]; then "
+            "cp /tmp/codex-config.toml /root/.codex/config.toml; "
+            "chmod 600 /root/.codex/config.toml; fi",
+            "cd /app",
+            "if [ ! -d .git ]; then git init >/dev/null 2>&1 || true; fi",
+            codex_command,
+        ]
+    )
+
+
 def build_docker_run_command(
     args: argparse.Namespace,
     *,
@@ -347,32 +398,37 @@ def build_docker_run_command(
     task_prompt: str,
     container_name: str,
 ) -> list[str]:
-    args.wattle_auth_path = args.wattle_auth_path.expanduser().resolve()
     args.source_dir = args.source_dir.expanduser().resolve()
     session_dir = (HARNESS_DIR / "runs/tui-sessions").resolve()
     session_dir.mkdir(parents=True, exist_ok=True)
     command = ["docker", "run"]
     if args.remove_container:
         command.append("--rm")
-    command.extend(
-        [
-            "-it",
-            "--name",
-            container_name,
-            "-v",
-            f"{args.source_dir}:/wattle-src:ro",
-            "-v",
-            f"{args.wattle_auth_path}:/tmp/wattle-auth.json:ro",
-            "-v",
-            f"{session_dir}:/logs/agent/wattle-sessions",
-            "-e",
-            "WATTLE_SESSION_DIR=/logs/agent/wattle-sessions",
-        ]
-    )
+    command.extend(["-it", "--name", container_name])
+    if args.agent == "codex":
+        args.codex_auth_path = args.codex_auth_path.expanduser().resolve()
+        command.extend(["-v", f"{args.codex_auth_path}:/tmp/codex-auth.json:ro"])
+        if args.codex_config_path is not None and args.codex_config_path.exists():
+            args.codex_config_path = args.codex_config_path.expanduser().resolve()
+            command.extend(["-v", f"{args.codex_config_path}:/tmp/codex-config.toml:ro"])
+    else:
+        args.wattle_auth_path = args.wattle_auth_path.expanduser().resolve()
+        command.extend(
+            [
+                "-v",
+                f"{args.source_dir}:/wattle-src:ro",
+                "-v",
+                f"{args.wattle_auth_path}:/tmp/wattle-auth.json:ro",
+                "-v",
+                f"{session_dir}:/logs/agent/wattle-sessions",
+                "-e",
+                "WATTLE_SESSION_DIR=/logs/agent/wattle-sessions",
+            ]
+        )
     deadline_epoch_ms = _run_deadline_epoch_ms_for_task(task_path)
-    if deadline_epoch_ms is not None:
+    if args.agent == "wattle" and deadline_epoch_ms is not None:
         command.extend(["-e", f"WATTLE_RUN_DEADLINE_EPOCH_MS={deadline_epoch_ms}"])
-    if args.wattle_provider_request_timeout_sec is not None:
+    if args.agent == "wattle" and args.wattle_provider_request_timeout_sec is not None:
         command.extend(
             [
                 "-e",
@@ -380,7 +436,7 @@ def build_docker_run_command(
                 f"{args.wattle_provider_request_timeout_sec}",
             ]
         )
-    if args.wattle_stream_idle_timeout_sec is not None:
+    if args.agent == "wattle" and args.wattle_stream_idle_timeout_sec is not None:
         command.extend(
             [
                 "-e",
@@ -389,7 +445,10 @@ def build_docker_run_command(
             ]
         )
     command.extend([task_container_image(args, task_path), "bash", "-lc"])
-    command.append(container_bootstrap_command(args, task_prompt))
+    if args.agent == "codex":
+        command.append(codex_container_bootstrap_command(args, task_prompt))
+    else:
+        command.append(container_bootstrap_command(args, task_prompt))
     return command
 
 
@@ -456,7 +515,7 @@ def launch_container_wattle_tui(
     if args.remove_container:
         print("Container will be removed when the TUI exits.")
     else:
-        print(f"Copy output after exit with: docker cp {container_name}:/app/move.txt ./move.txt")
+        print(f"Copy task output after exit with: docker cp {container_name}:/app ./app-output")
         print(f"Remove container with: docker rm {container_name}")
     return subprocess.call(docker_command, cwd=HARNESS_DIR)
 
@@ -491,12 +550,20 @@ def main() -> int:
     if not task_path.exists():
         print(f"[error] Task path does not exist: {task_path}", file=sys.stderr)
         return 2
-    if not args.local and not args.wattle_auth_path.exists():
+    if args.agent == "codex" and args.local:
+        print("[error] --agent codex requires the task container; omit --local.", file=sys.stderr)
+        return 2
+    if args.agent == "codex" and not args.codex_auth_path.exists():
+        print(f"[error] Codex auth file does not exist: {args.codex_auth_path}", file=sys.stderr)
+        return 2
+    if args.agent == "wattle" and not args.local and not args.wattle_auth_path.exists():
         print(f"[error] Wattle auth file does not exist: {args.wattle_auth_path}", file=sys.stderr)
         return 2
 
     task_prompt = read_task_prompt(task_path)
-    container_name = slug(args.session_name or f"wattle-tui-{args.task_name}-{int(time.time())}")
+    container_name = slug(
+        args.session_name or f"{args.agent}-tui-{args.task_name}-{int(time.time())}"
+    )
     if args.dry_run:
         print(f"Task path: {task_path}")
         if args.local:

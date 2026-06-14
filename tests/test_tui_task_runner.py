@@ -6,9 +6,9 @@ from pathlib import Path
 
 from run_tui_task import (
     build_docker_run_command,
+    build_task_image_command,
     build_wattle_environment,
     build_wattle_tui_command,
-    build_task_image_command,
     read_task_prompt,
     resolve_task_path,
 )
@@ -19,6 +19,7 @@ def _args(**overrides: object) -> argparse.Namespace:
         "codex_auth_path": Path("/home/user/.codex/auth.json"),
         "codex_config_path": Path("/home/user/.codex/config.toml"),
         "effort": "high",
+        "agent": "wattle",
         "harbor_bin": Path("/bin/harbor"),
         "harbor_package_cache_dir": Path("/harbor/packages"),
         "model": "deepseek/deepseek-v4-pro",
@@ -120,7 +121,50 @@ def test_container_tui_command_mounts_auth_and_source(tmp_path: Path) -> None:
     assert command[-3:] == ["bash", "-lc", command[-1]]
     assert command[-1].startswith("set -euo pipefail")
     assert "cp /tmp/wattle-auth.json /root/.wattle/auth.json" in command[-1]
-    assert "wattle --provider deepseek --model deepseek-v4-pro --yolo --thinking --effort high 'Do the task.'" in command[-1]
+    assert (
+        "wattle --provider deepseek --model deepseek-v4-pro --yolo "
+        "--thinking --effort high 'Do the task.'"
+    ) in command[-1]
+
+
+def test_codex_container_tui_command_uses_codex_auth_without_wattle(tmp_path: Path) -> None:
+    task_path = tmp_path / "task"
+    environment = task_path / "environment"
+    environment.mkdir(parents=True)
+    (environment / "Dockerfile").write_text("FROM ubuntu:24.04\n", encoding="utf-8")
+    (task_path / "task.toml").write_text(
+        "[agent]\ntimeout_sec = 900\n[environment]\ndocker_image = 'example/task:latest'\n",
+        encoding="utf-8",
+    )
+    auth_path = tmp_path / "codex-auth.json"
+    config_path = tmp_path / "codex-config.toml"
+    auth_path.write_text("{}", encoding="utf-8")
+    config_path.write_text("model = 'gpt-5.5'\n", encoding="utf-8")
+
+    command = build_docker_run_command(
+        _args(
+            agent="codex",
+            model="gpt-5.5",
+            codex_auth_path=auth_path,
+            codex_config_path=config_path,
+        ),
+        task_path=task_path,
+        task_prompt="Do the task.",
+        container_name="codex-tui-test",
+    )
+    joined = " ".join(command)
+
+    assert command[:2] == ["docker", "run"]
+    assert "codex-tui-test" in command
+    assert f"{auth_path.resolve()}:/tmp/codex-auth.json:ro" in command
+    assert f"{config_path.resolve()}:/tmp/codex-config.toml:ro" in command
+    assert "codex-tui-break-filter-js-from-html:latest" in command
+    assert "npm install -g @openai/codex" in command[-1]
+    assert (
+        "codex -m gpt-5.5 --dangerously-bypass-approvals-and-sandbox "
+        "-C /app 'Do the task.'"
+    ) in command[-1]
+    assert "wattle" not in joined.lower()
 
 
 def test_read_task_prompt_uses_instruction_md(tmp_path: Path) -> None:

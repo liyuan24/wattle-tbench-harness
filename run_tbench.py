@@ -13,7 +13,7 @@ from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
-from model_config import parse_provider_model
+from model_config import parse_codex_model, parse_provider_model
 
 HARNESS_DIR = Path(__file__).resolve().parent
 DEFAULT_OUTPUT_DIR = HARNESS_DIR / "runs"
@@ -32,6 +32,7 @@ DEFAULT_HARBOR_BIN = (
     else shutil.which("harbor") or "/home/liyuan/.local/bin/harbor"
 )
 EFFORTS = {"none", "low", "medium", "high", "xhigh", "max"}
+AGENTS = {"codex", "wattle"}
 
 
 @dataclass(frozen=True)
@@ -71,9 +72,15 @@ def first_existing(paths: list[Path]) -> Path:
 
 
 def build_run(args: argparse.Namespace) -> HarborRun:
-    parsed = parse_provider_model(args.model, provider=args.provider)
+    if args.agent == "codex":
+        parsed = parse_codex_model(args.model)
+    else:
+        parsed = parse_provider_model(
+            args.model or "deepseek/deepseek-v4-pro",
+            provider=args.provider,
+        )
     effort_part = args.effort if args.effort else "none"
-    name = slug(f"wattle-{parsed.provider}-{parsed.model}-{effort_part}")
+    name = slug(f"{args.agent}-{parsed.provider}-{parsed.model}-{effort_part}")
     if args.task:
         name = slug(f"{name}-{args.task}")
     elif args.include_task_name:
@@ -100,14 +107,20 @@ def build_tmux_child_args(
     )
     if not has_run_label:
         child_args.extend(["--run-label", label])
-    for option, value in (
+    option_values = [
         ("--output-dir", str(args.output_dir.expanduser().resolve())),
-        ("--source-dir", str(args.source_dir.expanduser().resolve())),
         ("--harbor-bin", str(args.harbor_bin)),
-        ("--wattle-auth-path", str(args.wattle_auth_path.expanduser().resolve())),
         ("--codex-auth-path", str(args.codex_auth_path.expanduser().resolve())),
         ("--codex-config-path", str(args.codex_config_path.expanduser().resolve())),
-    ):
+    ]
+    if args.agent == "wattle":
+        option_values.extend(
+            [
+                ("--source-dir", str(args.source_dir.expanduser().resolve())),
+                ("--wattle-auth-path", str(args.wattle_auth_path.expanduser().resolve())),
+            ]
+        )
+    for option, value in option_values:
         child_args = strip_option(child_args, option)
         child_args.extend([option, value])
     return child_args
@@ -167,13 +180,18 @@ def build_harbor_command(
     run: HarborRun,
     job_dir: Path,
 ) -> list[str]:
+    agent_import_path = (
+        "codex_harbor_agent:CodexAgent"
+        if args.agent == "codex"
+        else "wattle_harbor_agent:WattleAgent"
+    )
     command = [
         str(args.harbor_bin),
         "run",
         "-d",
         args.dataset,
         "--agent-import-path",
-        "wattle_harbor_agent:WattleAgent",
+        agent_import_path,
         "-m",
         run.model,
         "--job-name",
@@ -185,37 +203,51 @@ def build_harbor_command(
         "--n-attempts",
         str(args.n_attempts),
         "--yes",
-        "--ak",
-        f"source_dir={args.source_dir}",
-        "--ak",
-        f"wattle_auth_path={args.wattle_auth_path}",
-        "--ak",
-        f"codex_auth_path={args.codex_auth_path}",
-        "--ak",
-        f"codex_config_path={args.codex_config_path}",
-        "--ak",
-        f"thinking={str(args.effort != 'none').lower()}",
-        "--ak",
-        f"effort={args.effort}",
     ]
-    if args.max_tokens is not None:
-        command.extend(["--ak", f"max_tokens={args.max_tokens}"])
-    if args.wattle_provider_request_timeout_sec is not None:
+    if args.agent == "codex":
         command.extend(
             [
                 "--ak",
-                "provider_request_timeout_seconds="
-                f"{args.wattle_provider_request_timeout_sec}",
+                f"codex_auth_path={args.codex_auth_path}",
+                "--ak",
+                f"codex_config_path={args.codex_config_path}",
             ]
         )
-    if args.wattle_stream_idle_timeout_sec is not None:
+    else:
         command.extend(
             [
                 "--ak",
-                "stream_idle_timeout_seconds="
-                f"{args.wattle_stream_idle_timeout_sec}",
+                f"source_dir={args.source_dir}",
+                "--ak",
+                f"wattle_auth_path={args.wattle_auth_path}",
+                "--ak",
+                f"codex_auth_path={args.codex_auth_path}",
+                "--ak",
+                f"codex_config_path={args.codex_config_path}",
+                "--ak",
+                f"thinking={str(args.effort != 'none').lower()}",
+                "--ak",
+                f"effort={args.effort}",
             ]
         )
+        if args.max_tokens is not None:
+            command.extend(["--ak", f"max_tokens={args.max_tokens}"])
+        if args.wattle_provider_request_timeout_sec is not None:
+            command.extend(
+                [
+                    "--ak",
+                    "provider_request_timeout_seconds="
+                    f"{args.wattle_provider_request_timeout_sec}",
+                ]
+            )
+        if args.wattle_stream_idle_timeout_sec is not None:
+            command.extend(
+                [
+                    "--ak",
+                    "stream_idle_timeout_seconds="
+                    f"{args.wattle_stream_idle_timeout_sec}",
+                ]
+            )
     if args.force_build:
         command.append("--force-build")
     if args.no_delete:
@@ -274,8 +306,10 @@ def write_json(path: Path, data: object) -> None:
 def validate_inputs(args: argparse.Namespace) -> None:
     if not Path(args.harbor_bin).exists():
         raise FileNotFoundError(f"Harbor binary not found: {args.harbor_bin}")
-    if not args.source_dir.exists():
+    if args.agent == "wattle" and not args.source_dir.exists():
         raise FileNotFoundError(f"Wattle source dir not found: {args.source_dir}")
+    if args.agent == "codex" and not args.codex_auth_path.exists():
+        raise FileNotFoundError(f"Codex auth file not found: {args.codex_auth_path}")
     if not args.wattle_auth_path.exists() and not args.codex_auth_path.exists():
         env_auth = any(
             os.environ.get(name)
@@ -339,10 +373,15 @@ def git_commit_and_dirty(repo_dir: Path) -> tuple[str | None, bool | None]:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Run Wattle against Harbor / Terminal-Bench 2.0."
+        description="Run an agent against Harbor / Terminal-Bench 2.0."
     )
+    parser.add_argument("--agent", choices=sorted(AGENTS), default="wattle")
     parser.add_argument("--provider", default=None, help="Provider alias for bare --model values.")
-    parser.add_argument("--model", default="deepseek/deepseek-v4-pro", help="provider/model")
+    parser.add_argument(
+        "--model",
+        default=None,
+        help="Wattle provider/model or bare Codex model. Defaults by --agent.",
+    )
     parser.add_argument("--effort", choices=sorted(EFFORTS), default="high")
     parser.add_argument("--dataset", default=DEFAULT_DATASET)
     parser.add_argument("--task", action="append", default=[], help="Harbor registry task id.")
@@ -420,7 +459,10 @@ def main() -> int:
     for path in (jobs_root, logs_dir, commands_dir):
         path.mkdir(parents=True, exist_ok=True)
 
-    wattle_commit, wattle_dirty = git_commit_and_dirty(args.source_dir)
+    if args.agent == "wattle":
+        wattle_commit, wattle_dirty = git_commit_and_dirty(args.source_dir)
+    else:
+        wattle_commit, wattle_dirty = None, None
     harness_commit, harness_dirty = git_commit_and_dirty(HARNESS_DIR)
 
     env = os.environ.copy()
@@ -434,6 +476,7 @@ def main() -> int:
         batch_dir / "manifest.json",
         {
             "created_at": utc_now(),
+            "agent": args.agent,
             "dataset": args.dataset,
             "harness_commit": harness_commit,
             "harness_dirty": harness_dirty,
@@ -461,8 +504,10 @@ def main() -> int:
     )
 
     print(f"\n=== Running {run.job_name}: {run.model} ===")
+    print(f"Agent: {args.agent}")
     print(f"Dataset: {args.dataset}")
-    print(f"Wattle commit: {wattle_commit}")
+    if args.agent == "wattle":
+        print(f"Wattle commit: {wattle_commit}")
     print(f"Job dir: {job_dir}")
     if args.dry_run:
         print("Dry run; command written to", command_path)

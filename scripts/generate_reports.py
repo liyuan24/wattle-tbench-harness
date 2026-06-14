@@ -203,7 +203,7 @@ def _read_json(path: Path) -> Any | None:
 def _job_name_from_trial_path(path: Path) -> str:
     parents = list(path.parents)
     for parent in parents:
-        if parent.name.startswith("wattle-"):
+        if parent.name.startswith(("codex-", "wattle-")):
             return parent.name
     return parents[2].name if len(parents) > 2 else ""
 
