@@ -130,6 +130,25 @@ attempts. This is the preferred recovery path for Spot/preemptible VMs.
 
 ## GCP Run Analysis From Spark
 
+Bootstrap a fresh Ubuntu amd64 VM from this machine:
+
+```bash
+gcloud compute scp scripts/bootstrap_gcp_vm.sh \
+  tbench-amd64:/tmp/bootstrap_gcp_vm.sh \
+  --project=terminal-bench-for-wattle \
+  --zone=us-central1-a
+
+gcloud compute ssh tbench-amd64 \
+  --project=terminal-bench-for-wattle \
+  --zone=us-central1-a \
+  --command 'bash /tmp/bootstrap_gcp_vm.sh'
+```
+
+The bootstrap script installs system dependencies, Docker, Node.js/Codex CLI,
+Wattle, this harness, the harness Python environment, Harbor patches, and
+focused harness tests. It is safe to rerun. It does not copy auth files or start
+the benchmark automatically.
+
 When running on a GCP Spot VM, keep the benchmark run under the VM's persistent
 boot disk, for example `~/repos/wattle-tbench-harness/runs/<label>`. If the VM is
 stopped or preempted, completed trial artifacts remain available after the next
