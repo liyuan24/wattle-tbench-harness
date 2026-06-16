@@ -21,7 +21,8 @@ def _args(**overrides: object) -> argparse.Namespace:
         "effort": "high",
         "agent": "wattle",
         "harbor_bin": Path("/bin/harbor"),
-        "harbor_package_cache_dir": Path("/harbor/packages"),
+        "harbor_dataset_cache_dir": Path("/harbor/tasks"),
+        "dataset": "terminal-bench@2.0",
         "model": "deepseek/deepseek-v4-pro",
         "download_attempts": 3,
         "download_retry_delay_sec": 5.0,
@@ -33,6 +34,7 @@ def _args(**overrides: object) -> argparse.Namespace:
         "no_download": False,
         "local": False,
         "no_build": False,
+        "force_build": False,
         "remove_container": False,
         "session_name": None,
         "wattle_auth_path": Path("/home/user/.wattle/auth.json"),
@@ -73,7 +75,9 @@ def test_wattle_tui_command_uses_source_checkout_when_available(tmp_path: Path) 
     assert command[4] == "wattle"
 
 
-def test_task_image_build_command_uses_environment_dockerfile(tmp_path: Path) -> None:
+def test_task_image_build_command_uses_environment_dockerfile_without_declared_image(
+    tmp_path: Path,
+) -> None:
     task_path = tmp_path / "task"
     environment = task_path / "environment"
     environment.mkdir(parents=True)
@@ -90,7 +94,50 @@ def test_task_image_build_command_uses_environment_dockerfile(tmp_path: Path) ->
     ]
 
 
-def test_container_tui_command_mounts_auth_and_source(tmp_path: Path) -> None:
+def test_task_image_build_command_skips_dockerfile_when_image_is_declared(
+    tmp_path: Path,
+) -> None:
+    task_path = tmp_path / "task"
+    environment = task_path / "environment"
+    environment.mkdir(parents=True)
+    (environment / "Dockerfile").write_text("FROM ubuntu:24.04\n", encoding="utf-8")
+    (task_path / "task.toml").write_text(
+        "[environment]\ndocker_image = 'example/task:latest'\n",
+        encoding="utf-8",
+    )
+
+    assert build_task_image_command(_args(task_name="chess-best-move"), task_path) is None
+
+
+def test_task_image_build_command_force_builds_declared_image_task(
+    tmp_path: Path,
+) -> None:
+    task_path = tmp_path / "task"
+    environment = task_path / "environment"
+    environment.mkdir(parents=True)
+    (environment / "Dockerfile").write_text("FROM ubuntu:24.04\n", encoding="utf-8")
+    (task_path / "task.toml").write_text(
+        "[environment]\ndocker_image = 'example/task:latest'\n",
+        encoding="utf-8",
+    )
+
+    command = build_task_image_command(
+        _args(task_name="chess-best-move", force_build=True),
+        task_path,
+    )
+
+    assert command == [
+        "docker",
+        "build",
+        "-t",
+        "wattle-tui-chess-best-move:latest",
+        str(environment),
+    ]
+
+
+def test_container_tui_command_mounts_auth_and_source_and_uses_declared_image(
+    tmp_path: Path,
+) -> None:
     task_path = tmp_path / "task"
     environment = task_path / "environment"
     environment.mkdir(parents=True)
@@ -116,8 +163,8 @@ def test_container_tui_command_mounts_auth_and_source(tmp_path: Path) -> None:
     assert "wattle-tui-test" in command
     assert f"{source_dir.resolve()}:/wattle-src:ro" in command
     assert f"{auth_path.resolve()}:/tmp/wattle-auth.json:ro" in command
-    assert "wattle-tui-break-filter-js-from-html:latest" in command
-    assert command[-4] == "wattle-tui-break-filter-js-from-html:latest"
+    assert "example/task:latest" in command
+    assert command[-4] == "example/task:latest"
     assert command[-3:] == ["bash", "-lc", command[-1]]
     assert command[-1].startswith("set -euo pipefail")
     assert "cp /tmp/wattle-auth.json /root/.wattle/auth.json" in command[-1]
@@ -158,7 +205,7 @@ def test_codex_container_tui_command_uses_codex_auth_without_wattle(tmp_path: Pa
     assert "codex-tui-test" in command
     assert f"{auth_path.resolve()}:/tmp/codex-auth.json:ro" in command
     assert f"{config_path.resolve()}:/tmp/codex-config.toml:ro" in command
-    assert "codex-tui-break-filter-js-from-html:latest" in command
+    assert "example/task:latest" in command
     assert "npm install -g @openai/codex" in command[-1]
     assert (
         "codex -m gpt-5.5 --dangerously-bypass-approvals-and-sandbox "
@@ -209,11 +256,43 @@ def test_wattle_environment_sets_run_deadline_from_task(
     assert env["WATTLE_RUN_DEADLINE_EPOCH_MS"] == "1900000"
 
 
-def test_resolve_task_path_uses_existing_cached_task(tmp_path: Path) -> None:
-    task_dir = tmp_path / "break-filter-js-from-html"
-    task_dir.mkdir()
+def test_resolve_task_path_refreshes_existing_cached_task(
+    monkeypatch: object,
+    tmp_path: Path,
+) -> None:
+    task_dir = tmp_path / "terminal-bench" / "break-filter-js-from-html"
+    task_dir.mkdir(parents=True)
+    (task_dir / "instruction.md").write_text("stale\n", encoding="utf-8")
+
+    calls = []
+
+    def fake_run(command: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        calls.append((command, kwargs))
+        (task_dir / "instruction.md").write_text("fresh\n", encoding="utf-8")
+        return subprocess.CompletedProcess(command, 0, stdout="")
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
 
     resolved = resolve_task_path(_args(task_cache_dir=tmp_path))
+
+    assert resolved == task_dir.resolve()
+    assert (task_dir / "instruction.md").read_text(encoding="utf-8") == "fresh\n"
+    assert len(calls) == 1
+    assert calls[0][0] == [
+        "/bin/harbor",
+        "download",
+        "terminal-bench@2.0",
+        "--output-dir",
+        str(tmp_path.resolve()),
+        "--overwrite",
+    ]
+
+
+def test_resolve_task_path_can_use_cache_when_download_disabled(tmp_path: Path) -> None:
+    task_dir = tmp_path / "terminal-bench" / "break-filter-js-from-html"
+    task_dir.mkdir(parents=True)
+
+    resolved = resolve_task_path(_args(task_cache_dir=tmp_path, no_download=True))
 
     assert resolved == task_dir.resolve()
 
@@ -241,28 +320,27 @@ def test_resolve_task_path_retries_failed_download(
         )
     )
 
-    assert resolved == (tmp_path / "break-filter-js-from-html").resolve()
+    assert resolved == (tmp_path / "terminal-bench" / "break-filter-js-from-html").resolve()
     assert len(calls) == 2
     assert calls[0][0] == [
         "/bin/harbor",
-        "task",
         "download",
-        "terminal-bench/break-filter-js-from-html",
+        "terminal-bench@2.0",
         "--output-dir",
         str(tmp_path.resolve()),
+        "--overwrite",
     ]
 
 
-def test_resolve_task_path_falls_back_to_harbor_package_cache(
+def test_resolve_task_path_falls_back_to_harbor_dataset_cache(
     monkeypatch: object,
     tmp_path: Path,
 ) -> None:
-    package_cache_dir = tmp_path / "package-cache"
+    dataset_cache_dir = tmp_path / "dataset-cache"
     cached_task = (
-        package_cache_dir
-        / "terminal-bench"
+        dataset_cache_dir
+        / "dataset-content-hash"
         / "break-filter-js-from-html"
-        / "cached-content-hash"
     )
     cached_task.mkdir(parents=True)
     (cached_task / "task.toml").write_text("[task]\n", encoding="utf-8")
@@ -272,17 +350,20 @@ def test_resolve_task_path_falls_back_to_harbor_package_cache(
         raise subprocess.CalledProcessError(1, command)
 
     task_cache_dir = tmp_path / "tasks"
+    stale_task = task_cache_dir / "terminal-bench" / "break-filter-js-from-html"
+    stale_task.mkdir(parents=True)
+    (stale_task / "instruction.md").write_text("stale\n", encoding="utf-8")
     monkeypatch.setattr(subprocess, "run", fake_run)
     monkeypatch.setattr("run_tui_task.time.sleep", lambda _: None)
 
     resolved = resolve_task_path(
         _args(
             task_cache_dir=task_cache_dir,
-            harbor_package_cache_dir=package_cache_dir,
+            harbor_dataset_cache_dir=dataset_cache_dir,
             download_attempts=1,
         )
     )
 
-    assert resolved == (task_cache_dir / "break-filter-js-from-html").resolve()
+    assert resolved == (task_cache_dir / "terminal-bench" / "break-filter-js-from-html").resolve()
     assert (resolved / "task.toml").read_text(encoding="utf-8") == "[task]\n"
     assert (resolved / "instruction.md").read_text(encoding="utf-8") == "Do the task.\n"

@@ -1,10 +1,18 @@
 from __future__ import annotations
 
 import argparse
+import os
 from pathlib import Path
 
 from model_config import parse_codex_model, parse_provider_model
-from run_tbench import HarborRun, build_harbor_command, build_run
+from run_tbench import (
+    HarborRun,
+    build_harbor_command,
+    build_run,
+    infer_latest_run_label,
+    remember_latest_run_label,
+    resumed_artifact_path,
+)
 
 
 def test_parse_provider_model_supports_bare_model_with_provider() -> None:
@@ -127,3 +135,91 @@ def test_harbor_command_can_use_codex_agent_without_wattle_kwargs() -> None:
     assert "wattle_auth_path=" not in joined
     assert "thinking=" not in joined
     assert "effort=high" not in joined
+
+
+def test_harbor_command_omits_force_build_by_default() -> None:
+    args = argparse.Namespace(
+        agent="wattle",
+        agent_env=[],
+        agent_timeout_multiplier=None,
+        dataset="terminal-bench@2.0",
+        debug=False,
+        effort="high",
+        exclude_task_name=[],
+        extra_harbor_arg=[],
+        force_build=False,
+        harbor_bin=Path("/bin/harbor"),
+        include_task_name=["mteb-retrieve"],
+        max_tokens=None,
+        n_attempts=1,
+        n_concurrent=1,
+        n_tasks=None,
+        no_delete=False,
+        source_dir=Path("/src/wattle"),
+        task=[],
+        timeout_multiplier=None,
+        verifier_timeout_multiplier=None,
+        wattle_stream_idle_timeout_sec=None,
+        wattle_auth_path=Path("/home/user/.wattle/auth.json"),
+        codex_auth_path=Path("/home/user/.codex/auth.json"),
+        codex_config_path=Path("/home/user/.codex/config.toml"),
+        wattle_provider_request_timeout_sec=None,
+    )
+    run = HarborRun(
+        name="wattle-deepseek-deepseek-v4-pro-high",
+        job_name="wattle-deepseek-deepseek-v4-pro-high",
+        model="deepseek/deepseek-v4-pro",
+        provider="deepseek",
+        model_name="deepseek-v4-pro",
+    )
+
+    command = build_harbor_command(args=args, run=run, job_dir=Path("/tmp/job"))
+
+    assert "--force-build" not in command
+
+
+def test_resumed_artifact_path_keeps_missing_file_name(tmp_path: Path) -> None:
+    path = tmp_path / "logs" / "run.log"
+
+    assert resumed_artifact_path(path, resume=True, timestamp="20260616-120000") == path
+
+
+def test_resumed_artifact_path_adds_timestamp_when_file_exists(tmp_path: Path) -> None:
+    path = tmp_path / "logs" / "run.log"
+    path.parent.mkdir()
+    path.write_text("previous log\n", encoding="utf-8")
+
+    assert resumed_artifact_path(path, resume=True, timestamp="20260616-120000") == (
+        tmp_path / "logs" / "run.resume-20260616-120000.log"
+    )
+
+
+def test_resumed_artifact_path_unchanged_without_resume(tmp_path: Path) -> None:
+    path = tmp_path / "manifest.json"
+    path.write_text("{}\n", encoding="utf-8")
+
+    assert resumed_artifact_path(path, resume=False, timestamp="20260616-120000") == path
+
+
+def test_remember_latest_run_label_writes_state_and_symlink(tmp_path: Path) -> None:
+    run_dir = tmp_path / "run-a"
+    run_dir.mkdir()
+
+    remember_latest_run_label(tmp_path, "run-a")
+
+    assert (tmp_path / ".last_run_label").read_text(encoding="utf-8") == "run-a\n"
+    assert infer_latest_run_label(tmp_path) == "run-a"
+    latest = tmp_path / "latest"
+    assert latest.is_symlink()
+    assert latest.resolve() == run_dir
+
+
+def test_infer_latest_run_label_falls_back_to_newest_jobs_dir(tmp_path: Path) -> None:
+    older = tmp_path / "older"
+    newer = tmp_path / "newer"
+    (older / "jobs").mkdir(parents=True)
+    (newer / "jobs").mkdir(parents=True)
+    os.utime(older, (1, 1))
+    os.utime(newer, (2, 2))
+
+    assert infer_latest_run_label(tmp_path) == "newer"

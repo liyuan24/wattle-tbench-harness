@@ -25,6 +25,8 @@ DEFAULT_WATTLE_AUTH_PATHS = [
 DEFAULT_CODEX_AUTH_PATH = Path.home() / ".codex/auth.json"
 DEFAULT_CODEX_CONFIG_PATH = Path.home() / ".codex/config.toml"
 DEFAULT_DATASET = "terminal-bench@2.0"
+LAST_RUN_LABEL_FILE = ".last_run_label"
+LATEST_RUN_LINK = "latest"
 _LOCAL_HARBOR_BIN = HARNESS_DIR / ".venv/bin/harbor"
 DEFAULT_HARBOR_BIN = (
     str(_LOCAL_HARBOR_BIN)
@@ -69,6 +71,44 @@ def first_existing(paths: list[Path]) -> Path:
         if path.expanduser().exists():
             return path.expanduser()
     return paths[0].expanduser()
+
+
+def infer_latest_run_label(output_dir: Path) -> str | None:
+    state_path = output_dir / LAST_RUN_LABEL_FILE
+    if state_path.exists():
+        label = state_path.read_text(encoding="utf-8").strip()
+        if label and (output_dir / label).exists():
+            return label
+
+    if not output_dir.exists():
+        return None
+    candidates = [
+        path
+        for path in output_dir.iterdir()
+        if path.is_dir()
+        and path.name != LATEST_RUN_LINK
+        and not path.name.startswith(".")
+        and (path / "jobs").exists()
+    ]
+    if not candidates:
+        return None
+    return max(candidates, key=lambda path: path.stat().st_mtime).name
+
+
+def remember_latest_run_label(output_dir: Path, label: str) -> None:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    (output_dir / LAST_RUN_LABEL_FILE).write_text(label + "\n", encoding="utf-8")
+
+    link_path = output_dir / LATEST_RUN_LINK
+    target = output_dir / label
+    try:
+        if link_path.is_symlink() or link_path.is_file():
+            link_path.unlink()
+        if not link_path.exists():
+            link_path.symlink_to(target, target_is_directory=True)
+    except OSError:
+        # The state file is the authoritative fallback; the symlink is convenience.
+        pass
 
 
 def build_run(args: argparse.Namespace) -> HarborRun:
@@ -303,6 +343,12 @@ def write_json(path: Path, data: object) -> None:
     path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
+def resumed_artifact_path(path: Path, *, resume: bool, timestamp: str) -> Path:
+    if not resume or not path.exists():
+        return path
+    return path.with_name(f"{path.stem}.resume-{timestamp}{path.suffix}")
+
+
 def validate_inputs(args: argparse.Namespace) -> None:
     if not Path(args.harbor_bin).exists():
         raise FileNotFoundError(f"Harbor binary not found: {args.harbor_bin}")
@@ -415,11 +461,26 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--timeout-multiplier", type=float, default=None)
     parser.add_argument("--agent-timeout-multiplier", type=float, default=None)
     parser.add_argument("--verifier-timeout-multiplier", type=float, default=None)
-    parser.add_argument("--force-build", action="store_true")
+    parser.add_argument(
+        "--force-build",
+        action="store_true",
+        help=(
+            "Force Harbor to rebuild task images from Dockerfiles. Avoid for normal "
+            "scored evals because it bypasses declared docker_image environments."
+        ),
+    )
     parser.add_argument("--no-delete", action="store_true")
     parser.add_argument("--debug", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--tmux", action="store_true")
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help=(
+            "Resume an existing run-label directory. Harbor reuses completed "
+            "trial result.json files and reruns missing attempts."
+        ),
+    )
     parser.add_argument("--skip-reports", action="store_true")
     parser.add_argument("--agent-env", action="append", default=[])
     parser.add_argument("--extra-harbor-arg", action="append", default=[])
@@ -445,11 +506,27 @@ def main() -> int:
 
     run = build_run(args)
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    label = slug(args.run_label) if args.run_label else f"{timestamp}-{run.name}"
+    label = slug(args.run_label) if args.run_label else None
+    if args.resume and label is None:
+        label = infer_latest_run_label(args.output_dir)
+        if label is None:
+            print(
+                f"[error] --resume requested, but no latest run was found in {args.output_dir}.",
+                file=sys.stderr,
+            )
+            return 2
+        print(f"Resuming latest run label: {label}")
+    if label is None:
+        label = f"{timestamp}-{run.name}"
     batch_dir = args.output_dir / label
-    if batch_dir.exists():
+    if args.resume and not batch_dir.exists():
+        print(f"[error] --resume requested, but output directory does not exist: {batch_dir}", file=sys.stderr)
+        return 2
+    if batch_dir.exists() and not args.resume:
         print(f"[error] Output directory already exists: {batch_dir}", file=sys.stderr)
         return 2
+    if not args.dry_run:
+        remember_latest_run_label(args.output_dir, label)
     if args.tmux:
         return launch_tmux_run(raw_args=raw_args, args=args, label=label)
 
@@ -472,10 +549,16 @@ def main() -> int:
         else f"{HARNESS_DIR}:{env['PYTHONPATH']}"
     )
 
-    write_json(
+    manifest_path = resumed_artifact_path(
         batch_dir / "manifest.json",
+        resume=args.resume,
+        timestamp=timestamp,
+    )
+    write_json(
+        manifest_path,
         {
             "created_at": utc_now(),
+            "resume": args.resume,
             "agent": args.agent,
             "dataset": args.dataset,
             "harness_commit": harness_commit,
@@ -492,8 +575,16 @@ def main() -> int:
 
     job_dir = jobs_root / run.job_name
     command = build_harbor_command(args=args, run=run, job_dir=job_dir)
-    command_path = commands_dir / f"{run.job_name}.json"
-    log_path = logs_dir / f"{run.job_name}.log"
+    command_path = resumed_artifact_path(
+        commands_dir / f"{run.job_name}.json",
+        resume=args.resume,
+        timestamp=timestamp,
+    )
+    log_path = resumed_artifact_path(
+        logs_dir / f"{run.job_name}.log",
+        resume=args.resume,
+        timestamp=timestamp,
+    )
     write_json(
         command_path,
         {

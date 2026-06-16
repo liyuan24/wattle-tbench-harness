@@ -17,6 +17,7 @@ from run_tbench import (
     AGENTS,
     DEFAULT_CODEX_AUTH_PATH,
     DEFAULT_CODEX_CONFIG_PATH,
+    DEFAULT_DATASET,
     DEFAULT_HARBOR_BIN,
     DEFAULT_SOURCE_DIR,
     DEFAULT_WATTLE_AUTH_PATHS,
@@ -25,7 +26,7 @@ from run_tbench import (
 
 HARNESS_DIR = Path(__file__).resolve().parent
 DEFAULT_TASK_CACHE_DIR = HARNESS_DIR / "runs/tui-tasks"
-DEFAULT_HARBOR_PACKAGE_CACHE_DIR = Path.home() / ".cache/harbor/tasks/packages"
+DEFAULT_HARBOR_DATASET_CACHE_DIR = Path.home() / ".cache/harbor/tasks"
 
 
 def parse_args() -> argparse.Namespace:
@@ -62,24 +63,35 @@ def parse_args() -> argparse.Namespace:
         help="Codex config file to copy into the task container for --agent codex.",
     )
     parser.add_argument("--harbor-bin", type=Path, default=Path(DEFAULT_HARBOR_BIN))
+    parser.add_argument(
+        "--dataset",
+        default=DEFAULT_DATASET,
+        help="Harbor dataset ref to use for task materialization.",
+    )
     parser.add_argument("--task-cache-dir", type=Path, default=DEFAULT_TASK_CACHE_DIR)
     parser.add_argument(
-        "--harbor-package-cache-dir",
+        "--harbor-dataset-cache-dir",
         type=Path,
-        default=DEFAULT_HARBOR_PACKAGE_CACHE_DIR,
-        help="Harbor package cache used as a fallback when registry download fails.",
+        default=DEFAULT_HARBOR_DATASET_CACHE_DIR,
+        help="Harbor dataset cache used as a fallback when registry download fails.",
+    )
+    parser.add_argument(
+        "--harbor-package-cache-dir",
+        dest="harbor_dataset_cache_dir",
+        type=Path,
+        help=argparse.SUPPRESS,
     )
     parser.add_argument(
         "--download-attempts",
         type=int,
         default=3,
-        help="Number of Harbor task download attempts before failing.",
+        help="Number of Harbor dataset download attempts before failing.",
     )
     parser.add_argument(
         "--download-retry-delay-sec",
         type=float,
         default=5.0,
-        help="Seconds to wait between Harbor task download attempts.",
+        help="Seconds to wait between Harbor dataset download attempts.",
     )
     parser.add_argument("--wattle-provider-request-timeout-sec", type=float, default=None)
     parser.add_argument("--wattle-stream-idle-timeout-sec", type=float, default=None)
@@ -94,7 +106,11 @@ def parse_args() -> argparse.Namespace:
         help="Deprecated compatibility option; TUI runs are always attached.",
     )
     parser.add_argument("--dry-run", action="store_true")
-    parser.add_argument("--no-download", action="store_true")
+    parser.add_argument(
+        "--no-download",
+        action="store_true",
+        help="Use the local task cache without refreshing from Harbor.",
+    )
     parser.add_argument(
         "--local",
         action="store_true",
@@ -106,6 +122,14 @@ def parse_args() -> argparse.Namespace:
         help="Do not build environment/Dockerfile; pull/use the task.toml docker_image instead.",
     )
     parser.add_argument(
+        "--force-build",
+        action="store_true",
+        help=(
+            "Force building environment/Dockerfile even when task.toml declares "
+            "environment.docker_image."
+        ),
+    )
+    parser.add_argument(
         "--remove-container",
         action="store_true",
         help="Remove the task container when the TUI exits.",
@@ -113,18 +137,18 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def cached_harbor_package_task(args: argparse.Namespace) -> Path | None:
-    package_dir = (
-        args.harbor_package_cache_dir.expanduser().resolve()
-        / "terminal-bench"
-        / args.task_name
-    )
-    if not package_dir.exists():
+def dataset_export_name(dataset: str) -> str:
+    return dataset.rsplit("/", 1)[-1].split("@", 1)[0]
+
+
+def cached_harbor_dataset_task(args: argparse.Namespace) -> Path | None:
+    cache_dir = args.harbor_dataset_cache_dir.expanduser().resolve()
+    if not cache_dir.exists():
         return None
 
     candidates = [
         path
-        for path in package_dir.iterdir()
+        for path in cache_dir.glob(f"*/{args.task_name}")
         if path.is_dir() and (path / "task.toml").exists()
     ]
     if not candidates:
@@ -136,18 +160,22 @@ def resolve_task_path(args: argparse.Namespace) -> Path:
     if args.task_path is not None:
         return args.task_path.expanduser().resolve()
 
-    task_dir = args.task_cache_dir.expanduser().resolve() / args.task_name
-    if task_dir.exists() or args.no_download:
+    task_dir = (
+        args.task_cache_dir.expanduser().resolve()
+        / dataset_export_name(args.dataset)
+        / args.task_name
+    )
+    if args.no_download:
         return task_dir
 
     args.task_cache_dir.mkdir(parents=True, exist_ok=True)
     download_command = [
         str(args.harbor_bin),
-        "task",
         "download",
-        f"terminal-bench/{args.task_name}",
+        args.dataset,
         "--output-dir",
         str(args.task_cache_dir),
+        "--overwrite",
     ]
     attempts = max(1, args.download_attempts)
     download_error = None
@@ -177,14 +205,17 @@ def resolve_task_path(args: argparse.Namespace) -> Path:
             )
             time.sleep(max(0.0, args.download_retry_delay_sec))
 
-    if download_error is not None and not task_dir.exists():
-        cached_task = cached_harbor_package_task(args)
+    if download_error is not None:
+        cached_task = cached_harbor_dataset_task(args)
         if cached_task is not None:
             print(
-                "[warn] Harbor task download failed; using cached package task at "
+                "[warn] Harbor dataset download failed; using cached dataset task at "
                 f"{cached_task}",
                 file=sys.stderr,
             )
+            if task_dir.exists():
+                shutil.rmtree(task_dir)
+            task_dir.parent.mkdir(parents=True, exist_ok=True)
             shutil.copytree(cached_task, task_dir)
         else:
             if download_error.stdout:
@@ -280,6 +311,8 @@ def build_task_image_command(args: argparse.Namespace, task_path: Path) -> list[
     dockerfile = task_path / "environment" / "Dockerfile"
     if args.no_build or not dockerfile.exists():
         return None
+    if read_task_docker_image(task_path) is not None and not args.force_build:
+        return None
     return [
         "docker",
         "build",
@@ -297,9 +330,11 @@ def pull_task_image_command(task_path: Path) -> list[str] | None:
 
 
 def task_container_image(args: argparse.Namespace, task_path: Path) -> str:
+    image = read_task_docker_image(task_path)
+    if image is not None and not args.force_build:
+        return image
     if not args.no_build and (task_path / "environment" / "Dockerfile").exists():
         return local_task_image_tag(args)
-    image = read_task_docker_image(task_path)
     if image is None:
         raise FileNotFoundError(
             f"No Dockerfile at {task_path / 'environment' / 'Dockerfile'} "

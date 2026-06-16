@@ -88,7 +88,6 @@ cd /home/liyuan/repos/wattle-tbench-harness
   --effort high \
   --n-attempts 1 \
   --n-concurrent 2 \
-  --force-build \
   --source-dir /home/liyuan/repos/wattle \
   --wattle-auth-path /home/liyuan/.willow/auth.json
 ```
@@ -101,11 +100,78 @@ Run detached in tmux:
   --effort high \
   --n-attempts 1 \
   --n-concurrent 2 \
-  --force-build \
   --source-dir /home/liyuan/repos/wattle \
   --wattle-auth-path /home/liyuan/.willow/auth.json \
   --tmux
 ```
+
+Resume the most recent interrupted run by adding `--resume`:
+
+```bash
+./run_tbench.py \
+  --model deepseek/deepseek-v4-pro \
+  --effort high \
+  --n-attempts 1 \
+  --n-concurrent 2 \
+  --source-dir /home/liyuan/repos/wattle \
+  --wattle-auth-path /home/liyuan/.willow/auth.json \
+  --resume \
+  --tmux
+```
+
+The runner records the most recent run label in `runs/.last_run_label` and
+keeps a convenience symlink at `runs/latest`. To resume an older run, pass its
+label explicitly with `--run-label`.
+
+The resumed run must use the same dataset, task filters, agent, model, attempts,
+and job name as the original run. Harbor will count completed trial attempts
+that already have `result.json` files and rerun only missing or incomplete
+attempts. This is the preferred recovery path for Spot/preemptible VMs.
+
+## GCP Run Analysis From Spark
+
+When running on a GCP Spot VM, keep the benchmark run under the VM's persistent
+boot disk, for example `~/repos/wattle-tbench-harness/runs/<label>`. If the VM is
+stopped or preempted, completed trial artifacts remain available after the next
+SSH login:
+
+- trial `result.json` files
+- `trial.log`
+- verifier outputs under `verifier/`
+- Wattle JSONL session logs under `agent/wattle-sessions/`
+- aggregate run logs under `logs/`
+
+Sync the latest VM run back to this machine for local analysis:
+
+```bash
+./scripts/sync_gcp_run.py \
+  --project terminal-bench-for-wattle \
+  --zone us-central1-a \
+  --instance tbench-amd64
+```
+
+The synced copy is written to `runs/gcp/<label>` by default, then local reports
+are regenerated:
+
+```text
+runs/gcp/<label>/reports/summary.md
+runs/gcp/<label>/reports/per_task.csv
+runs/gcp/<label>/reports/per_trial.csv
+runs/gcp/<label>/analysis/incremental/summary.md
+runs/gcp/<label>/analysis/incremental/snapshot.json
+```
+
+Sync a specific older run:
+
+```bash
+./scripts/sync_gcp_run.py --run-label wattle-gpt55-tbench20-amd64-gcp-20260616
+```
+
+Do not pass `--force-build` for normal scored Terminal-Bench 2.0 evaluation.
+When a task declares `environment.docker_image`, Harbor should use that image;
+forcing a rebuild can pull newer unpinned transitive dependencies from the
+task Dockerfile and change task behavior. Use `--force-build` only when
+intentionally testing Dockerfile reproducibility.
 
 The runner records:
 
@@ -125,8 +191,7 @@ Run one task headlessly by Terminal-Bench task name:
   --model deepseek/deepseek-v4-pro \
   --include-task-name adaptive-rejection-sampler \
   --n-attempts 1 \
-  --n-concurrent 1 \
-  --force-build
+  --n-concurrent 1
 ```
 
 `--task-id` is accepted as an alias for `--include-task-name` for convenience.
@@ -227,7 +292,6 @@ Command shape:
   --effort high \
   --n-attempts 1 \
   --n-concurrent 2 \
-  --force-build \
   --source-dir /home/liyuan/repos/wattle \
   --wattle-auth-path /home/liyuan/.willow/auth.json \
   --run-label harbor-wattle-deepseek-v4-pro-high-20260613-harbor-deadlines \
@@ -262,7 +326,6 @@ The expected DeepSeek diagnostic command is:
   --effort high \
   --n-attempts 1 \
   --n-concurrent 2 \
-  --force-build \
   --source-dir /home/liyuan/repos/wattle \
   --wattle-auth-path /home/liyuan/.willow/auth.json \
   --tmux
@@ -278,8 +341,7 @@ Run one scored Terminal-Bench task with Codex CLI directly:
   --model gpt-5.5 \
   --include-task-name train-fasttext \
   --n-attempts 1 \
-  --n-concurrent 1 \
-  --force-build
+  --n-concurrent 1
 ```
 
 Run a full scored suite with Codex CLI directly:
@@ -290,6 +352,5 @@ Run a full scored suite with Codex CLI directly:
   --model gpt-5.5 \
   --n-attempts 1 \
   --n-concurrent 2 \
-  --force-build \
   --tmux
 ```
