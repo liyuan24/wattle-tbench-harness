@@ -149,6 +149,15 @@ Wattle, this harness, the harness Python environment, Harbor patches, and
 focused harness tests. It is safe to rerun. It does not copy auth files or start
 the benchmark automatically.
 
+Copy local Wattle/Codex auth files to the VM:
+
+```bash
+./scripts/copy_gcp_auth.sh \
+  --project terminal-bench-for-wattle \
+  --zone us-central1-a \
+  --instance tbench-amd64
+```
+
 When running on a GCP Spot VM, keep the benchmark run under the VM's persistent
 boot disk, for example `~/repos/wattle-tbench-harness/runs/<label>`. If the VM is
 stopped or preempted, completed trial artifacts remain available after the next
