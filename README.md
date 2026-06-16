@@ -133,7 +133,23 @@ attempts. This is the preferred recovery path for Spot/preemptible VMs.
 Use this flow for official Terminal-Bench 2.0 runs from Spark. The GCP VM runs
 native `amd64` Docker images; Spark remains the analysis workstation.
 
-1. Bootstrap a fresh Ubuntu amd64 VM from Spark:
+1. SSH to the VM:
+
+```bash
+gcloud compute ssh tbench-amd64 \
+  --project=terminal-bench-for-wattle \
+  --zone=us-central1-a
+```
+
+After starting a tmux-backed run, reconnect with the same SSH command and then
+attach to the run:
+
+```bash
+tmux ls
+tmux attach -t <session-name>
+```
+
+2. Bootstrap a fresh Ubuntu amd64 VM from Spark:
 
 ```bash
 gcloud compute scp scripts/bootstrap_gcp_vm.sh \
@@ -152,7 +168,7 @@ Wattle, this harness, the harness Python environment, Harbor patches, and
 focused harness tests. It is safe to rerun. It does not copy auth files or start
 the benchmark automatically.
 
-2. Copy local Wattle/Codex auth files to the VM:
+3. Copy local Wattle/Codex auth files to the VM:
 
 ```bash
 ./scripts/copy_gcp_auth.sh \
@@ -161,7 +177,7 @@ the benchmark automatically.
   --instance tbench-amd64
 ```
 
-3. Start the full official evaluation on the VM:
+4. Start the full official evaluation on the VM:
 
 ```bash
 gcloud compute ssh tbench-amd64 \
@@ -184,7 +200,7 @@ forcing a rebuild can pull newer unpinned transitive dependencies from the
 task Dockerfile and change task behavior. Use `--force-build` only when
 intentionally testing Dockerfile reproducibility.
 
-4. Resume after Spot interruption:
+5. Resume after Spot interruption:
 
 ```bash
 gcloud compute ssh tbench-amd64 \
@@ -206,7 +222,7 @@ The runner records the latest run label in `runs/.last_run_label` and keeps a
 convenience symlink at `runs/latest`, so `--resume` does not require remembering
 the label. To resume an older run, pass `--run-label`.
 
-5. Run one task headlessly on the VM:
+6. Run one task headlessly on the VM:
 
 ```bash
 cd ~/repos/wattle-tbench-harness
@@ -220,7 +236,7 @@ cd ~/repos/wattle-tbench-harness
   --tmux
 ```
 
-6. Run one task in TUI mode on the VM:
+7. Run one task in TUI mode on the VM:
 
 ```bash
 cd ~/repos/wattle-tbench-harness
@@ -231,7 +247,7 @@ cd ~/repos/wattle-tbench-harness
   --source-dir ~/repos/wattle
 ```
 
-7. Sync VM artifacts back to Spark for analysis:
+8. Sync VM artifacts back to Spark for analysis:
 
 ```bash
 ./scripts/sync_gcp_run.py \
