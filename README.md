@@ -128,9 +128,12 @@ and job name as the original run. Harbor will count completed trial attempts
 that already have `result.json` files and rerun only missing or incomplete
 attempts. This is the preferred recovery path for Spot/preemptible VMs.
 
-## GCP Run Analysis From Spark
+## GCP amd64 Workflow
 
-Bootstrap a fresh Ubuntu amd64 VM from this machine:
+Use this flow for official Terminal-Bench 2.0 runs from Spark. The GCP VM runs
+native `amd64` Docker images; Spark remains the analysis workstation.
+
+1. Bootstrap a fresh Ubuntu amd64 VM from Spark:
 
 ```bash
 gcloud compute scp scripts/bootstrap_gcp_vm.sh \
@@ -149,7 +152,7 @@ Wattle, this harness, the harness Python environment, Harbor patches, and
 focused harness tests. It is safe to rerun. It does not copy auth files or start
 the benchmark automatically.
 
-Copy local Wattle/Codex auth files to the VM:
+2. Copy local Wattle/Codex auth files to the VM:
 
 ```bash
 ./scripts/copy_gcp_auth.sh \
@@ -158,18 +161,77 @@ Copy local Wattle/Codex auth files to the VM:
   --instance tbench-amd64
 ```
 
-When running on a GCP Spot VM, keep the benchmark run under the VM's persistent
-boot disk, for example `~/repos/wattle-tbench-harness/runs/<label>`. If the VM is
-stopped or preempted, completed trial artifacts remain available after the next
-SSH login:
+3. Start the full official evaluation on the VM:
 
-- trial `result.json` files
-- `trial.log`
-- verifier outputs under `verifier/`
-- Wattle JSONL session logs under `agent/wattle-sessions/`
-- aggregate run logs under `logs/`
+```bash
+gcloud compute ssh tbench-amd64 \
+  --project=terminal-bench-for-wattle \
+  --zone=us-central1-a
 
-Sync the latest VM run back to this machine for local analysis:
+cd ~/repos/wattle-tbench-harness
+./run_tbench.py \
+  --model codex/gpt-5.5 \
+  --effort high \
+  --n-attempts 1 \
+  --n-concurrent 2 \
+  --source-dir ~/repos/wattle \
+  --tmux
+```
+
+Do not pass `--force-build` for normal scored Terminal-Bench 2.0 evaluation.
+When a task declares `environment.docker_image`, Harbor should use that image;
+forcing a rebuild can pull newer unpinned transitive dependencies from the
+task Dockerfile and change task behavior. Use `--force-build` only when
+intentionally testing Dockerfile reproducibility.
+
+4. Resume after Spot interruption:
+
+```bash
+gcloud compute ssh tbench-amd64 \
+  --project=terminal-bench-for-wattle \
+  --zone=us-central1-a
+
+cd ~/repos/wattle-tbench-harness
+./run_tbench.py \
+  --model codex/gpt-5.5 \
+  --effort high \
+  --n-attempts 1 \
+  --n-concurrent 2 \
+  --source-dir ~/repos/wattle \
+  --resume \
+  --tmux
+```
+
+The runner records the latest run label in `runs/.last_run_label` and keeps a
+convenience symlink at `runs/latest`, so `--resume` does not require remembering
+the label. To resume an older run, pass `--run-label`.
+
+5. Run one task headlessly on the VM:
+
+```bash
+cd ~/repos/wattle-tbench-harness
+./run_tbench.py \
+  --model codex/gpt-5.5 \
+  --effort high \
+  --include-task-name mteb-retrieve \
+  --n-attempts 1 \
+  --n-concurrent 1 \
+  --source-dir ~/repos/wattle \
+  --tmux
+```
+
+6. Run one task in TUI mode on the VM:
+
+```bash
+cd ~/repos/wattle-tbench-harness
+./run_tui_task.py \
+  --task-name mteb-retrieve \
+  --model codex/gpt-5.5 \
+  --effort high \
+  --source-dir ~/repos/wattle
+```
+
+7. Sync VM artifacts back to Spark for analysis:
 
 ```bash
 ./scripts/sync_gcp_run.py \
@@ -195,11 +257,16 @@ Sync a specific older run:
 ./scripts/sync_gcp_run.py --run-label wattle-gpt55-tbench20-amd64-gcp-20260616
 ```
 
-Do not pass `--force-build` for normal scored Terminal-Bench 2.0 evaluation.
-When a task declares `environment.docker_image`, Harbor should use that image;
-forcing a rebuild can pull newer unpinned transitive dependencies from the
-task Dockerfile and change task behavior. Use `--force-build` only when
-intentionally testing Dockerfile reproducibility.
+When running on a GCP Spot VM, keep the benchmark run under the VM's persistent
+boot disk, for example `~/repos/wattle-tbench-harness/runs/<label>`. If the VM is
+stopped or preempted, completed trial artifacts remain available after the next
+SSH login:
+
+- trial `result.json` files
+- `trial.log`
+- verifier outputs under `verifier/`
+- Wattle JSONL session logs under `agent/wattle-sessions/`
+- aggregate run logs under `logs/`
 
 The runner records:
 
