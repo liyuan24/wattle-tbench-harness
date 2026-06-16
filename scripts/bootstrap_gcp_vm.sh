@@ -103,9 +103,9 @@ setup_harness() {
   ./setup.sh
 
   log "Applying Harbor patches"
-  python scripts/patch_harbor_upload_dir.py
-  python scripts/patch_harbor_agent_timeout.py
-  python scripts/check_harbor_patch.py
+  .venv/bin/python scripts/patch_harbor_upload_dir.py
+  .venv/bin/python scripts/patch_harbor_agent_timeout.py
+  .venv/bin/python scripts/check_harbor_patch.py
 
   log "Running focused harness tests"
   .venv/bin/python -m pytest tests/test_harbor_runner.py tests/test_tui_task_runner.py -q
