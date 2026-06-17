@@ -2,12 +2,12 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T12:54:55Z`
+Snapshot used: `2026-06-17T13:00:03Z`
 
 Counts at snapshot:
 
 - Passed: 155
-- Failed: 48
+- Failed: 49
 - Exceptions: 16
 - Running or incomplete: 2
 - Prompt-cache hit rate: 85.1%
@@ -260,10 +260,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `video-processing`
 
-- Status: failed in completed Wattle attempts; one retry is running.
+- Status: all synced Wattle attempts failed.
 - Verifier: first attempt had landing frame 230 outside inclusive range 231 to 234; retry had example landing frame 61 below range 62 to 64 and test-video takeoff frame 239 above range 219 to 223.
 - Oracle contrast: uses frame-level movement/background subtraction and task-specific thresholds to locate jump start/end.
-- Wattle behavior: produced the required TOML structure and plausible frame estimates, but failed tight temporal boundaries in different ways across attempts. Running retry `video-processing__ZPuX76L` is creating `/app/jump_analyzer.py` with fixed-camera foreground detection and jump-event logic informed by hurdle/track geometry.
+- Wattle behavior: produced the required TOML structure and plausible frame estimates, but failed tight temporal boundaries in different ways across attempts. Retry `video-processing__ZPuX76L` used fixed-camera foreground subtraction and hurdle/track geometry, but still failed hidden takeoff badly at frame 308 versus expected 219 to 223.
 - Codex comparison: Codex also failed a tight boundary check, but on takeoff rather than landing: takeoff frame 226 was outside the inclusive range 219 to 223.
 - Raw lesson: video/temporal tasks need exact boundary calibration and verifier-range checks before final answer.
 
@@ -478,8 +478,8 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `qemu-alpine-ssh`
 
-- Status: both synced Wattle attempts passed.
-- Current evidence: Wattle left Alpine running in QEMU with SSH forwarded on `localhost:2222`, root password `password123`, and validated an SSH login to a root shell inside the VM.
+- Status: two completed Wattle attempts passed, and one retry is running.
+- Current evidence: completed attempts `qemu-alpine-ssh__2rXBcVb` and `qemu-alpine-ssh__EyRt9zU` left Alpine running in QEMU with SSH forwarded on `localhost:2222`, root password `password123`, and validated an SSH login to a root shell inside the VM. Running retry `qemu-alpine-ssh__dumJjxx` has QEMU running and is attaching to its serial console to check whether Alpine has reached a login prompt.
 - Oracle contrast: leaves a booted VM with reachable SSH, not only a configured disk or launch command.
 - Raw lesson: VM service tasks pass when Wattle validates the exact externally reachable login path and leaves the long-running process alive for the verifier.
 
@@ -646,9 +646,9 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 - Watch point: check that validation uses the verifier-equivalent text conversion and clears the 0.62 accuracy threshold with margin before finalizing `/app/model.bin`.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### `video-processing` retry
+### `qemu-alpine-ssh` retry
 
-- Status: Wattle retry `video-processing__ZPuX76L` is running.
-- Current evidence: prior completed attempts failed tight takeoff/landing frame windows despite producing valid TOML output. The running retry is using fixed-camera foreground detection and task-specific hurdle/track geometry after inspecting frames.
-- Watch point: check exact frame-boundary ranges on both example and hidden-style videos, not only plausible jump timing on the example.
+- Status: Wattle retry `qemu-alpine-ssh__dumJjxx` is running.
+- Current evidence: prior completed attempts passed by leaving Alpine running in QEMU, forwarding SSH on host port 2222, and validating `ssh -p 2222 root@localhost` with password `password123`. The running retry has QEMU running and is attaching to its serial console to check for the Alpine login prompt.
+- Watch point: check that SSH, not only serial login, is reachable at final handoff and that the VM process remains alive.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.

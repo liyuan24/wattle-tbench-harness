@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T12:54:55Z`
+Snapshot used: `2026-06-17T13:00:03Z`
 
 This summary intentionally avoids task-specific fixes. It ranks general Wattle improvements by expected pass-rate impact, breadth across failures, and implementation practicality.
 
@@ -140,7 +140,7 @@ Observed in:
 
 - `gcode-to-text`: two Wattle attempts failed; the first decoded a plausible sentence, while the retry produced a near-flag string with exact-character errors. Codex passed the comparison, so stronger rendering/OCR and character-level validation are feasible under the same environment.
 - `extract-moves-from-video`: one attempt had low command-sequence similarity, and the retry timed out with the verifier seeing no final `solution.txt`; Codex passed the comparison, so a stronger extraction workflow plus final artifact persistence is feasible under the same task/harness.
-- `video-processing`: two Wattle attempts and Codex all failed tight frame-boundary checks, so the issue is exact temporal calibration rather than only one implementation's heuristic.
+- `video-processing`: all synced Wattle attempts and Codex failed tight frame-boundary checks, so the issue is exact temporal calibration rather than only one implementation's heuristic.
 - `sam-cell-seg`: retry missed a mask-alignment IoU threshold while also failing serialized-coordinate schema, showing image-mask tasks need both geometry scoring and output-format validation.
 - `financial-document-processor`: repeated manual/partial classification did not complete all files or `summary.csv`; Codex passed the comparison, so transaction-style staging and coverage validation are feasible.
 
