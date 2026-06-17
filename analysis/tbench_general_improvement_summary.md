@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T08:07:51Z`
+Snapshot used: `2026-06-17T08:12:58Z`
 
 This summary intentionally avoids task-specific fixes. It ranks general Wattle improvements by expected pass-rate impact, breadth across failures, and implementation practicality.
 
@@ -135,7 +135,7 @@ Some failures came from accepting plausible extracted content too early.
 
 Observed in:
 
-- `gcode-to-text`: decoded a plausible sentence instead of the hidden flag; Codex passed the comparison, so stronger rendering/OCR validation is feasible under the same environment.
+- `gcode-to-text`: two Wattle attempts failed; the first decoded a plausible sentence, while the retry produced a near-flag string with exact-character errors. Codex passed the comparison, so stronger rendering/OCR and character-level validation are feasible under the same environment.
 - `extract-moves-from-video`: command sequence similarity was too low; Codex passed the comparison, so a stronger extraction workflow is feasible under the same task/harness.
 - `video-processing`: two Wattle attempts and Codex all failed tight frame-boundary checks, so the issue is exact temporal calibration rather than only one implementation's heuristic.
 - `financial-document-processor`: manual/partial classification did not complete all files; Codex passed the comparison, so transaction-style staging and coverage validation are feasible.
@@ -179,7 +179,7 @@ General fix:
 
 ## Priority 8: Keep Prompt Caching Healthy But Do Not Optimize It Blindly
 
-The current run's aggregate prompt-cache hit rate is 85.5%, which is much better than the earlier 49.2% signal. The cache issue no longer appears to be the dominant cause of failures in this snapshot.
+The current run's aggregate prompt-cache hit rate is 85.4%, which is much better than the earlier 49.2% signal. The cache issue no longer appears to be the dominant cause of failures in this snapshot.
 
 General fix:
 

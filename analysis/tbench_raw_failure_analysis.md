@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T08:07:51Z`
+Snapshot used: `2026-06-17T08:12:58Z`
 
 Counts at snapshot:
 
 - Passed: 97
-- Failed: 30
+- Failed: 31
 - Exceptions: 11
 - Running or incomplete: 2
-- Prompt-cache hit rate: 85.5%
+- Prompt-cache hit rate: 85.4%
 
 Deep evidence reports were regenerated under:
 
@@ -111,12 +111,12 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `gcode-to-text`
 
-- Status: failed.
-- Verifier: expected `flag{gc0d3_iz_ch4LLenGiNg}`, got `the quick brown fox jumps over the lazy dog`.
+- Status: failed in both synced Wattle attempts.
+- Verifier: expected `flag{gc0d3_iz_ch4LLenGiNg}`. The first attempt wrote `the quick brown fox jumps over the lazy dog`; retry `gcode-to-text__BRWtjtt` wrote the near-flag string `flag{gac0d3_iz_ch4LLengING}`.
 - Oracle contrast: renders rotated 3D G-code segments and uses image/OCR tooling to recover the hidden text.
-- Wattle behavior: solved for a visually plausible decoded sentence, but not the verifier target.
+- Wattle behavior: moved from a plausible sentence to a nearly correct flag-shaped output, but still accepted character-level OCR/geometry errors that the verifier rejected.
 - Codex comparison: Codex passed this task, confirming the hidden flag is recoverable in the same environment when the rendering/OCR workflow is strong enough.
-- Raw lesson: Wattle should avoid accepting first plausible OCR/vision output without checking task-specific hidden-message criteria and alternative views.
+- Raw lesson: Wattle should avoid accepting plausible or near-correct OCR/vision output without task-specific character-level validation, expected-pattern checks, and alternative views/renderings.
 
 ### `gpt2-codegolf`
 
@@ -462,6 +462,13 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 - Oracle contrast: leaves a booted VM with reachable SSH, not only a configured disk or launch command.
 - Raw lesson: VM service tasks pass when Wattle validates the exact externally reachable login path and leaves the long-running process alive for the verifier.
 
+### `make-mips-interpreter`
+
+- Status: one Wattle attempt passed and one retry is still running.
+- Current evidence: passed attempt `make-mips-interpreter__aCajDDM` implemented `/app/vm.js`, ran `node vm.js`, booted Doom through graphics initialization, saved `/tmp/frame.bmp`, and validated the BMP header, `640 x 400` resolution, and 32-bit depth.
+- Oracle contrast: implements enough MIPS VM behavior to run DoomGeneric and emit the expected frame artifact.
+- Raw lesson: emulator/interpreter tasks can pass when Wattle validates actual target-binary execution and the verifier-visible frame artifact, not only instruction-level smoke tests.
+
 ### `torch-pipeline-parallelism`
 
 - Status: both synced Wattle attempts passed.
@@ -492,9 +499,9 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 - Watch point: if the retry passes, compare its OCR/frame sampling and transcript reconstruction workflow against Codex and the failed sparse-screenshot approach.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### `gcode-to-text` retry
+### `make-mips-interpreter` retry
 
-- Status: Wattle retry `gcode-to-text__BRWtjtt` is running.
-- Current evidence: prior Wattle attempt decoded the plausible sentence `the quick brown fox jumps over the lazy dog`, while the verifier expected `flag{gc0d3_iz_ch4LLenGiNg}`. Codex passed this comparison. The running retry has started by inspecting `/app/text.gcode` directly.
-- Watch point: if the retry passes, compare its G-code geometry/rendering workflow against the failed first-plausible-output path and Codex pass.
+- Status: Wattle retry `make-mips-interpreter__e9PC8ee` is running.
+- Current evidence: prior Wattle attempt `make-mips-interpreter__aCajDDM` passed after validating a Doom frame artifact. The running retry is inspecting the ELF/repo contents and looking for a binutils/Node path because `file` is unavailable.
+- Watch point: because one Wattle attempt already passed, classify the retry only if it produces a distinct failure signature; otherwise treat the prior pass as positive evidence for executable-level validation on emulator tasks.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
