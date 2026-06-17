@@ -2,12 +2,12 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T12:34:23Z`
+Snapshot used: `2026-06-17T12:39:31Z`
 
 Counts at snapshot:
 
-- Passed: 148
-- Failed: 47
+- Passed: 151
+- Failed: 48
 - Exceptions: 16
 - Running or incomplete: 2
 - Prompt-cache hit rate: 85.1%
@@ -50,10 +50,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `db-wal-recovery`
 
-- Status: failed in completed Wattle attempts, and one retry is running.
+- Status: all synced Wattle attempts failed.
 - Verifier: `Apple` stayed at value `100`; expected WAL update value `150`, proving encrypted WAL changes were not applied.
 - Oracle contrast: detects the XOR-encrypted WAL, XOR-decrypts it with key `0x42`, replaces `/app/main.db-wal`, then lets SQLite apply the WAL before writing `recovered.json`.
-- Wattle behavior: produced valid-looking JSON with rows sorted by id, but from the base database state rather than recovered WAL state. Running retry `db-wal-recovery__8hrDzqy` is inspecting saved session data and WAL hexdump/output before producing `/app/recovered.json`.
+- Wattle behavior: produced valid-looking JSON with rows sorted by id, but from the base database state rather than recovered WAL state. Retry `db-wal-recovery__8hrDzqy` repeated the same failure after inspecting saved session/WAL data, writing JSON with 11 sorted records, and validating only JSON shape/count rather than the expected WAL-updated values.
 - Codex comparison: Codex passed this task, strengthening the conclusion that the task and harness are healthy and Wattle's miss is semantic recovery of sidecar WAL state.
 - Raw lesson: Wattle should treat sidecar recovery files as first-class input and verify semantic deltas, not only output shape.
 
@@ -450,15 +450,15 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `compile-compcert`
 
-- Status: two completed Wattle attempts passed and one retry is running.
-- Current evidence: completed attempts `compile-compcert__FYotYgk` and `compile-compcert__Ypa3qhV` built upstream CompCert tag `v3.13.1` under `/tmp/CompCert`, produced `/tmp/CompCert/ccomp`, installed the required runtime/config pieces, and validated the compiler through `ccomp -version` plus smoke C programs compiled from outside the source tree. Running retry `compile-compcert__Feo3jb9` hit an out-of-memory kill during parallel Coq proof compilation and is resuming the same build with reduced parallelism.
+- Status: all synced Wattle attempts passed.
+- Current evidence: retry `compile-compcert__Feo3jb9` completed successfully after an out-of-memory kill during parallel Coq proof compilation, resuming the same `/tmp/CompCert` build with reduced parallelism, validating `/tmp/CompCert/ccomp -version`, and compiling/running a smoke C program. Earlier attempts `compile-compcert__FYotYgk` and `compile-compcert__Ypa3qhV` passed after building upstream CompCert tag `v3.13.1`, installing runtime/config pieces, and validating the required compiler path from outside the build directory.
 - Oracle contrast: builds the requested CompCert release at the required filesystem path and leaves the compiler invocable for verifier use.
-- Raw lesson: build-heavy tasks can pass when Wattle keeps to a narrow upstream release path, validates the exact required executable path, and confirms invocation from outside the build directory.
+- Raw lesson: build-heavy tasks can pass when Wattle keeps to a narrow upstream release path, caps resource usage after OOM signals, validates the exact required executable path, and confirms invocation from outside the build directory.
 
 ### `schemelike-metacircular-eval`
 
-- Status: both synced Wattle attempts passed.
-- Current evidence: Wattle implemented `eval.scm`, preserved STDIN for interpreted programs, handled closures/environments/mutation/file I/O, compared direct `interp.py` output against `eval.scm` and nested self-interpretation, and removed generated callback artifacts.
+- Status: two completed Wattle attempts passed, and one retry is running.
+- Current evidence: completed attempts `schemelike-metacircular-eval__H9Agtat` and `schemelike-metacircular-eval__oCPHDYP` implemented `eval.scm`, preserved STDIN for interpreted programs, handled closures/environments/mutation/file I/O, compared direct `interp.py` output against `eval.scm` and nested self-interpretation, and removed generated callback artifacts. Running retry `schemelike-metacircular-eval__saABBoR` has confirmed host primitives and is checking test-program language features before implementing the same behavior.
 - Oracle contrast: implements a Scheme-level evaluator that can run target programs through the provided interpreter while preserving observable behavior.
 - Raw lesson: interpreter tasks benefit from differential validation against the baseline interpreter across the whole provided test corpus, plus cleanup of artifacts produced by tests.
 
@@ -471,8 +471,8 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `qemu-startup`
 
-- Status: one Wattle attempt passed and one retry timed out.
-- Current evidence: passed attempt `qemu-startup__3XE3wqu` left QEMU running in the background and validated that `telnet 127.0.0.1 6665` showed an Alpine login prompt. Retry `qemu-startup__DsGusbV` timed out with QEMU no longer running, port 6665 not ready, and `/tmp/data.txt` missing during verifier execution.
+- Status: one Wattle attempt passed, one retry timed out, and one retry is running.
+- Current evidence: passed attempt `qemu-startup__3XE3wqu` left QEMU running in the background and validated that `telnet 127.0.0.1 6665` showed an Alpine login prompt. Retry `qemu-startup__DsGusbV` timed out with QEMU no longer running, port 6665 not ready, and `/tmp/data.txt` missing during verifier execution. Running retry `qemu-startup__35Dm9mT` has not yet produced synced evidence.
 - Oracle contrast: leaves the VM process and serial/telnet endpoint alive for the verifier's final liveness and version checks.
 - Raw lesson: service/VM tasks need final liveness checks that run immediately before final response, and those checks must verify all required side artifacts as well as the visible port.
 
@@ -639,16 +639,16 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ## Running Or Incomplete At Snapshot
 
-### `compile-compcert` retry
+### `qemu-startup` retry
 
-- Status: Wattle retry `compile-compcert__Feo3jb9` is running.
-- Current evidence: prior completed attempts passed after building CompCert `v3.13.1` under `/tmp/CompCert` and validating `/tmp/CompCert/ccomp` from outside the build directory. The running retry identified an out-of-memory kill during parallel Coq proof compilation and resumed with `make -j2`.
-- Watch point: if the retry fails, check whether Wattle should cap parallelism earlier for proof/build-heavy workloads.
+- Status: Wattle retry `qemu-startup__35Dm9mT` is running.
+- Current evidence: prior completed attempts are mixed: one passed by leaving QEMU and the telnet login prompt alive, while another timed out with no live VM/port and missing `/tmp/data.txt`. The running retry has not produced enough synced evidence yet.
+- Watch point: check final VM process liveness, telnet prompt availability, and required side artifacts immediately before handoff.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### `db-wal-recovery` retry
+### `schemelike-metacircular-eval` retry
 
-- Status: Wattle retry `db-wal-recovery__8hrDzqy` is running.
-- Current evidence: prior completed attempts failed by writing sorted JSON from the base database without applying encrypted WAL updates, leaving `Apple` at `100` instead of `150`. The running retry is inspecting saved session data and WAL hexdump/output before producing `/app/recovered.json`.
-- Watch point: check whether the retry validates the recovered semantic delta, not just JSON shape/count.
+- Status: Wattle retry `schemelike-metacircular-eval__saABBoR` is running.
+- Current evidence: prior completed attempts passed by implementing `eval.scm`, preserving STDIN, supporting closures/mutation/file I/O, differentially validating against `interp.py`, and cleaning generated callback artifacts. The running retry is inspecting primitives and test language features before implementation.
+- Watch point: if the retry passes, keep this as positive evidence for broad differential interpreter validation plus artifact cleanup.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
