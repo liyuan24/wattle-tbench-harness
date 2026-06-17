@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T09:04:10Z`
+Snapshot used: `2026-06-17T09:09:18Z`
 
 Counts at snapshot:
 
 - Passed: 104
-- Failed: 34
+- Failed: 35
 - Exceptions: 12
 - Running or incomplete: 2
-- Prompt-cache hit rate: 85.3%
+- Prompt-cache hit rate: 85.2%
 
 Deep evidence reports were regenerated under:
 
@@ -147,10 +147,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `mcmc-sampling-stan`
 
-- Status: exception, `AgentTimeoutError`.
+- Status: exception, `AgentTimeoutError`; retry `mcmc-sampling-stan__puVs8Uq` is running.
 - Verifier: posterior alpha and beta means were astronomically wrong relative to expected ranges, despite Wattle reporting plausible mean files before timeout.
 - Oracle contrast: installs pinned RStan dependencies, uses a hierarchical binomial Stan model with the intended prior transformation, then runs a long reproducible sample to write posterior means.
-- Wattle behavior: generated the required files and an apparently good intermediate result, then changed the Stan model/rerun path and timed out with verifier-visible bad posterior files.
+- Wattle behavior: generated the required files and an apparently good intermediate result, then changed the Stan model/rerun path and timed out with verifier-visible bad posterior files. The running retry is reinstalling RStan dependencies after adding BLAS/LAPACK/Fortran system dependencies.
 - Raw lesson: probabilistic/scientific tasks need stable final artifact protection; once a verifier-plausible result is produced, later experiments should not overwrite it without passing the same checks.
 
 ### `model-extraction-relu-logits`
@@ -208,10 +208,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `protein-assembly`
 
-- Status: failed in one Wattle attempt; retry `protein-assembly__ppLhTxo` is running.
-- Verifier: fusion protein order was wrong; expected flag, donor, DHFR, acceptor, SNAP.
+- Status: failed in both synced Wattle attempts.
+- Verifier: fusion protein order was wrong in both attempts; expected flag, donor, DHFR, acceptor, SNAP.
 - Oracle contrast: identifies binder/tag semantics, resolves SNAP/fluorescent protein choices from external sequence sources, then assembles the sequence in the specified order.
-- Wattle behavior: generated a valid DNA-looking `gblock.txt`, but the translated protein did not satisfy component ordering. The running retry is filtering FPbase records locally because an earlier query returned a broad list rather than a single exact match.
+- Wattle behavior: generated valid DNA-looking `gblock.txt` files and locally reported the intended component order in both attempts, but the verifier still could not find the required order, showing Wattle's component identity check was not verifier-equivalent.
 - Codex comparison: Codex passed this task, so the required component-order grounding is achievable under the same task/harness.
 - Raw lesson: bio/design tasks need semantic validation against named components and ordering, not only sequence validity.
 
@@ -534,9 +534,9 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 - Watch point: if the retry passes, compare whether all-file classification, atomic moves, and summary CSV coverage replaced the earlier partial-move workflow.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### `protein-assembly` retry
+### `mcmc-sampling-stan` retry
 
-- Status: Wattle retry `protein-assembly__ppLhTxo` is running.
-- Current evidence: prior Wattle attempt produced a valid-looking DNA sequence but got component ordering wrong, while Codex passed. The running retry is filtering FPbase records locally to avoid broad/ambiguous protein matches.
-- Watch point: if the retry passes, compare whether exact component identity/order validation replaced the earlier sequence-validity-only checks.
+- Status: Wattle retry `mcmc-sampling-stan__puVs8Uq` is running.
+- Current evidence: prior Wattle attempt produced plausible posterior means, then overwrote the final state during a later rerun and timed out with invalid verifier-visible mean files. The running retry is rebuilding RStan dependencies after adding BLAS/LAPACK/Fortran packages.
+- Watch point: if the retry passes, compare whether stable artifact preservation and a pinned oracle-like Stan path replaced the failed late-rerun behavior.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.

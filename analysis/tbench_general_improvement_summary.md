@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T09:04:10Z`
+Snapshot used: `2026-06-17T09:09:18Z`
 
 This summary intentionally avoids task-specific fixes. It ranks general Wattle improvements by expected pass-rate impact, breadth across failures, and implementation practicality.
 
@@ -159,7 +159,7 @@ Several outputs were syntactically valid but semantically wrong.
 
 Observed in:
 
-- `protein-assembly`: DNA sequence valid, protein component order wrong; Codex passed the comparison, so component grounding/order validation is feasible under the same task/harness.
+- `protein-assembly`: two Wattle attempts produced valid-looking DNA and locally claimed correct component order, but the verifier still found the protein order wrong; Codex passed, so verifier-equivalent component grounding/order validation is feasible under the same task/harness.
 - `extract-elf`: initial JSON was valid but ELF memory/symbol content was wrong; a Wattle retry passed after addressing parser/address-convention semantics, while Codex had also failed with 0% expected values.
 - `raman-fitting`: JSON valid, scientific fit wrong across two Wattle attempts and Codex; repeated convergence to wrong peak centers reinforces that generic curve fitting without verified unit conversion and domain windows is insufficient.
 - `torch-tensor-parallelism`: module valid, distributed gradients wrong.
@@ -181,7 +181,7 @@ General fix:
 
 ## Priority 8: Keep Prompt Caching Healthy But Do Not Optimize It Blindly
 
-The current run's aggregate prompt-cache hit rate is 85.3%, which is much better than the earlier 49.2% signal. The cache issue no longer appears to be the dominant cause of failures in this snapshot.
+The current run's aggregate prompt-cache hit rate is 85.2%, which is much better than the earlier 49.2% signal. The cache issue no longer appears to be the dominant cause of failures in this snapshot.
 
 General fix:
 
