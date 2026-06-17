@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T08:48:49Z`
+Snapshot used: `2026-06-17T08:53:56Z`
 
 Counts at snapshot:
 
-- Passed: 100
+- Passed: 101
 - Failed: 34
 - Exceptions: 12
 - Running or incomplete: 2
-- Prompt-cache hit rate: 85.3%
+- Prompt-cache hit rate: 85.2%
 
 Deep evidence reports were regenerated under:
 
@@ -75,12 +75,12 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `extract-elf`
 
-- Status: failed in a synced Wattle attempt; retry `extract-elf__2EaaYvz` is running.
-- Verifier: only 0% of expected values matched.
+- Status: one Wattle attempt failed and one retry passed.
+- Verifier: failed attempt matched only 0% of expected values.
 - Oracle contrast: parses ELF headers, sections, symbol tables, memory words, function symbols, and address/function mappings using a full ELF parser.
-- Wattle behavior: emitted valid JSON with plausible numeric keys, but the data model did not match the expected ELF extraction contract. The running retry is investigating PIE load-base conventions and rebased versus base-independent addresses.
+- Wattle behavior: failed attempt emitted valid JSON with plausible numeric keys, but the data model did not match the expected ELF extraction contract. Retry `extract-elf__2EaaYvz` passed after investigating PIE load-base conventions and rebased versus base-independent addresses while implementing `/app/extract.js`.
 - Codex comparison: Codex also failed this task with 0.00% expected values, reinforcing that superficial JSON/numeric extraction is a broad trap for binary-format tasks.
-- Raw lesson: for binary formats, superficial output schema checks are insufficient; Wattle needs contract-derived structural checks against known sections/symbols.
+- Raw lesson: for binary formats, superficial output schema checks are insufficient; parser-backed extraction and explicit address-convention checks can turn a 0% semantic match into a pass.
 
 ### `extract-moves-from-video`
 
@@ -208,10 +208,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `protein-assembly`
 
-- Status: failed.
+- Status: failed in one Wattle attempt; retry `protein-assembly__ppLhTxo` is running.
 - Verifier: fusion protein order was wrong; expected flag, donor, DHFR, acceptor, SNAP.
 - Oracle contrast: identifies binder/tag semantics, resolves SNAP/fluorescent protein choices from external sequence sources, then assembles the sequence in the specified order.
-- Wattle behavior: generated a valid DNA-looking `gblock.txt`, but the translated protein did not satisfy component ordering.
+- Wattle behavior: generated a valid DNA-looking `gblock.txt`, but the translated protein did not satisfy component ordering. The running retry is filtering FPbase records locally because an earlier query returned a broad list rather than a single exact match.
 - Codex comparison: Codex passed this task, so the required component-order grounding is achievable under the same task/harness.
 - Raw lesson: bio/design tasks need semantic validation against named components and ordering, not only sequence validity.
 
@@ -513,9 +513,9 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 - Watch point: if the retry fails, compare whether it skipped exact output equivalence, SQLite execution, or final SQL-format validation.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### `extract-elf` retry
+### `protein-assembly` retry
 
-- Status: Wattle retry `extract-elf__2EaaYvz` is running.
-- Current evidence: prior Wattle and Codex attempts matched 0.00% of expected values. The running retry is checking position-independent executable load-base conventions and rebased versus base-independent address output.
-- Watch point: if the retry passes, compare whether full ELF parser-backed extraction and address-convention checks replaced the failed plausible numeric JSON output.
+- Status: Wattle retry `protein-assembly__ppLhTxo` is running.
+- Current evidence: prior Wattle attempt produced a valid-looking DNA sequence but got component ordering wrong, while Codex passed. The running retry is filtering FPbase records locally to avoid broad/ambiguous protein matches.
+- Watch point: if the retry passes, compare whether exact component identity/order validation replaced the earlier sequence-validity-only checks.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
