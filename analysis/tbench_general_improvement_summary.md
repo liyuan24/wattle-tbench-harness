@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T03:37:28Z`
+Snapshot used: `2026-06-17T03:44:54Z`
 
 This summary intentionally avoids task-specific fixes. It ranks general Wattle improvements by expected pass-rate impact, breadth across failures, and implementation practicality.
 
@@ -40,6 +40,7 @@ Observed in:
 - `train-fasttext`: internal validation did not match private verifier format/threshold.
 - `gpt2-codegolf`: implementation did not satisfy exact compile/path/CLI contract; Codex passed the same task, which points to Wattle's exact validation loop rather than an environment issue.
 - `torch-tensor-parallelism`: forward/syntax checks missed backward distributed gradient mismatch.
+- `pytorch-model-recovery`: TorchScript model saved with the wrong `forward(src, tgt)` interface, despite plausible model-recovery work.
 - `overfull-hbox`: no overfull boxes, but invalid edit set.
 
 General fix:
@@ -53,6 +54,7 @@ General fix:
   - size limits
   - private-input format
   - multi-rank/backward/edge-case behavior
+  - model/service function signatures
 - Final "done" should require those checks to pass, or explicitly state the unmet risk.
 
 ## Priority 3: Preserve Oracle/API Semantics For External Benchmarks And Libraries
@@ -147,6 +149,7 @@ Observed in:
 - `extract-elf`: JSON valid, ELF memory/symbol content wrong.
 - `raman-fitting`: JSON valid, scientific fit wrong.
 - `torch-tensor-parallelism`: module valid, distributed gradients wrong.
+- `pytorch-model-recovery`: model artifact valid enough to save, but not callable through the verifier's expected interface.
 
 General fix:
 
@@ -159,7 +162,7 @@ General fix:
 
 ## Priority 8: Keep Prompt Caching Healthy But Do Not Optimize It Blindly
 
-The current run's aggregate prompt-cache hit rate is 86.2%, which is much better than the earlier 49.2% signal. The cache issue no longer appears to be the dominant cause of failures in this snapshot.
+The current run's aggregate prompt-cache hit rate is 86.5%, which is much better than the earlier 49.2% signal. The cache issue no longer appears to be the dominant cause of failures in this snapshot.
 
 General fix:
 

@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T03:37:28Z`
+Snapshot used: `2026-06-17T03:44:54Z`
 
 Counts at snapshot:
 
-- Passed: 48
-- Failed: 17
+- Passed: 49
+- Failed: 18
 - Exceptions: 6
 - Running or incomplete: 2
-- Prompt-cache hit rate: 86.2%
+- Prompt-cache hit rate: 86.5%
 
 Deep evidence reports were regenerated under:
 
@@ -18,7 +18,7 @@ Deep evidence reports were regenerated under:
 runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/
 ```
 
-The Codex comparison run `codex-compare-nonpassed-20260617` had one completed comparison at this snapshot: Codex passed `gpt2-codegolf`. Other comparison tasks were still running, so most task notes are grounded in Wattle logs, verifier failures, and Terminal-Bench oracle/tests.
+The Codex comparison run `codex-compare-nonpassed-20260617` had two completed comparisons at this snapshot: Codex passed `gpt2-codegolf` and failed `torch-tensor-parallelism`. `caffe-cifar-10` was still running. Most task notes remain grounded in Wattle logs, verifier failures, and Terminal-Bench oracle/tests.
 
 ## Confirmed Failures And Exceptions
 
@@ -175,6 +175,14 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had one completed co
 - Wattle behavior: generated a valid DNA-looking `gblock.txt`, but the translated protein did not satisfy component ordering.
 - Raw lesson: bio/design tasks need semantic validation against named components and ordering, not only sequence validity.
 
+### `pytorch-model-recovery`
+
+- Status: failed.
+- Verifier: TorchScript `forward()` expected at most 2 arguments but received 3; the expected recovered model interface accepts source and target tensors.
+- Oracle contrast: reconstructs the transformer-style architecture from `weights.pt`, including `forward(self, src, tgt)`, tunes only `output_layer`, then saves `/app/model.pt` as TorchScript.
+- Wattle behavior: produced a TorchScript model with a single-input forward signature, so it could not be called by the verifier's dataset path.
+- Raw lesson: model-recovery tasks need exact module interface validation, not only state-dict loading and local loss checks.
+
 ### `raman-fitting`
 
 - Status: failed.
@@ -189,6 +197,7 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had one completed co
 - Verifier: gradient mismatch for both column and row parallel linear layers.
 - Oracle contrast: implements Megatron-style autograd collectives: copy input forward/all-reduce gradient backward, gather output forward/split gradient backward, reduce output forward/identity backward.
 - Wattle behavior: passed basic syntax/forward-style checks but failed distributed gradient semantics.
+- Codex comparison: Codex also failed this task, with row-parallel failures across multi-rank cases. This reinforces that the task requires exact distributed autograd semantics, not just Wattle-specific cleanup.
 - Raw lesson: framework tasks need backward-pass tests and multi-rank numerical equivalence, not only import/forward smoke tests.
 
 ### `train-fasttext`
@@ -212,13 +221,13 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had one completed co
 ### `build-cython-ext`
 
 - Status: running at the snapshot.
-- Current evidence: Wattle was rerunning `python setup.py build_ext --inplace` after installing build tooling.
+- Current evidence: Wattle was still iterating on `python setup.py build_ext --inplace` after installing build tooling and compatibility patches.
 - Oracle contrast: clone `pyknotid` at `0.5.3`, patch specific Python/NumPy/Cython incompatibilities, install pinned `setuptools` and `cython`, build in place, then install editable.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
 
-### `git-leak-recovery`
+### `sam-cell-seg`
 
 - Status: running at the snapshot.
-- Current evidence: Wattle reported secret recovery, repo cleanup, reflog expiry, garbage collection, and no remaining `secret[...]` matches.
-- Oracle contrast: extracts `secret[...]` from dangling commits, writes `/app/secret.txt`, then prunes dangling commits so the secret is no longer present in Git metadata.
+- Current evidence: Wattle had begun a MobileSAM-based mask conversion task, but no completed verifier result was synced yet.
+- Oracle contrast: installs the pinned MobileSAM implementation, uses the provided box masks as prompts, converts all masks to non-overlapping contiguous polylines, and writes an output CSV matching the input schema.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.

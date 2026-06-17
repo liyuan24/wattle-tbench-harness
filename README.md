@@ -327,6 +327,20 @@ analysis/tbench_raw_failure_analysis.md
 analysis/tbench_general_improvement_summary.md
 ```
 
+Run the sync-and-analysis loop continuously in tmux:
+
+```bash
+tmux new-session -d -s gcp-tbench-analysis-monitor \
+  'cd /home/liyuan/repos/wattle-tbench-harness && ./scripts/monitor_gcp_analysis.sh --interval 300'
+```
+
+The monitor writes:
+
+```text
+runs/gcp/monitor/latest-status.md
+runs/gcp/monitor/monitor.log
+```
+
 When running on a GCP Spot VM, keep the benchmark run under the VM's persistent
 boot disk, for example `~/repos/wattle-tbench-harness/runs/<label>`. If the VM is
 stopped or preempted, completed trial artifacts remain available after the next
