@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T05:28:55Z`
+Snapshot used: `2026-06-17T05:39:10Z`
 
 Counts at snapshot:
 
-- Passed: 72
+- Passed: 74
 - Failed: 23
 - Exceptions: 6
 - Running or incomplete: 2
-- Prompt-cache hit rate: 85.5%
+- Prompt-cache hit rate: 85.6%
 
 Deep evidence reports were regenerated under:
 
@@ -18,7 +18,7 @@ Deep evidence reports were regenerated under:
 runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/
 ```
 
-The Codex comparison run `codex-compare-nonpassed-20260617` had nine completed comparisons at this snapshot: Codex passed `build-pov-ray`, `db-wal-recovery`, `gpt2-codegolf`, and `mteb-retrieve`, failed `configure-git-webserver`, `overfull-hbox`, `polyglot-rust-c`, and `torch-tensor-parallelism`, and timed out on `caffe-cifar-10`. Codex `train-fasttext` was running. Most task notes remain grounded in Wattle logs, verifier failures, and Terminal-Bench oracle/tests.
+The Codex comparison run `codex-compare-nonpassed-20260617` had eleven completed comparisons at this snapshot: Codex passed `build-pov-ray`, `db-wal-recovery`, `gpt2-codegolf`, and `mteb-retrieve`; failed `configure-git-webserver`, `overfull-hbox`, `polyglot-rust-c`, `torch-tensor-parallelism`, `train-fasttext`, and `video-processing`; and timed out on `caffe-cifar-10`. Codex `install-windows-3.11` was running. Most task notes remain grounded in Wattle logs, verifier failures, and Terminal-Bench oracle/tests.
 
 ## Confirmed Failures And Exceptions
 
@@ -244,6 +244,7 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had nine completed c
 - Verifier: private accuracy was 0.539925, below threshold 0.62.
 - Oracle contrast: converts the provided parquet train set to FastText supervised format and trains with `wordNgrams 2` and `dim 5`.
 - Wattle behavior: reported acceptable validation on its own processed split, but verifier used the real private evaluation contract and failed.
+- Codex comparison: Codex also failed, with private accuracy 0.58465 below the same 0.62 threshold. This makes the issue broader than Wattle-only execution and reinforces the need for exact data conversion/training settings and validation with margin.
 - Raw lesson: ML tasks need validation that matches the verifier input format and threshold with margin; internal split success can be misleading.
 
 ### `video-processing`
@@ -252,6 +253,7 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had nine completed c
 - Verifier: landing frame was 230; expected inclusive range 231 to 234.
 - Oracle contrast: uses frame-level movement/background subtraction and task-specific thresholds to locate jump start/end.
 - Wattle behavior: got very close but failed an off-by-one/tolerance-sensitive boundary.
+- Codex comparison: Codex also failed a tight boundary check, but on takeoff rather than landing: takeoff frame 226 was outside the inclusive range 219 to 223.
 - Raw lesson: video/temporal tasks need exact boundary calibration and verifier-range checks before final answer.
 
 ## Completed Passing Retries Since Prior Snapshot
@@ -312,27 +314,41 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had nine completed c
 - Oracle contrast: reconstructs a compact C renderer that reproduces the hidden path-tracing output and progress behavior under the compressed-size constraint.
 - Raw lesson: this remains a positive example for exact behavioral reproduction plus compressed-source validation; it does not change the general failure taxonomy.
 
+### `regex-chess`
+
+- Status: passed in both synced Wattle attempts.
+- Current evidence: retry `regex-chess__e3gJsr6` completed successfully after writing `/app/re.json` as a JSON list of regex/replacement pairs, validating the sample output, passing `/app/check.py`, satisfying the pair-count and size limits, and passing additional valid-position comparisons against `python-chess` for castling, queen promotion, and en-passant cases. The earlier pass `regex-chess__eBbYn7d` generated 6,863 pairs and passed the same checker.
+- Oracle contrast: generates a regex/pattern inventory that makes the chess PGN checker pass while preserving the exact JSON interface expected by the tests.
+- Raw lesson: this remains a positive example for matching the verifier's normalization contract and then broadening validation over legal edge cases; it does not change the general failure taxonomy.
+
+### `modernize-scientific-stack`
+
+- Status: passed in both synced Wattle attempts.
+- Current evidence: retry `modernize-scientific-stack__mWcAi6j` completed successfully after creating `/app/analyze_climate_modern.py` and `/app/requirements.txt`, preserving the same data/config inputs, running the script, and validating the expected station mean-temperature output. The earlier pass `modernize-scientific-stack__wrSjEGR` also compile-checked the modern script and preserved the legacy `/app/climate_analyzer/analyze_climate.py`.
+- Oracle contrast: modernizes the scientific stack while preserving the same data/config behavior and expected output without modifying the legacy file.
+- Raw lesson: this remains a positive example for preserving legacy behavior while modernizing dependencies and syntax; it does not change the general failure taxonomy.
+
 ## Running Or Incomplete At Snapshot
 
-### `regex-chess` retry
+### `torch-tensor-parallelism` retry
 
 - Status: running at the snapshot.
-- Current evidence: one Wattle attempt for this task already passed after generating `/app/re.json`, validating exact required sample output, running `python3 /app/check.py`, and satisfying file constraints with 6,863 pairs. Retry `regex-chess__e3gJsr6` was running a FEN comparison validation loop matching `check.py`, including its tolerated en-passant target normalization, while restricting validation to legal positions reachable from normal play plus a few valid special-case setups to avoid invalid-FEN artifacts.
-- Oracle contrast: generates a regex/pattern inventory that makes the chess PGN checker pass while preserving the exact JSON interface expected by the tests.
-- Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
+- Current evidence: one Wattle attempt failed gradient checks for both column and row parallel linear layers, and Codex also failed row-parallel indexing/shape behavior. Retry `torch-tensor-parallelism__DJJCv6Q` was running after inspecting `/app/parallel_linear.py` for interface and shape consistency and locating exception-handling paths plus a `ValueError`.
+- Oracle contrast: implements Megatron-style distributed linear layers with exact forward and backward collective semantics across ranks.
+- Watch point: if the retry passes, the key differentiator should be exact multi-rank/backward validation; if it fails again, it reinforces this as a verifier-like distributed autograd gap.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
 
 ### `winning-avg-corewars` retry
 
 - Status: running at the snapshot.
-- Current evidence: one Wattle attempt for this task already passed with verifier-style `pmars -b -r 100 -f` validation above all required win thresholds. Retry `winning-avg-corewars__KJ5akir` was running a bounded parallel search over compact scanner variants, screened only with the same fixed 100-round pMARS interface used for final evaluation.
+- Current evidence: one Wattle attempt for this task already passed with verifier-style `pmars -b -r 100 -f` validation above all required win thresholds. Retry `winning-avg-corewars__KJ5akir` was still running after a bounded parallel compact-scanner search hit its 600-second timeout without a completed verifier result.
 - Oracle contrast: writes a multi-component Redcode warrior and validates against stone, vampire, paper, snake, and G2-Clear without modifying opponent files.
 - Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
 
-### Codex `train-fasttext` comparison
+### Codex `install-windows-3.11` comparison
 
 - Status: running at the snapshot.
-- Current evidence: Wattle timed out on this task and still missed the private accuracy threshold. Codex comparison `train-fasttext__mHUHgSX` had started but had not yet emitted assistant/tool evidence or a verifier result.
-- Watch point: if Codex passes, that will strengthen the case that Wattle needs tighter private-format validation and faster minimal FastText training paths. If Codex fails similarly, the lesson still points to budget-aware ML validation, but with broader model difficulty.
+- Current evidence: Wattle failed this task by not leaving QEMU/Windows and VNC `:1` services alive. Codex comparison `install-windows-3.11__g6g8y7G` had started but had not yet emitted assistant/tool evidence or a verifier result.
+- Watch point: if Codex passes, that will strengthen the case for final service-liveness gates and exact VM launch parameters. If Codex fails similarly, it reinforces the task's service/boot difficulty across agents.
 - Do not classify the Codex comparison outcome yet. It should be analyzed after a completed `result.json` is synced.
