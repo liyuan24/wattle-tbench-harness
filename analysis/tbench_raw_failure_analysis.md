@@ -2,13 +2,13 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T07:57:35Z`
+Snapshot used: `2026-06-17T08:07:51Z`
 
 Counts at snapshot:
 
-- Passed: 96
+- Passed: 97
 - Failed: 30
-- Exceptions: 10
+- Exceptions: 11
 - Running or incomplete: 2
 - Prompt-cache hit rate: 85.5%
 
@@ -251,10 +251,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `train-fasttext`
 
-- Status: exception, `AgentTimeoutError`.
-- Verifier: private accuracy was 0.539925, below threshold 0.62.
+- Status: exception, `AgentTimeoutError`, in both synced Wattle attempts.
+- Verifier: first Wattle attempt had private accuracy 0.539925 and retry had 0.602975, both below threshold 0.62.
 - Oracle contrast: converts the provided parquet train set to FastText supervised format and trains with `wordNgrams 2` and `dim 5`.
-- Wattle behavior: reported acceptable validation on its own processed split, but verifier used the real private evaluation contract and failed.
+- Wattle behavior: first attempt reported acceptable validation on its own processed split, but verifier used the real private evaluation contract and failed. Retry produced a smaller valid model but still missed the accuracy threshold before timeout.
 - Codex comparison: Codex also failed, with private accuracy 0.58465 below the same 0.62 threshold. This makes the issue broader than Wattle-only execution and reinforces the need for exact data conversion/training settings and validation with margin.
 - Raw lesson: ML tasks need validation that matches the verifier input format and threshold with margin; internal split success can be misleading.
 
@@ -471,8 +471,8 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `tune-mjcf`
 
-- Status: one Wattle attempt passed and one retry is running.
-- Current evidence: passed attempt `tune-mjcf__vkgf5hy` saved `/app/model.xml` with MuJoCo option `solver="PGS"`, preserved physical model properties, and validated `/app/eval.py` with final state difference 0.0000 and speedup 2.04x.
+- Status: both synced Wattle attempts passed.
+- Current evidence: Wattle saved `/app/model.xml` with MuJoCo solver/computation settings that preserved physical model properties, validated `/app/eval.py` with final state difference 0.0000, and achieved speedups above 2x. Retry also ran an extra 30-seed correctness check with max absolute state difference `4.34e-08`.
 - Oracle contrast: improves simulation runtime without changing the final full physics state beyond evaluator tolerance.
 - Raw lesson: performance-tuning tasks can pass when Wattle changes solver/computation settings while validating exact state equivalence and runtime target together.
 
@@ -485,16 +485,16 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ## Running Or Incomplete At Snapshot
 
-### `train-fasttext` retry
+### `extract-moves-from-video` retry
 
-- Status: Wattle retry `train-fasttext__tBeUiwP` is running.
-- Current evidence: prior Wattle attempt `train-fasttext__Lxx62u2` timed out and produced a model that only exceeded the threshold under Wattle's preprocessing path, while the verifier saw 0.539925 accuracy. Codex also failed this comparison below threshold at 0.58465.
-- Watch point: if the retry passes, compare its exact data conversion/evaluation command and model-size controls against both failed attempts.
+- Status: Wattle retry `extract-moves-from-video__Gd4fao8` is running.
+- Current evidence: prior Wattle attempt had only 63.37% command-transcript similarity, while Codex passed the comparison. The running retry is OCRing frequent frames and using move counters/prompts to reconstruct the sequence rather than relying on sparse screenshots.
+- Watch point: if the retry passes, compare its OCR/frame sampling and transcript reconstruction workflow against Codex and the failed sparse-screenshot approach.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### `tune-mjcf` retry
+### `gcode-to-text` retry
 
-- Status: Wattle retry `tune-mjcf__zDWrQcT` is running.
-- Current evidence: one prior Wattle attempt already passed by setting MuJoCo `solver="PGS"` and validating both speedup and final-state equivalence. The running retry is exploring non-physical-computation shortcuts first.
-- Watch point: because a prior Wattle attempt passed, this retry should not change the failure taxonomy unless it later fails with a new verifier signature.
+- Status: Wattle retry `gcode-to-text__BRWtjtt` is running.
+- Current evidence: prior Wattle attempt decoded the plausible sentence `the quick brown fox jumps over the lazy dog`, while the verifier expected `flag{gc0d3_iz_ch4LLenGiNg}`. Codex passed this comparison. The running retry has started by inspecting `/app/text.gcode` directly.
+- Watch point: if the retry passes, compare its G-code geometry/rendering workflow against the failed first-plausible-output path and Codex pass.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.

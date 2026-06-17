@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T07:57:35Z`
+Snapshot used: `2026-06-17T08:07:51Z`
 
 This summary intentionally avoids task-specific fixes. It ranks general Wattle improvements by expected pass-rate impact, breadth across failures, and implementation practicality.
 
@@ -42,7 +42,7 @@ Observed in:
 
 - `mteb-retrieve`: wrong MTEB wrapper/prompt semantics produced the wrong ranked document; Codex passed the same task, reinforcing that exact API parity is achievable in the harness.
 - `mteb-leaderboard`: wrong leaderboard snapshot/aggregation semantics; Codex passed the comparison, so exact snapshot/completeness/aggregation reproduction is feasible in the same environment.
-- `train-fasttext`: internal validation did not match private verifier format/threshold; Codex also failed below threshold, so exact data conversion/training settings and margin matter broadly.
+- `train-fasttext`: two Wattle attempts and Codex all failed below the private verifier threshold, so exact data conversion/training settings and validation margin matter broadly.
 - `gpt2-codegolf`: implementation did not satisfy exact compile/path/CLI/output contract across two Wattle attempts; Codex passed the same task, which points to Wattle's exact validation loop rather than an environment issue.
 - `torch-tensor-parallelism`: forward/syntax checks missed backward distributed gradient mismatch.
 - `pytorch-model-recovery`: TorchScript model saved with the wrong `forward(src, tgt)` interface, despite plausible model-recovery work.
@@ -100,7 +100,7 @@ Observed in:
 - `caffe-cifar-10`: build/train did not finish required artifacts.
 - `make-doom-for-mips`: two Wattle attempts and Codex all timed out after partial Doom/VM progress without reaching the expected graphics initialization and reference-like frame.
 - `install-windows-3.11`: first Wattle attempt did not leave services running; retry fixed liveness/path but still failed visual feedback, while Codex also failed path/visual-feedback checks.
-- `train-fasttext`: timed out and still missed accuracy; Codex also completed below threshold, which keeps the lesson focused on fast oracle-like training paths plus verifier-matched validation rather than Wattle-only timeout handling.
+- `train-fasttext`: both Wattle attempts timed out and still missed accuracy; Codex also completed below threshold, which keeps the lesson focused on fast oracle-like training paths plus verifier-matched validation rather than Wattle-only timeout handling.
 - `mcmc-sampling-stan`: long sampling and late reruns consumed budget and left bad final artifacts.
 
 General fix:
