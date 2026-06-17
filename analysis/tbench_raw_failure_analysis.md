@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T04:17:18Z`
+Snapshot used: `2026-06-17T04:19:19Z`
 
 Counts at snapshot:
 
@@ -245,7 +245,7 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had two completed co
 ### `dna-assembly`
 
 - Status: running at the snapshot.
-- Current evidence: Wattle had parsed `sequences.fasta`, located how the input plasmid and insert templates map into the desired circular output, and was inspecting junction contexts for Golden Gate primer overhang design; no completed verifier result was synced yet.
+- Current evidence: Wattle had parsed `sequences.fasta`, located how the input plasmid and insert templates map into the desired circular output, inspected junction contexts for Golden Gate primer overhang design, and was installing Primer3 so it could validate candidate annealing segments with the exact `oligotm` flags; no completed verifier result was synced yet.
 - Oracle contrast: designs one BsaI-ready primer pair for each template (`input`, `egfp`, `flag`, `snap`), uses unique four-base Golden Gate junction overhangs, excludes start/stop codons where required, validates each annealing tract with the exact `oligotm` flags, and writes a 16-line `primers.fasta` with exact `>TEMPLATENAME_DIR` headers and no blank lines.
 - Watch point: this is another orientation-sensitive DNA design task. The completed result should be judged against verifier-style reconstruction of all fragments and overhang junctions, not only primer Tm checks.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
@@ -253,7 +253,7 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had two completed co
 ### `gpt2-codegolf` retry
 
 - Status: running at the snapshot.
-- Current evidence: the first Wattle `gpt2-codegolf` trial remains a confirmed failure, but a second trial `gpt2-codegolf__kUprDk6` was running at the snapshot; no completed verifier result was synced yet for the retry.
+- Current evidence: the first Wattle `gpt2-codegolf` trial remains a confirmed failure, but a second trial `gpt2-codegolf__kUprDk6` was running at the snapshot and debugging raw checkpoint tensor layout after a compiled smoke run suggested a targeted weight-order issue; no completed verifier result was synced yet for the retry.
 - Oracle contrast: still requires a dependency-free `/app/gpt2.c` under 5000 bytes that compiles with `gcc -O3 -lm`, reads the checkpoint and BPE file, and emits exact argmax GPT-2 continuations for verifier prompts.
 - Watch point: keep the existing confirmed-failure lesson, but replace or augment it if the retry passes or fails with a different verifier signature.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
