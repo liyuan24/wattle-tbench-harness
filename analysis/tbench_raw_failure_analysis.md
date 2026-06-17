@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T08:23:12Z`
+Snapshot used: `2026-06-17T08:28:19Z`
 
 Counts at snapshot:
 
-- Passed: 98
+- Passed: 99
 - Failed: 32
 - Exceptions: 11
 - Running or incomplete: 2
-- Prompt-cache hit rate: 85.4%
+- Prompt-cache hit rate: 85.3%
 
 Deep evidence reports were regenerated under:
 
@@ -163,10 +163,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `mteb-leaderboard`
 
-- Status: failed.
+- Status: failed in one Wattle attempt; retry `mteb-leaderboard__CNyeeXt` is running.
 - Verifier: expected `GritLM/GritLM-7B`; Wattle wrote `Salesforce/SFR-Embedding-2_R`.
 - Oracle contrast: checks out the MTEB results repo at a specific commit, loads the exact `MTEB(Scandinavian, v1)` benchmark, filters models with all tasks, and computes complete-task averages.
-- Wattle behavior: selected a plausible leaderboard winner but did not reproduce the exact dated result computation.
+- Wattle behavior: selected a plausible leaderboard winner but did not reproduce the exact dated result computation. The running retry is inspecting benchmark/task definitions so it can compute the same Scandinavian leaderboard inputs instead of guessing from model names.
 - Codex comparison: Codex passed this task, strengthening the conclusion that Wattle needs exact benchmark snapshot/completeness/aggregation reproduction rather than a broader leaderboard heuristic.
 - Raw lesson: benchmark/leaderboard tasks require exact dataset snapshot, benchmark name, completeness filters, and aggregation semantics.
 
@@ -471,8 +471,8 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `circuit-fibsqrt`
 
-- Status: one Wattle attempt passed and one retry is still running.
-- Current evidence: passed attempt `circuit-fibsqrt__HA3mGv6` created `/app/gates.txt` with 10,094 lines, validated the supplied simulator examples `sim 208 -> 377` and `sim 20000 -> 1407432322`, and checked 42 boundary/random inputs against a Python reference for `fib(isqrt(N)) mod 2^32`.
+- Status: both synced Wattle attempts passed.
+- Current evidence: passed attempt `circuit-fibsqrt__HA3mGv6` created `/app/gates.txt` with 10,094 lines, validated the supplied simulator examples `sim 208 -> 377` and `sim 20000 -> 1407432322`, and checked 42 boundary/random inputs against a Python reference for `fib(isqrt(N)) mod 2^32`. Retry `circuit-fibsqrt__aQM8Ahy` also passed with an 8,100-line `gates.txt`, the same two official examples, and 38 independent edge/random reference checks.
 - Oracle contrast: produces a gate network that matches the arithmetic contract under the simulator and line budget.
 - Raw lesson: circuit-generation tasks can pass when Wattle validates both official examples and independently generated edge/random cases against a compact reference.
 
@@ -506,9 +506,9 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 - Watch point: if the retry passes, compare its OCR/frame sampling and transcript reconstruction workflow against Codex and the failed sparse-screenshot approach.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### `circuit-fibsqrt` retry
+### `mteb-leaderboard` retry
 
-- Status: Wattle retry `circuit-fibsqrt__aQM8Ahy` is running.
-- Current evidence: prior Wattle attempt `circuit-fibsqrt__HA3mGv6` passed with simulator examples and randomized reference checks. The running retry has started by inspecting simulator semantics and the existing example file.
-- Watch point: if the retry fails, compare whether it skipped the broad reference validation that made the first attempt robust.
+- Status: Wattle retry `mteb-leaderboard__CNyeeXt` is running.
+- Current evidence: prior Wattle attempt picked `Salesforce/SFR-Embedding-2_R` while the verifier expected `GritLM/GritLM-7B`; Codex passed this comparison. The running retry is inspecting local MTEB benchmark/task definitions before recomputing the Scandinavian leaderboard.
+- Watch point: if the retry passes, compare whether exact benchmark snapshot/task completeness/aggregation reproduction replaced the failed broader leaderboard heuristic.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
