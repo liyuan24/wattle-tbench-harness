@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T12:39:31Z`
+Snapshot used: `2026-06-17T12:49:47Z`
 
 This summary intentionally avoids task-specific fixes. It ranks general Wattle improvements by expected pass-rate impact, breadth across failures, and implementation practicality.
 
@@ -15,9 +15,9 @@ Observed in:
 - `polyglot-c-py`: correct source, extra `cmain`; Codex also failed the comparison with the same leftover artifact.
 - `polyglot-rust-c`: correct source, extra `main` and `cmain` across all synced Wattle attempts; Codex also failed the comparison by leaving an extra `main`, so exact final inventory is a broad failure mode.
 - `configure-git-webserver`: smoke-tested successfully, then reset state so verifier saw 404; Codex also failed the comparison with HTTP 404, and Wattle retries with a deployment hook/server plus a managed persistent service still failed with verifier-visible HTTP 000.
-- `qemu-startup`: one Wattle attempt passed, but a retry timed out with the VM no longer running and required side artifacts missing, showing service liveness must be checked at final handoff.
+- `qemu-startup`: two Wattle attempts passed by leaving the VM and telnet prompt alive, but one retry timed out with the VM no longer running and required side artifacts missing, showing service liveness must be checked at final handoff.
 - `financial-document-processor`: two Wattle attempts moved a partial set of files and left `summary.csv` missing.
-- `build-pov-ray`: the first Wattle attempt built a working executable but missed source/provenance artifacts; a retry passed after preserving official 2.2 archives/layout, and Codex also passed the comparison.
+- `build-pov-ray`: the first Wattle attempt built a working executable but missed source/provenance artifacts; two retries passed after preserving official 2.2 archives/layout, and Codex also passed the comparison.
 - `mcmc-sampling-stan`: plausible posterior mean files were produced, then later experimentation left bad verifier-visible outputs; a retry passed after preserving the pinned RStan sampling path and final means.
 - `sam-cell-seg`: one attempt's segmentation geometry was accepted, but the serialized CSV coordinate fields used tuple syntax instead of verifier-accepted flat lists.
 - `winning-avg-corewars`: one retry timed out and left an early placeholder/test warrior as the verifier-visible final file, while later retries passed only after preserving a fully validated warrior, showing the general need for final validated-artifact handoff.

@@ -2,11 +2,11 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T12:39:31Z`
+Snapshot used: `2026-06-17T12:49:47Z`
 
 Counts at snapshot:
 
-- Passed: 151
+- Passed: 153
 - Failed: 48
 - Exceptions: 16
 - Running or incomplete: 2
@@ -24,10 +24,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `build-pov-ray`
 
-- Status: one Wattle attempt failed and one retry passed.
+- Status: one Wattle attempt failed and two retries passed.
 - Verifier: expected POV-Ray 2.2 source marker `file_id.diz`; it was missing, indicating the wrong extraction/build layout or wrong source version.
 - Oracle contrast: downloads the exact `Official-2.2` `POVDOC`, `POVSCN`, and `POVSRC` archives, extracts them in `/app`, copies `machine/unix/*` into `source`, patches build files, and installs the resulting binary.
-- Wattle behavior: the failed attempt reported a successful build and render but left the source tree in a layout the verifier considered wrong. Retry `build-pov-ray__w5rvtSs` passed after downloading official `POVSRC.TAR.Z` and `POVDOC.TAR.Z`, extracting to `/app/povray-2.2`, building under `/app/povray-2.2/build`, and validating the requested render command.
+- Wattle behavior: the failed attempt reported a successful build and render but left the source tree in a layout the verifier considered wrong. Retries `build-pov-ray__w5rvtSs` and `build-pov-ray__P3kfg6z` passed after downloading official POV-Ray 2.2 archives, extracting source/docs to `/app/povray-2.2`, building `/usr/local/bin/povray`, preserving `/app/deps/illum1.pov`, and validating the requested render command with the correct include path.
 - Codex comparison: Codex passed this task, strengthening the conclusion that Wattle's failure is not a task/harness issue but a final-state provenance audit miss.
 - Raw lesson: Wattle validated executable behavior without validating the verifier-visible provenance and required source artifacts.
 
@@ -464,15 +464,15 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `git-multibranch`
 
-- Status: both synced Wattle attempts passed.
-- Current evidence: Wattle configured SSH remote `git@localhost:/git/project`, password auth, a bare repo, `post-receive` deployment for `main` and `dev`, and HTTPS nginx on port 8443, then cleaned validation-created refs/deployed payloads while preserving services and hooks.
+- Status: two completed Wattle attempts passed, and one retry is running.
+- Current evidence: completed attempts `git-multibranch__U6ApYrw` and `git-multibranch__pYxYnbz` configured SSH remote `git@localhost:/git/project`, password auth, a bare repo, `post-receive` deployment for `main` and `dev`, and HTTPS nginx on port 8443, then cleaned validation-created refs/deployed payloads while preserving services and hooks. Running retry `git-multibranch__HGYP3GA` is checking active Nginx process state and planning compact end-to-end validation.
 - Oracle contrast: leaves a Git/HTTPS service state that lets the verifier push branches and observe the correct branch-specific deployed content.
 - Raw lesson: service tasks can pass when Wattle validates the exact external workflow but then resets only validation payloads, not the required service/hook infrastructure.
 
 ### `qemu-startup`
 
-- Status: one Wattle attempt passed, one retry timed out, and one retry is running.
-- Current evidence: passed attempt `qemu-startup__3XE3wqu` left QEMU running in the background and validated that `telnet 127.0.0.1 6665` showed an Alpine login prompt. Retry `qemu-startup__DsGusbV` timed out with QEMU no longer running, port 6665 not ready, and `/tmp/data.txt` missing during verifier execution. Running retry `qemu-startup__35Dm9mT` has not yet produced synced evidence.
+- Status: two Wattle attempts passed and one retry timed out.
+- Current evidence: retry `qemu-startup__35Dm9mT` completed successfully after leaving the Alpine ISO running in QEMU, recording the QEMU PID at `/tmp/alpine-qemu-6665.pid`, and validating that telnet on `127.0.0.1:6665` shows a login prompt. Earlier pass `qemu-startup__3XE3wqu` used the same final service-liveness pattern. Retry `qemu-startup__DsGusbV` timed out with QEMU no longer running, port 6665 not ready, and `/tmp/data.txt` missing during verifier execution.
 - Oracle contrast: leaves the VM process and serial/telnet endpoint alive for the verifier's final liveness and version checks.
 - Raw lesson: service/VM tasks need final liveness checks that run immediately before final response, and those checks must verify all required side artifacts as well as the visible port.
 
@@ -639,16 +639,16 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ## Running Or Incomplete At Snapshot
 
-### `qemu-startup` retry
+### `git-multibranch` retry
 
-- Status: Wattle retry `qemu-startup__35Dm9mT` is running.
-- Current evidence: prior completed attempts are mixed: one passed by leaving QEMU and the telnet login prompt alive, while another timed out with no live VM/port and missing `/tmp/data.txt`. The running retry has not produced enough synced evidence yet.
-- Watch point: check final VM process liveness, telnet prompt availability, and required side artifacts immediately before handoff.
+- Status: Wattle retry `git-multibranch__HGYP3GA` is running.
+- Current evidence: prior completed attempts passed by preserving SSH/Git/Nginx service infrastructure while cleaning only validation-created branch refs and deployed payloads. The running retry is checking Nginx process state and preparing compact end-to-end validation.
+- Watch point: check that any final cleanup preserves the bare repo, hooks, auth, TLS config, web roots, and live Nginx service.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
 ### `schemelike-metacircular-eval` retry
 
 - Status: Wattle retry `schemelike-metacircular-eval__saABBoR` is running.
-- Current evidence: prior completed attempts passed by implementing `eval.scm`, preserving STDIN, supporting closures/mutation/file I/O, differentially validating against `interp.py`, and cleaning generated callback artifacts. The running retry is inspecting primitives and test language features before implementation.
+- Current evidence: prior completed attempts passed by implementing `eval.scm`, preserving STDIN, supporting closures/mutation/file I/O, differentially validating against `interp.py`, and cleaning generated callback artifacts. The running retry has implemented `eval.scm`, validated the required examples, and is comparing it against `interp.py` across provided test programs.
 - Watch point: if the retry passes, keep this as positive evidence for broad differential interpreter validation plus artifact cleanup.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
