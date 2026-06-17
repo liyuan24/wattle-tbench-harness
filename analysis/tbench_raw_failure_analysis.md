@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T03:51:44Z`
+Snapshot used: `2026-06-17T03:54:21Z`
 
 Counts at snapshot:
 
-- Passed: 50
-- Failed: 19
+- Passed: 51
+- Failed: 20
 - Exceptions: 6
 - Running or incomplete: 2
-- Prompt-cache hit rate: 86.4%
+- Prompt-cache hit rate: 86.3%
 
 Deep evidence reports were regenerated under:
 
@@ -127,6 +127,14 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had two completed co
 - Wattle behavior: generated the required files and an apparently good intermediate result, then changed the Stan model/rerun path and timed out with verifier-visible bad posterior files.
 - Raw lesson: probabilistic/scientific tasks need stable final artifact protection; once a verifier-plausible result is produced, later experiments should not overwrite it without passing the same checks.
 
+### `model-extraction-relu-logits`
+
+- Status: failed.
+- Verifier: `stolen_A1.npy` existed, but row 11 of the verifier's original 30x10 matrix could not be matched up to scaling.
+- Oracle contrast: uses query-only ReLU critical-point sweeps that are robust to unknown hidden width and verifier-generated weights.
+- Wattle behavior: produced a script and locally validated perfect recovery against the visible `/app/forward.py` internals, including a visible 20x10 `A1`, but the verifier used a different generated matrix and exposed incomplete row recovery.
+- Raw lesson: model-extraction tasks need hidden-input robustness checks and should not rely on visible implementation constants as proof of correctness; validation should test generality over shape/seed variations where possible.
+
 ### `mteb-leaderboard`
 
 - Status: failed.
@@ -226,16 +234,16 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had two completed co
 
 ## Running Or Incomplete At Snapshot
 
-### `model-extraction-relu-logits`
+### `large-scale-text-editing`
 
 - Status: running at the snapshot.
-- Current evidence: Wattle had inspected `forward.py` and found that the hidden layer shape is directly present in the importable implementation, but no completed `result.json` had been synced yet.
-- Oracle contrast: uses query-only critical-point sweeps against `forward()` to recover rows of `A1` up to permutation and scale, then writes `/app/steal.py` and `/app/stolen_A1.npy`.
+- Current evidence: Wattle was working on `/app/apply_macros.vim`; no completed verifier result was synced yet.
+- Oracle contrast: defines three distinct `setreg` macros under 200 total keystrokes, runs `:%normal! @a`, `@b`, `@c`, and transforms the million-row CSV byte-for-byte using only allowed Vim commands.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
 
-### `nginx-request-logging`
+### `sparql-university`
 
 - Status: running at the snapshot.
-- Current evidence: Wattle had installed/inspected Nginx, edited `/etc/nginx/nginx.conf`, wrote `/etc/nginx/conf.d/benchmark-site.conf`, and was still in progress with no completed verifier result synced yet.
-- Oracle contrast: installs Nginx, creates exact index and 404 pages, adds `log_format` and `limit_req_zone` in the `http` context, applies `limit_req` in the server block, removes the default site, validates `nginx -t`, restarts Nginx, and verifies localhost:8080.
+- Current evidence: Wattle had written `/app/solution.sparql` and was editing the query after discovering `rdflib` was unavailable locally; no completed verifier result was synced yet.
+- Oracle contrast: separates the EU-department eligibility condition from the returned country aggregation, counts currently enrolled distinct students by department using the 2025-08-16 date, and returns the exact professor/country groups expected by the tests.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
