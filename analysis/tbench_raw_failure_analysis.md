@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T08:53:56Z`
+Snapshot used: `2026-06-17T09:04:10Z`
 
 Counts at snapshot:
 
-- Passed: 101
+- Passed: 104
 - Failed: 34
 - Exceptions: 12
 - Running or incomplete: 2
-- Prompt-cache hit rate: 85.2%
+- Prompt-cache hit rate: 85.3%
 
 Deep evidence reports were regenerated under:
 
@@ -102,10 +102,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `financial-document-processor`
 
-- Status: exception, `NonZeroAgentExitCodeError`.
+- Status: exception, `NonZeroAgentExitCodeError`; retry `financial-document-processor__QTBG3Nt` is running.
 - Verifier: invoices and `summary.csv` were missing or incomplete.
 - Oracle contrast: implements OCR/text extraction for images/PDFs, content-based invoice classification, moves every document, and writes a structured invoice summary.
-- Wattle behavior: began moving a hand-classified subset and then exited before completing destination directories and summary output.
+- Wattle behavior: began moving a hand-classified subset and then exited before completing destination directories and summary output. The running retry has not yet produced a completed result.
 - Codex comparison: Codex passed this task, showing the transaction-style all-files-then-summary workflow is achievable in the same task environment.
 - Raw lesson: multi-file classification tasks need transaction-style staging: classify all files, validate total coverage, then move/write outputs atomically.
 
@@ -504,13 +504,34 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 - Oracle contrast: leaves a working Mailman/Postfix service integration with the expected list/domain aliases and local delivery behavior.
 - Raw lesson: mail/service integration tasks pass when Wattle validates daemon liveness, generated routing maps, policy state, and the evaluator workflow together.
 
+### `query-optimize`
+
+- Status: both synced Wattle attempts passed.
+- Current evidence: retry `query-optimize__w54u8pV` saved `/app/sol.sql`, validated single-query/no-comments/semicolon formatting, executed successfully against `/app/oewn.sqlite`, returned 500 rows, and checked the same tested output hash as the optimized equivalent candidate. The earlier pass `query-optimize__SznDBb2` also validated identical output to the original query plus SQLite execution.
+- Oracle contrast: preserves exact query results while improving the SQL plan and leaving a verifier-ready single SQL file.
+- Raw lesson: query-optimization tasks pass when Wattle validates semantic equivalence against the original query and enforces final SQL formatting constraints.
+
+### `code-from-image`
+
+- Status: both synced Wattle attempts passed.
+- Current evidence: retry `code-from-image__p6tpuQf` wrote `/app/output.txt`; earlier pass `code-from-image__TuVgRiu` also wrote the expected 65-byte output artifact.
+- Oracle contrast: extracts exact code/text content from the supplied image and writes only the verifier-expected output file.
+- Raw lesson: image transcription tasks can pass when Wattle keeps the deliverable narrow and validates the exact output artifact rather than relying on descriptive interpretation.
+
+### `fix-code-vulnerability`
+
+- Status: both synced Wattle attempts passed.
+- Current evidence: retry `fix-code-vulnerability__PLUE5As` updated `/app/bottle.py` so response header names and values reject newline, carriage return, and NUL characters, wrote `/app/report.jsonl` with `cwe-93`, and validated `367 passed` through `pytest -rA`. Earlier pass `fix-code-vulnerability__Kbic8zY` used the same CWE-93 fix and report contract.
+- Oracle contrast: patches the vulnerable header handling while preserving the existing Bottle test suite and producing the required vulnerability report.
+- Raw lesson: security-fix tasks pass when Wattle pairs a minimal targeted validation with the full existing regression suite and exact report schema.
+
 ## Running Or Incomplete At Snapshot
 
-### `query-optimize` retry
+### `financial-document-processor` retry
 
-- Status: Wattle retry `query-optimize__w54u8pV` is running.
-- Current evidence: prior Wattle attempt `query-optimize__SznDBb2` passed after writing `/app/sol.sql`, validating identical output to the original query on the provided database, successful SQLite execution, and one-query/no-comments/semicolon formatting.
-- Watch point: if the retry fails, compare whether it skipped exact output equivalence, SQLite execution, or final SQL-format validation.
+- Status: Wattle retry `financial-document-processor__QTBG3Nt` is running.
+- Current evidence: prior Wattle attempt exited non-zero after moving only a subset and leaving `summary.csv` missing, while Codex passed. The running retry has not yet synced detailed progress.
+- Watch point: if the retry passes, compare whether all-file classification, atomic moves, and summary CSV coverage replaced the earlier partial-move workflow.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
 ### `protein-assembly` retry
