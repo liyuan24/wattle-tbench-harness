@@ -2,11 +2,11 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T05:44:18Z`
+Snapshot used: `2026-06-17T05:54:32Z`
 
 Counts at snapshot:
 
-- Passed: 75
+- Passed: 77
 - Failed: 23
 - Exceptions: 7
 - Running or incomplete: 2
@@ -18,7 +18,7 @@ Deep evidence reports were regenerated under:
 runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/
 ```
 
-The Codex comparison run `codex-compare-nonpassed-20260617` had eleven completed comparisons at this snapshot: Codex passed `build-pov-ray`, `db-wal-recovery`, `gpt2-codegolf`, and `mteb-retrieve`; failed `configure-git-webserver`, `overfull-hbox`, `polyglot-rust-c`, `torch-tensor-parallelism`, `train-fasttext`, and `video-processing`; and timed out on `caffe-cifar-10`. Codex `install-windows-3.11` was running. Most task notes remain grounded in Wattle logs, verifier failures, and Terminal-Bench oracle/tests.
+The Codex comparison run `codex-compare-nonpassed-20260617` had twelve completed comparisons at this snapshot: Codex passed `build-pov-ray`, `db-wal-recovery`, `gpt2-codegolf`, and `mteb-retrieve`; failed `configure-git-webserver`, `install-windows-3.11`, `overfull-hbox`, `polyglot-rust-c`, `torch-tensor-parallelism`, `train-fasttext`, and `video-processing`; and timed out on `caffe-cifar-10`. Codex `make-doom-for-mips` was running. Most task notes remain grounded in Wattle logs, verifier failures, and Terminal-Bench oracle/tests.
 
 ## Confirmed Failures And Exceptions
 
@@ -128,6 +128,7 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had eleven completed
 - Verifier: QEMU was not running and VNC port 5901 was not listening.
 - Oracle contrast: compiles/uses QEMU 5.2.0, starts the Windows image with the required legacy device flags, VNC `:1`, nginx/noVNC service, and monitor interfaces.
 - Wattle behavior: investigated boot flags but did not leave the required long-running VM services alive.
+- Codex comparison: Codex also failed the verifier, with QEMU running against `/app/win311-runtime.img` instead of the expected `/app/isos/win311.img`, plus visual-feedback key tests failing.
 - Raw lesson: service tasks need a final liveness gate for all required processes/ports after any debugging restarts.
 
 ### `make-doom-for-mips`
@@ -335,6 +336,20 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had eleven completed
 - Oracle contrast: implements Megatron-style distributed linear layers with exact forward and backward collective semantics across ranks.
 - Raw lesson: this is positive evidence that exact distributed autograd semantics can turn the task around, but it still supports the broader need for multi-rank/backward verifier-like validation.
 
+### `feal-linear-cryptanalysis`
+
+- Status: passed in both synced Wattle attempts.
+- Current evidence: retry `feal-linear-cryptanalysis__eX5XQT8` completed successfully after recovering the 20-bit seeds, expanding round keys, validating encryption/decryption across all 32 known pairs, generating `/app/plaintexts.txt` from `/app/ciphertexts.txt`, and confirming 100 output lines. The earlier pass `feal-linear-cryptanalysis__9FwPG5V` recovered the same seeds and validated the same plaintext output.
+- Oracle contrast: recovers the FEAL key material from known pairs and writes the exact decrypted plaintext list.
+- Raw lesson: this remains a positive example for end-to-end cryptanalytic validation against all known pairs plus final output cardinality; it does not change the general failure taxonomy.
+
+### `prove-plus-comm`
+
+- Status: passed in both synced Wattle attempts.
+- Current evidence: retry `prove-plus-comm__ZNbd2W4` completed successfully after replacing the base-case `admit` with `apply plus_n_O`, replacing the inductive-step `admit` with `rewrite IHn'` and `apply plus_n_Sm`, running `coqc plus_comm.v`, and confirming `plus_comm.vo` was produced. The earlier pass `prove-plus-comm__bvZWpuh` completed and compiled the same proof.
+- Oracle contrast: completes the Coq proof without admits and leaves the compiled proof artifact.
+- Raw lesson: this remains a positive example for exact compiler-backed proof validation; it does not change the general failure taxonomy.
+
 ## Completed Mixed-Outcome Retries Since Prior Snapshot
 
 ### `winning-avg-corewars` retry
@@ -346,25 +361,25 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had eleven completed
 
 ## Running Or Incomplete At Snapshot
 
+### `caffe-cifar-10` retry
+
+- Status: running at the snapshot.
+- Current evidence: one Wattle attempt already timed out without producing `/app/caffe/examples/cifar10/cifar10_quick_iter_500.caffemodel` or `/app/caffe/training_output.txt`, and Codex also timed out on this task. Retry `caffe-cifar-10__srgqEfW` was running Caffe's built-in `make tools examples` target to produce `build/tools/caffe.bin` and `build/examples/cifar10/convert_cifar_data.bin` under the expected source tree.
+- Oracle contrast: builds Caffe with the required tools/examples, prepares CIFAR-10 data, and runs exactly 500 iterations while teeing output to the verifier-visible training log.
+- Watch point: if the retry passes, the likely differentiator is following the built-in Caffe targets and preserving the required artifacts; if it fails, it further reinforces long build/train deadline management.
+- Do not classify yet. It should be analyzed after a completed `result.json` is synced.
+
 ### `path-tracing` retry
 
 - Status: running at the snapshot.
-- Current evidence: one Wattle attempt for this task already passed after writing `/app/image.c`, compiling it, generating `/app/reconstructed.ppm`, staying under the compressed-size limit, and achieving high local normalized-L2 similarity against `/app/image.ppm`. Retry `path-tracing__dhCWrsR` was running after matching the sky to a standard pinhole ray setup and fitting camera/object parameters against silhouettes and checker pattern before compactly encoding the generator.
+- Current evidence: one Wattle attempt for this task already passed after writing `/app/image.c`, compiling it, generating `/app/reconstructed.ppm`, staying under the compressed-size limit, and achieving high local normalized-L2 similarity against `/app/image.ppm`. Retry `path-tracing__dhCWrsR` was running an error-map loop to find the largest mismatch, likely in checker/shadow/lighting constants, then make a focused edit and rerun exact validation.
 - Oracle contrast: writes a compact C image generator that reconstructs the target path-traced image closely enough under the compressed-size limit.
 - Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
 
-### `prove-plus-comm` retry
+### Codex `make-doom-for-mips` comparison
 
 - Status: running at the snapshot.
-- Current evidence: one Wattle attempt for this task already passed after completing `plus_comm.v` and compiling it with `coqc plus_comm.v`. Retry `prove-plus-comm__ZNbd2W4` was running after replacing the base-case `admit` with `apply plus_n_O`, replacing the inductive-step `admit` with `rewrite IHn'` and `apply plus_n_Sm`, and confirming `plus_comm.vo` was produced.
-- Oracle contrast: completes the Coq proof without admits and leaves the compiled proof artifact.
-- Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
-- Do not classify yet. It should be analyzed after a completed `result.json` is synced.
-
-### Codex `install-windows-3.11` comparison
-
-- Status: running at the snapshot.
-- Current evidence: Wattle failed this task by not leaving QEMU/Windows and VNC `:1` services alive. Codex comparison `install-windows-3.11__g6g8y7G` had started but had not yet emitted assistant/tool evidence or a verifier result.
-- Watch point: if Codex passes, that will strengthen the case for final service-liveness gates and exact VM launch parameters. If Codex fails similarly, it reinforces the task's service/boot difficulty across agents.
+- Current evidence: Wattle timed out on this task after late emulator/runtime debugging. Codex comparison `make-doom-for-mips__dtoidwG` had started but had not yet emitted assistant/tool evidence or a verifier result.
+- Watch point: if Codex passes, that will help isolate the specific MIPS runtime/build strategy Wattle missed. If Codex fails similarly, it reinforces this as a broad emulator/cross-compile budget and ISA-compatibility challenge.
 - Do not classify the Codex comparison outcome yet. It should be analyzed after a completed `result.json` is synced.

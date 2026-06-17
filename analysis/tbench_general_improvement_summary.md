@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T05:44:18Z`
+Snapshot used: `2026-06-17T05:54:32Z`
 
 This summary intentionally avoids task-specific fixes. It ranks general Wattle improvements by expected pass-rate impact, breadth across failures, and implementation practicality.
 
@@ -96,7 +96,7 @@ Observed in:
 
 - `caffe-cifar-10`: build/train did not finish required artifacts.
 - `make-doom-for-mips`: late emulator/runtime debugging consumed budget.
-- `install-windows-3.11`: did not leave required services running.
+- `install-windows-3.11`: did not leave required services running; Codex also failed after using a runtime image path different from the verifier-expected `/app/isos/win311.img`.
 - `train-fasttext`: timed out and still missed accuracy; Codex also completed below threshold, which keeps the lesson focused on fast oracle-like training paths plus verifier-matched validation rather than Wattle-only timeout handling.
 - `mcmc-sampling-stan`: long sampling and late reruns consumed budget and left bad final artifacts.
 
