@@ -2,12 +2,12 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T11:17:26Z`
+Snapshot used: `2026-06-17T11:22:34Z`
 
 Counts at snapshot:
 
 - Passed: 137
-- Failed: 42
+- Failed: 43
 - Exceptions: 13
 - Running or incomplete: 2
 - Prompt-cache hit rate: 85.0%
@@ -327,8 +327,8 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `path-tracing`
 
-- Status: passed in both synced Wattle attempts.
-- Current evidence: retry `path-tracing__dhCWrsR` completed successfully after writing `/app/image.c`, compiling it, generating `reconstructed.ppm`, keeping compressed source at `3 19 644` from `cat image.c | gzip | wc`, validating output dimensions `2400x1800`, and reaching local relative-L2-style similarity `0.9929`. The earlier pass `path-tracing__iZaeUpX` also generated `/app/reconstructed.ppm`, stayed under 2k compressed, and reached high normalized-L2 similarity.
+- Status: two completed Wattle attempts passed and one retry is running.
+- Current evidence: retry `path-tracing__dhCWrsR` completed successfully after writing `/app/image.c`, compiling it, generating `reconstructed.ppm`, keeping compressed source at `3 19 644` from `cat image.c | gzip | wc`, validating output dimensions `2400x1800`, and reaching local relative-L2-style similarity `0.9929`. The earlier pass `path-tracing__iZaeUpX` also generated `/app/reconstructed.ppm`, stayed under 2k compressed, and reached high normalized-L2 similarity. Running retry `path-tracing__fp6agpu` is fitting camera, checker plane, sphere, and lighting parameters from pixel samples before implementing a compact `image.c` and validating with an independent similarity script.
 - Oracle contrast: writes a compact C image generator that reconstructs the target path-traced image closely enough under the compressed-size limit.
 - Raw lesson: this remains a positive example for compact generator validation against image similarity and source-size constraints; it does not change the general failure taxonomy.
 
@@ -369,8 +369,8 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `torch-tensor-parallelism` retry
 
-- Status: mixed completed outcomes with one retry running: one Wattle retry passed, and earlier attempts failed gradient/indexing checks.
-- Current evidence: retry `torch-tensor-parallelism__DJJCv6Q` completed successfully after implementing `/app/parallel_linear.py` with sharded column/row parallel layers plus custom autograd wrappers for gather/reduce behavior so local weight and bias gradients are preserved. Earlier Wattle attempts failed column/row parallel weight-gradient checks and row-parallel indexing behavior, and Codex also failed row-parallel indexing/shape behavior. Running retry `torch-tensor-parallelism__9Nbajku` has implemented sharded column/row layers, gathers column-parallel outputs, all-reduces row-parallel partial outputs, and syntax-validated `/app/parallel_linear.py`, but full distributed runtime validation has not yet completed in the synced logs.
+- Status: mixed completed outcomes: one Wattle retry passed, and two Wattle attempts failed distributed gradient/indexing checks.
+- Current evidence: retry `torch-tensor-parallelism__9Nbajku` failed with `ColumnParallelLinear` weight-gradient mismatch on rank 0 and `RowParallelLinear` slicing failure (`start (16) + length (16) exceeds dimension size (16)`) after only syntax-validating `/app/parallel_linear.py`. Earlier failed attempt `torch-tensor-parallelism__gbSTPtC` also missed column/row parallel weight gradients. Retry `torch-tensor-parallelism__DJJCv6Q` passed after implementing sharded column/row parallel layers plus custom autograd wrappers for gather/reduce behavior so local weight and bias gradients are preserved. Codex also failed row-parallel indexing/shape behavior.
 - Oracle contrast: implements Megatron-style distributed linear layers with exact forward and backward collective semantics across ranks.
 - Raw lesson: this is positive evidence that exact distributed autograd semantics can turn the task around, but it still supports the broader need for multi-rank/backward verifier-like validation.
 
@@ -625,16 +625,16 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ## Running Or Incomplete At Snapshot
 
+### `path-tracing` retry
+
+- Status: Wattle retry `path-tracing__fp6agpu` is running.
+- Current evidence: prior completed attempts passed after writing compact `/app/image.c`, compiling it, generating `reconstructed.ppm`, staying under the 2k compressed-source limit, validating dimensions, and checking high image similarity. The running retry is fitting camera, checker plane, sphere, and lighting parameters from pixel samples before implementing a compact `image.c` and validating with an independent similarity script.
+- Watch point: if the retry passes, keep this as positive evidence for combining compact source-size checks with independent image-similarity validation.
+- Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
+
 ### `regex-chess` retry
 
 - Status: Wattle retry `regex-chess__Zv766pg` is running.
-- Current evidence: prior completed attempts passed after generating `/app/re.json` within size and pair-count limits, matching the sample output, passing `/app/check.py`, and validating special move cases against `python-chess`. The running retry has inspected checker behavior and is generating regex rules that expand FEN, emit candidate next positions, filter illegal king-in-check positions, and recompress; it is now adjusting validation to the checker's accepted FEN contract for en-passant targets.
+- Current evidence: prior completed attempts passed after generating `/app/re.json` within size and pair-count limits, matching the sample output, passing `/app/check.py`, and validating special move cases against `python-chess`. The running retry has inspected checker behavior and is generating regex rules that expand FEN, emit candidate next positions, filter illegal king-in-check positions, and recompress; it is now running broader randomized validation on valid game-reachable white-to-move positions plus constructed special positions.
 - Watch point: if the retry passes, keep this as positive evidence for using an executable reference model to generate compact regex-rewrite artifacts under strict file constraints.
-- Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
-
-### `torch-tensor-parallelism` retry
-
-- Status: Wattle retry `torch-tensor-parallelism__9Nbajku` is running.
-- Current evidence: prior synced attempts include one pass after custom autograd wrappers and earlier failures on distributed weight gradients and row-parallel indexing. The running retry has implemented `/app/parallel_linear.py` with output/input sharding, gathered column-parallel outputs, all-reduced row-parallel partial outputs, and passed syntax validation, but full distributed runtime validation has not yet completed in the synced logs.
-- Watch point: if the retry passes, compare whether it includes real distributed backward validation instead of relying on syntax checks.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
