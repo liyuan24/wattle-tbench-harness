@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T06:20:09Z`
+Snapshot used: `2026-06-17T06:25:17Z`
 
 Counts at snapshot:
 
-- Passed: 83
+- Passed: 85
 - Failed: 26
 - Exceptions: 8
 - Running or incomplete: 2
-- Prompt-cache hit rate: 85.5%
+- Prompt-cache hit rate: 85.4%
 
 Deep evidence reports were regenerated under:
 
@@ -18,7 +18,7 @@ Deep evidence reports were regenerated under:
 runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/
 ```
 
-The Codex comparison run `codex-compare-nonpassed-20260617` had thirteen completed comparisons at this snapshot: Codex passed `build-pov-ray`, `db-wal-recovery`, `gpt2-codegolf`, and `mteb-retrieve`; failed `configure-git-webserver`, `install-windows-3.11`, `overfull-hbox`, `polyglot-rust-c`, `torch-tensor-parallelism`, `train-fasttext`, and `video-processing`; and timed out on `caffe-cifar-10` and `make-doom-for-mips`. Codex `extract-moves-from-video` was running. Most task notes remain grounded in Wattle logs, verifier failures, and Terminal-Bench oracle/tests.
+The Codex comparison run `codex-compare-nonpassed-20260617` had fourteen completed comparisons at this snapshot: Codex passed `build-pov-ray`, `db-wal-recovery`, `extract-moves-from-video`, `gpt2-codegolf`, and `mteb-retrieve`; failed `configure-git-webserver`, `install-windows-3.11`, `overfull-hbox`, `polyglot-rust-c`, `torch-tensor-parallelism`, `train-fasttext`, and `video-processing`; and timed out on `caffe-cifar-10` and `make-doom-for-mips`. Codex `gcode-to-text` was running. Most task notes remain grounded in Wattle logs, verifier failures, and Terminal-Bench oracle/tests.
 
 ## Confirmed Failures And Exceptions
 
@@ -87,6 +87,7 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had thirteen complet
 - Verifier: solution text similarity was 63.37%, below the 90% threshold.
 - Oracle contrast: derives the Zork command transcript from the video rather than producing a merely plausible command list.
 - Wattle behavior: wrote a syntactically clean `solution.txt`, but the extracted sequence was materially different.
+- Codex comparison: Codex passed this task, so the failure points to Wattle's video/transcript extraction strategy rather than a task or harness issue.
 - Raw lesson: media/OCR tasks need confidence-aware extraction and cross-validation, not just format validation.
 
 ### `filter-js-from-html`
@@ -395,27 +396,41 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had thirteen complet
 - Oracle contrast: serves a PyPI-compatible simple index on port 8080 with the expected package/version/function import contract.
 - Raw lesson: package-index tasks need verifier-exact index layout and install command validation, not only a local package build or manually tested alternate layout.
 
+## Newly Completed Passing Retries
+
+### `cobol-modernization`
+
+- Status: both synced Wattle attempts passed.
+- Current evidence: Wattle implemented `/app/program.py`, preserved COBOL fixed-width no-newline `.DAT` records, updated account/book/transaction data, and compared Python outputs byte-for-byte against the original COBOL program from identical copied inputs.
+- Oracle contrast: reimplements the COBOL data-processing behavior in Python while preserving exact fixed-width data files and transaction semantics.
+- Raw lesson: this is positive evidence for a robust pattern: for legacy-program modernization tasks, Wattle should execute the original implementation as an oracle where available and compare final persisted artifacts byte-for-byte.
+
+### `crack-7z-hash`
+
+- Status: both synced Wattle attempts passed.
+- Current evidence: Wattle recovered the password and wrote `/app/solution.txt` with the expected secret content `honeybear`; the retry also confirmed the target path `secrets/secret_file.txt` before finishing.
+- Oracle contrast: recovers the 7z password and extracts only the target secret file content into the required solution artifact.
+- Raw lesson: targeted artifact extraction and a minimal final answer file work well when Wattle keeps the verifier-visible deliverable narrow.
+
 ## Running Or Incomplete At Snapshot
 
-### `cobol-modernization` retry
+### `overfull-hbox` retry
 
-- Status: running at the snapshot.
-- Current evidence: one Wattle attempt for this task already passed after implementing `/app/program.py`, preserving COBOL fixed-width `.DAT` record layouts, and byte-for-byte comparing Python outputs against the original COBOL program from identical initial states. Retry `cobol-modernization__QVV6rkL` had started but had not yet emitted assistant/tool evidence.
-- Oracle contrast: reimplements the COBOL data-processing behavior in Python while preserving exact fixed-width data files and transaction semantics.
-- Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
-- Do not classify yet. It should be analyzed after a completed `result.json` is synced.
+- Status: Wattle retry `overfull-hbox__iv3p9dd` is running.
+- Current evidence: two prior Wattle attempts failed because `input.tex` used words outside the allowed `synonyms.txt` edit set even though the TeX output itself avoided overfull boxes. Codex also failed this comparison with the same allowed-edit contract miss.
+- Watch point: if the retry passes, compare whether it introduced an explicit allowed-synonym audit before finalizing.
+- Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### `crack-7z-hash` retry
+### `polyglot-rust-c` retry
 
-- Status: running at the snapshot.
-- Current evidence: one Wattle attempt for this task already passed after writing `/app/solution.txt` containing `honeybear`. Retry `crack-7z-hash__YcfD75w` was running after extracting the archive hash, confirming the target path `secrets/secret_file.txt`, and starting a focused John-the-Ripper recovery using bundled resources.
-- Oracle contrast: recovers the 7z password and extracts only the target secret file content into the required solution artifact.
-- Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
-- Do not classify yet. It should be analyzed after a completed `result.json` is synced.
+- Status: Wattle retry `polyglot-rust-c__ciAfnzW` is running.
+- Current evidence: two prior Wattle attempts failed because compiled artifacts such as `main` and `cmain` remained beside `main.rs`, while the verifier expected only `main.rs`. Codex also failed this comparison by leaving an extra `main`.
+- Watch point: if the retry passes, compare whether it moved validation artifacts outside the checked directory or cleaned them before final validation.
+- Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### Codex `extract-moves-from-video` comparison
+### Codex `gcode-to-text` comparison
 
-- Status: running at the snapshot.
-- Current evidence: Wattle's command transcript had only 63.37% similarity against the expected solution. Codex comparison `extract-moves-from-video__kDUDMob` had started but had not yet emitted assistant/tool evidence or a verifier result.
-- Watch point: if Codex passes, compare its extraction workflow to Wattle's plausible-but-wrong transcript generation; if Codex fails similarly, it reinforces the need for stronger video/OCR confidence checks.
+- Status: Codex comparison `gcode-to-text__Den56ri` is running.
+- Current evidence: Wattle decoded a plausible sentence, `the quick brown fox jumps over the lazy dog`, but the verifier expected `flag{gc0d3_iz_ch4LLenGiNg}`. The oracle renders rotated G-code segments and applies image/OCR tooling to recover the hidden text.
+- Watch point: if Codex passes, compare its view-selection/rendering/OCR workflow to Wattle's first-plausible-output behavior; if it fails, this reinforces the need for stronger media extraction confidence checks.
 - Do not classify the Codex comparison outcome yet. It should be analyzed after a completed `result.json` is synced.
