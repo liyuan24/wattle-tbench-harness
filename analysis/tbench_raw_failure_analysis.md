@@ -2,13 +2,13 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T11:53:21Z`
+Snapshot used: `2026-06-17T12:03:37Z`
 
 Counts at snapshot:
 
-- Passed: 141
-- Failed: 43
-- Exceptions: 14
+- Passed: 142
+- Failed: 45
+- Exceptions: 15
 - Running or incomplete: 2
 - Prompt-cache hit rate: 85.1%
 
@@ -33,10 +33,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `caffe-cifar-10`
 
-- Status: two synced Wattle attempts ended with `AgentTimeoutError`, and one retry is running.
+- Status: all synced Wattle attempts ended with `AgentTimeoutError`.
 - Verifier: expected `/app/caffe/examples/cifar10/cifar10_quick_iter_500.caffemodel` and `/app/caffe/training_output.txt`; neither existed.
 - Oracle contrast: installs Caffe dependencies, checks out BVLC Caffe at `9b89154`, applies CPU/OpenCV/HDF5 compatibility patches, builds Caffe, runs CIFAR data prep, then runs exactly 500 iterations with output tee'd to `training_output.txt`.
-- Wattle behavior: the completed retry built CPU-only Caffe tools/examples and configured the solver for `max_iter: 500`, `snapshot: 500`, and CPU mode, but timed out before producing the required caffemodel and `training_output.txt`. Running retry `caffe-cifar-10__ZUbhad7` is correcting the build invocation to use Caffe's actual `tools` and `examples` targets while preserving the requested output/model paths; after a parallel build ran out of memory, it is resuming with a single compiler job before data/training validation.
+- Wattle behavior: one retry built CPU-only Caffe tools/examples and configured the solver for `max_iter: 500`, `snapshot: 500`, and CPU mode, but timed out before producing the required caffemodel and `training_output.txt`. Newer retry `caffe-cifar-10__ZUbhad7` corrected the build invocation and reached the data conversion/training step, but still timed out without the required caffemodel or training log; the verifier also saw the solver still configured for GPU mode in the expected solver file.
 - Raw lesson: long build/train tasks need earlier task-plan compression, deadline-aware fallbacks, and explicit artifact checkpoints before continuing expensive work.
 
 ### `configure-git-webserver`
@@ -172,10 +172,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `mteb-retrieve`
 
-- Status: failed in both completed Wattle attempts, and one retry is running.
+- Status: failed in all synced Wattle attempts.
 - Verifier: expected `MTEB: Massive Text Embedding Benchmark`; Wattle wrote `HumanEval: Benchmarking Python code generation via functional examples`.
 - Oracle contrast: uses `mteb.get_model("BAAI/bge-small-zh-v1.5", revision=...)`, encodes query with `task_name="SciFact"` and `PromptType.query`, encodes docs with `PromptType.passage`, then selects the 5th highest similarity.
-- Wattle behavior: inspected model/wrapper details but still wrote the wrong document in both completed attempts; retry `mteb-retrieve__Mr7e9Et` also synced the same unexpected result. Running retry `mteb-retrieve__He9Lf9t` has started but has not yet synced tool/assistant evidence beyond its running status.
+- Wattle behavior: inspected model/wrapper details but still wrote the wrong document in all three attempts; retries `mteb-retrieve__Mr7e9Et` and `mteb-retrieve__He9Lf9t` both synced the same unexpected `HumanEval` result.
 - Codex comparison: Codex passed this task in the comparison run, which reinforces that the failure is not the harness or task image but Wattle's exact MTEB API/revision/prompt-type/ranking reproduction.
 - Raw lesson: embedding tasks are sensitive to wrapper semantics, prompt type, task name, revision, and ranking convention; Wattle needs exact API parity with the prompt/oracle.
 
@@ -341,15 +341,15 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `adaptive-rejection-sampler`
 
-- Status: passed in both synced Wattle attempts.
-- Current evidence: retry `adaptive-rejection-sampler__E68fkod` completed successfully after installing R, implementing `/app/ars.R`, generating `/app/normal_samples.txt`, and running the formal `test()` function through `Rscript`. The earlier pass `adaptive-rejection-sampler__joi43Xi` validated normal, exponential, invalid-input, and non-log-concavity behavior.
+- Status: two completed Wattle attempts passed and one retry is running.
+- Current evidence: retry `adaptive-rejection-sampler__E68fkod` completed successfully after installing R, implementing `/app/ars.R`, generating `/app/normal_samples.txt`, and running the formal `test()` function through `Rscript`. The earlier pass `adaptive-rejection-sampler__joi43Xi` validated normal, exponential, invalid-input, and non-log-concavity behavior. Running retry `adaptive-rejection-sampler__WP4UrZo` has detected that R is missing and is installing the system R package before writing and validating the required script.
 - Oracle contrast: implements the adaptive rejection sampler in R with validation over target distributions and invalid inputs.
 - Raw lesson: this remains a positive example for installing missing runtime dependencies and running the task's formal statistical validation; it does not change the general failure taxonomy.
 
 ### `custom-memory-heap-crash`
 
-- Status: passed in both synced Wattle attempts.
-- Current evidence: retry `custom-memory-heap-crash__3QLCZxW` completed successfully after modifying only `/app/user.cpp`, forcing libstdc++ facet registration before the custom heap is enabled, calling `__gnu_cxx::__freeres()` in cleanup, and validating Release, Debug, and Valgrind with zero reported errors. The earlier pass fixed the same release-only custom-heap cleanup crash.
+- Status: all synced Wattle attempts passed.
+- Current evidence: retry `custom-memory-heap-crash__ZGyeDV9` completed successfully after modifying only `/app/user.cpp`, forcing the in-house libstdc++ facet registry to initialize before `main.cpp` installs the custom heap, calling `__gnu_cxx::__freeres()` during cleanup, and validating Release, Debug, and Valgrind. Earlier attempts `custom-memory-heap-crash__3QLCZxW` and `custom-memory-heap-crash__wQNqzW9` passed with the same protected-source-preserving fix and memory-tool validation.
 - Oracle contrast: fixes the release-only teardown crash without changing the protected allocator owner code.
 - Raw lesson: this remains a positive example for root-cause validation across build modes plus memory tooling; it does not change the general failure taxonomy.
 
@@ -625,16 +625,16 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ## Running Or Incomplete At Snapshot
 
-### `caffe-cifar-10` retry
+### `adaptive-rejection-sampler` retry
 
-- Status: Wattle retry `caffe-cifar-10__ZUbhad7` is running.
-- Current evidence: prior completed attempts timed out before producing `/app/caffe/examples/cifar10/cifar10_quick_iter_500.caffemodel` and `/app/caffe/training_output.txt`. The running retry is correcting the Caffe build invocation to use the actual `tools` and `examples` targets while preserving the requested output/model paths; after a parallel build ran out of memory, it is resuming with `make -j1 tools examples`.
-- Watch point: if the retry passes, compare whether it front-loads generated protobuf headers, exact Caffe target builds, and artifact checkpoints before the expensive 500-iteration training step.
+- Status: Wattle retry `adaptive-rejection-sampler__WP4UrZo` is running.
+- Current evidence: prior completed attempts passed after installing R, implementing `/app/ars.R`, generating `/app/normal_samples.txt`, and running the formal R `test()` function over target distributions and invalid-input/log-concavity checks. The running retry has detected that R is not installed and is installing the system R package before writing and validating the required script.
+- Watch point: if the retry passes, keep this as positive evidence for installing missing runtime dependencies and running the task's formal statistical validation.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### `mteb-retrieve` retry
+### `multi-source-data-merger` retry
 
-- Status: Wattle retry `mteb-retrieve__He9Lf9t` is running.
-- Current evidence: prior completed Wattle attempts both wrote `HumanEval: Benchmarking Python code generation via functional examples` instead of the expected `MTEB: Massive Text Embedding Benchmark`, while the Codex comparison passed the same task. The running Wattle retry has started but has not yet synced detailed tool evidence.
-- Watch point: if the retry passes, compare whether it uses the exact MTEB wrapper/model revision, `SciFact`, prompt semantics, and fifth-highest ranking contract rather than generic embedding similarity.
+- Status: Wattle retry `multi-source-data-merger__FcGDpD8` is running.
+- Current evidence: prior completed attempts passed after writing `/app/merged_users.parquet` and `/app/conflicts.json`, including all unique users, applying source priority `source_a > source_b > source_c`, preserving the required schema and integer/date types, and matching conflict counts. The running retry is inspecting source schemas and dependency availability before running a merge script and validating row counts, types, and conflicts.
+- Watch point: if the retry passes, keep this as positive evidence for schema-aware merge validation plus explicit conflict-report checks.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
