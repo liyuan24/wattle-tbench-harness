@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T13:00:03Z`
+Snapshot used: `2026-06-17T13:10:19Z`
 
 Counts at snapshot:
 
@@ -254,7 +254,7 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 - Status: exception, `AgentTimeoutError`, in completed Wattle attempts; one retry is running.
 - Verifier: first Wattle attempt had private accuracy 0.539925 and retry had 0.602975, both below threshold 0.62.
 - Oracle contrast: converts the provided parquet train set to FastText supervised format and trains with `wordNgrams 2` and `dim 5`.
-- Wattle behavior: first attempt reported acceptable validation on its own processed split, but verifier used the real private evaluation contract and failed. Retry produced a smaller valid model but still missed the accuracy threshold before timeout. Running retry `train-fasttext__76KNeuA` is rerunning FastText supervised training directly after an earlier shell `time` issue, targeting `/app/model.bin` only after validation.
+- Wattle behavior: first attempt reported acceptable validation on its own processed split, but verifier used the real private evaluation contract and failed. Retry produced a smaller valid model but still missed the accuracy threshold before timeout. Running retry `train-fasttext__76KNeuA` has moved from a raw FastText rerun into a lowercasing and punctuation-separated tokenization candidate, staging normalized `/tmp/yelp_train_norm.ft` and `/tmp/yelp_test_norm.ft` files before deciding whether to replace `/app/model.bin`.
 - Codex comparison: Codex also failed, with private accuracy 0.58465 below the same 0.62 threshold. This makes the issue broader than Wattle-only execution and reinforces the need for exact data conversion/training settings and validation with margin.
 - Raw lesson: ML tasks need validation that matches the verifier input format and threshold with margin; internal split success can be misleading.
 
@@ -479,7 +479,7 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 ### `qemu-alpine-ssh`
 
 - Status: two completed Wattle attempts passed, and one retry is running.
-- Current evidence: completed attempts `qemu-alpine-ssh__2rXBcVb` and `qemu-alpine-ssh__EyRt9zU` left Alpine running in QEMU with SSH forwarded on `localhost:2222`, root password `password123`, and validated an SSH login to a root shell inside the VM. Running retry `qemu-alpine-ssh__dumJjxx` has QEMU running and is attaching to its serial console to check whether Alpine has reached a login prompt.
+- Current evidence: completed attempts `qemu-alpine-ssh__2rXBcVb` and `qemu-alpine-ssh__EyRt9zU` left Alpine running in QEMU with SSH forwarded on `localhost:2222`, root password `password123`, and validated an SSH login to a root shell inside the VM. Running retry `qemu-alpine-ssh__dumJjxx` has QEMU running and is using the TCP serial console to complete the VM-side SSH setup before validating the requested SSH login path.
 - Oracle contrast: leaves a booted VM with reachable SSH, not only a configured disk or launch command.
 - Raw lesson: VM service tasks pass when Wattle validates the exact externally reachable login path and leaves the long-running process alive for the verifier.
 
@@ -642,13 +642,13 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 ### `train-fasttext` retry
 
 - Status: Wattle retry `train-fasttext__76KNeuA` is running.
-- Current evidence: prior completed attempts timed out and missed the private accuracy threshold after validating on mismatched or insufficient local formats. The running retry is rerunning FastText supervised training directly after a shell `time` issue, using `/tmp/yelp_train.ft` and `/tmp/yelp_test.ft` before moving any model to `/app/model.bin`.
+- Current evidence: prior completed attempts timed out and missed the private accuracy threshold after validating on mismatched or insufficient local formats. The running retry is testing a lowercasing and punctuation-separated FastText input conversion, staging normalized train/test files such as `/tmp/yelp_train_norm.ft` and `/tmp/yelp_test_norm.ft` before moving any model to `/app/model.bin`.
 - Watch point: check that validation uses the verifier-equivalent text conversion and clears the 0.62 accuracy threshold with margin before finalizing `/app/model.bin`.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
 ### `qemu-alpine-ssh` retry
 
 - Status: Wattle retry `qemu-alpine-ssh__dumJjxx` is running.
-- Current evidence: prior completed attempts passed by leaving Alpine running in QEMU, forwarding SSH on host port 2222, and validating `ssh -p 2222 root@localhost` with password `password123`. The running retry has QEMU running and is attaching to its serial console to check for the Alpine login prompt.
+- Current evidence: prior completed attempts passed by leaving Alpine running in QEMU, forwarding SSH on host port 2222, and validating `ssh -p 2222 root@localhost` with password `password123`. The running retry has QEMU running and is using the TCP serial console to finish the VM-side SSH setup before final SSH validation.
 - Watch point: check that SSH, not only serial login, is reachable at final handoff and that the VM process remains alive.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
