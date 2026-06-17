@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T04:35:43Z`
+Snapshot used: `2026-06-17T04:40:07Z`
 
 Counts at snapshot:
 
@@ -10,7 +10,7 @@ Counts at snapshot:
 - Failed: 23
 - Exceptions: 6
 - Running or incomplete: 2
-- Prompt-cache hit rate: 85.2%
+- Prompt-cache hit rate: 85.1%
 
 Deep evidence reports were regenerated under:
 
@@ -18,7 +18,7 @@ Deep evidence reports were regenerated under:
 runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/
 ```
 
-The Codex comparison run `codex-compare-nonpassed-20260617` had six completed comparisons at this snapshot: Codex passed `gpt2-codegolf` and `mteb-retrieve`, failed `configure-git-webserver`, `overfull-hbox`, and `torch-tensor-parallelism`, and timed out on `caffe-cifar-10`. Codex `polyglot-rust-c` was still running. Most task notes remain grounded in Wattle logs, verifier failures, and Terminal-Bench oracle/tests.
+The Codex comparison run `codex-compare-nonpassed-20260617` had seven completed comparisons at this snapshot: Codex passed `gpt2-codegolf` and `mteb-retrieve`, failed `configure-git-webserver`, `overfull-hbox`, `polyglot-rust-c`, and `torch-tensor-parallelism`, and timed out on `caffe-cifar-10`. Codex `db-wal-recovery` was running. Most task notes remain grounded in Wattle logs, verifier failures, and Terminal-Bench oracle/tests.
 
 ## Confirmed Failures And Exceptions
 
@@ -192,6 +192,7 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had six completed co
 - Verifier: expected only `main.rs`; found `main`, `cmain`, and `main.rs`.
 - Oracle contrast: creates only `polyglot/main.rs`; build products are not left in place.
 - Wattle behavior: validated both Rust and C++ compilation but left generated executables/symlinks.
+- Codex comparison: Codex also failed the task with the same final-inventory contract class, leaving `main` beside `main.rs`. That makes the failure pattern broader than Wattle-specific execution cleanup.
 - Raw lesson: exact output inventories should be treated as part of the task contract, not incidental filesystem state.
 
 ### `protein-assembly`
@@ -277,3 +278,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had six completed co
 - Oracle contrast: reverse-engineers the decompressor format and emits a compact compressed stream below the 2500-byte limit.
 - Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
+
+### Codex `db-wal-recovery` comparison
+
+- Status: running at the snapshot.
+- Current evidence: Wattle failed this task by producing valid-looking JSON from the base database state instead of applying the XOR-encrypted WAL delta. Codex comparison `db-wal-recovery__d7QMisB` had started but had not yet emitted assistant/tool evidence or a verifier result.
+- Watch point: if Codex passes, that will strengthen the case that the task is healthy and Wattle needs better sidecar/WAL semantic validation. If Codex fails similarly, the lesson still points to hidden state recovery and semantic delta validation, but with broader model difficulty.
+- Do not classify the Codex comparison outcome yet. It should be analyzed after a completed `result.json` is synced.
