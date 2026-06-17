@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T04:53:42Z`
+Snapshot used: `2026-06-17T04:55:32Z`
 
 Counts at snapshot:
 
-- Passed: 67
+- Passed: 68
 - Failed: 23
 - Exceptions: 6
-- Running or incomplete: 2
-- Prompt-cache hit rate: 85.3%
+- Running or incomplete: 1
+- Prompt-cache hit rate: 85.4%
 
 Deep evidence reports were regenerated under:
 
@@ -284,15 +284,14 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had nine completed c
 - Oracle contrast: creates `branch1` and `branch2` from the bundles, uses branch1 as base, applies the branch2 state, then implements `algo.py` with a modulo-diagonal color mapping inferred from examples.
 - Raw lesson: this remains a positive example for exact repository-state setup plus verifier-like example validation; it does not change the general failure taxonomy.
 
-## Running Or Incomplete At Snapshot
+### `pytorch-model-cli`
 
-### `pytorch-model-cli` retry
-
-- Status: running at the snapshot.
-- Current evidence: one Wattle attempt for this task already passed after creating `/app/cli_tool`, `/app/weights.json`, and `/app/prediction.txt`, validating that `./cli_tool weights.json image.png` outputs only `2`, and confirming `prediction.txt` matches. Retry `pytorch-model-cli__Ppsm6C6` was running after writing `/app/weights.json`, validating the Python inference path, converting `/app/cli_tool` into a small native launcher, and starting a final exact-command/artifact-content validation.
+- Status: passed in both synced Wattle attempts.
+- Current evidence: retry `pytorch-model-cli__Ppsm6C6` completed successfully after creating `/app/cli_tool`, `/app/weights.json`, and `/app/prediction.txt`, validating that `./cli_tool weights.json image.png` outputs only `2`, confirming `prediction.txt` contains only `2`, and checking that `/app/cli_tool` is an ELF executable. The earlier attempt `pytorch-model-cli__j8TEW5F` passed with the same exact CLI/output contract.
 - Oracle contrast: builds a CLI around the supplied image/model assets, writes the expected prediction artifact, and preserves the exact command interface.
-- Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
-- Do not classify yet. It should be analyzed after a completed `result.json` is synced.
+- Raw lesson: this remains a positive example for exact final command and artifact validation; it does not change the general failure taxonomy.
+
+## Running Or Incomplete At Snapshot
 
 ### `winning-avg-corewars` retry
 
