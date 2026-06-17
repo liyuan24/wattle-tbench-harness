@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T04:22:24Z`
+Snapshot used: `2026-06-17T04:24:16Z`
 
 Counts at snapshot:
 
 - Passed: 61
-- Failed: 21
+- Failed: 22
 - Exceptions: 6
 - Running or incomplete: 2
-- Prompt-cache hit rate: 85.6%
+- Prompt-cache hit rate: 85.4%
 
 Deep evidence reports were regenerated under:
 
@@ -18,7 +18,7 @@ Deep evidence reports were regenerated under:
 runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/
 ```
 
-The Codex comparison run `codex-compare-nonpassed-20260617` had two completed comparisons at this snapshot: Codex passed `gpt2-codegolf` and failed `torch-tensor-parallelism`. `caffe-cifar-10` was still running. Most task notes remain grounded in Wattle logs, verifier failures, and Terminal-Bench oracle/tests.
+The Codex comparison run `codex-compare-nonpassed-20260617` had three completed comparisons at this snapshot: Codex passed `gpt2-codegolf`, failed `torch-tensor-parallelism`, and timed out on `caffe-cifar-10`. Codex `mteb-retrieve` was still running. Most task notes remain grounded in Wattle logs, verifier failures, and Terminal-Bench oracle/tests.
 
 ## Confirmed Failures And Exceptions
 
@@ -53,6 +53,14 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had two completed co
 - Oracle contrast: detects the XOR-encrypted WAL, XOR-decrypts it with key `0x42`, replaces `/app/main.db-wal`, then lets SQLite apply the WAL before writing `recovered.json`.
 - Wattle behavior: produced valid-looking JSON with rows sorted by id, but from the base database state rather than recovered WAL state.
 - Raw lesson: Wattle should treat sidecar recovery files as first-class input and verify semantic deltas, not only output shape.
+
+### `dna-assembly`
+
+- Status: failed.
+- Verifier: `primers.fasta` existed and had the expected primer inventory, but at least one forward/reverse pair had an annealing Tm delta of 5.071125 C, just above the allowed 5 C threshold.
+- Oracle contrast: chooses exact template cut boundaries, excludes insert start/stop codons where required, derives Golden Gate overhangs from the verifier-equivalent reverse-complement reconstruction, and validates every annealing tract with `oligotm -tp 1 -sc 1 -mv 50 -dv 2 -n 0.8 -d 500`.
+- Wattle behavior: did substantial correct setup work and reported that all forward/reverse Tm differences were within 5 C, but its final local validation did not match the verifier closely enough near the threshold.
+- Raw lesson: near-threshold scientific/design tasks need verifier-equivalent reconstruction with margin; Wattle should not accept a final design where an exact hidden check can fail by a small tolerance.
 
 ### `dna-insert`
 
@@ -242,18 +250,18 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had two completed co
 
 ## Running Or Incomplete At Snapshot
 
-### `dna-assembly`
-
-- Status: running at the snapshot.
-- Current evidence: Wattle had parsed `sequences.fasta`, located how the input plasmid and insert templates map into the desired circular output, inspected junction contexts for Golden Gate primer overhang design, installed Primer3, validated annealing lengths with the exact `oligotm` flags, and wrote `primers.fasta`; no completed verifier result was synced yet.
-- Oracle contrast: designs one BsaI-ready primer pair for each template (`input`, `egfp`, `flag`, `snap`), uses unique four-base Golden Gate junction overhangs, excludes start/stop codons where required, validates each annealing tract with the exact `oligotm` flags, and writes a 16-line `primers.fasta` with exact `>TEMPLATENAME_DIR` headers and no blank lines.
-- Watch point: this is another orientation-sensitive DNA design task. The completed result should be judged against verifier-style reconstruction of all fragments and overhang junctions, not only primer Tm checks.
-- Do not classify yet. It should be analyzed after a completed `result.json` is synced.
-
 ### `gpt2-codegolf` retry
 
 - Status: running at the snapshot.
 - Current evidence: the first Wattle `gpt2-codegolf` trial remains a confirmed failure, but a second trial `gpt2-codegolf__kUprDk6` was running at the snapshot with the required `/app/gpt2.c` interface fixed and was making a bounded semantic improvement to the raw checkpoint tensor layout; no completed verifier result was synced yet for the retry.
 - Oracle contrast: still requires a dependency-free `/app/gpt2.c` under 5000 bytes that compiles with `gcc -O3 -lm`, reads the checkpoint and BPE file, and emits exact argmax GPT-2 continuations for verifier prompts.
 - Watch point: keep the existing confirmed-failure lesson, but replace or augment it if the retry passes or fails with a different verifier signature.
+- Do not classify yet. It should be analyzed after a completed `result.json` is synced.
+
+### `llm-inference-batching-scheduler` retry
+
+- Status: running at the snapshot.
+- Current evidence: one Wattle attempt for this task already passed, but another attempt `llm-inference-batching-scheduler__kgrrhCE` had just started and was inspecting request distributions plus the provided cost model before generating shape-aware batch plans.
+- Oracle contrast: uses deterministic shape selection and dynamic programming to satisfy all request coverage, maximum-shape, cost, padding, latency, and sequential-time thresholds across both buckets.
+- Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.

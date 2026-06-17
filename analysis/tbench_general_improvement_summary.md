@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T04:22:24Z`
+Snapshot used: `2026-06-17T04:24:16Z`
 
 This summary intentionally avoids task-specific fixes. It ranks general Wattle improvements by expected pass-rate impact, breadth across failures, and implementation practicality.
 
@@ -47,6 +47,7 @@ Observed in:
 - `sam-cell-seg`: all substantive image-mask tests passed, but exact serialized coordinate type failed.
 - `model-extraction-relu-logits`: local validation against visible model internals passed, but hidden verifier weights exposed incomplete recovery.
 - `dna-insert`: local validation reported matching primer Tm values, but the verifier reconstructed the primer pair in a different orientation and found the Tm delta above threshold.
+- `dna-assembly`: local validation reported all primer-pair Tm differences within threshold, but the verifier found a 5.071125 C delta against a 5 C limit.
 
 General fix:
 
@@ -159,6 +160,7 @@ Observed in:
 - `pytorch-model-recovery`: model artifact valid enough to save, but not callable through the verifier's expected interface.
 - `model-extraction-relu-logits`: recovered rows matched visible weights but not the verifier's hidden generated matrix.
 - `dna-insert`: primer sequences were syntactically valid and encoded the insert, but the annealing-arm orientation and Tm contract were not verifier-equivalent.
+- `dna-assembly`: primer inventory and assembly intent were plausible, but the exact Golden Gate reconstruction and annealing Tm margin still failed.
 
 General fix:
 
@@ -173,7 +175,7 @@ General fix:
 
 ## Priority 8: Keep Prompt Caching Healthy But Do Not Optimize It Blindly
 
-The current run's aggregate prompt-cache hit rate is 85.6%, which is much better than the earlier 49.2% signal. The cache issue no longer appears to be the dominant cause of failures in this snapshot.
+The current run's aggregate prompt-cache hit rate is 85.4%, which is much better than the earlier 49.2% signal. The cache issue no longer appears to be the dominant cause of failures in this snapshot.
 
 General fix:
 
