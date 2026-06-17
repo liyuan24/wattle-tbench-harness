@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T06:56:03Z`
+Snapshot used: `2026-06-17T07:06:17Z`
 
 Counts at snapshot:
 
-- Passed: 92
+- Passed: 93
 - Failed: 28
-- Exceptions: 8
+- Exceptions: 9
 - Running or incomplete: 2
-- Prompt-cache hit rate: 85.2%
+- Prompt-cache hit rate: 85.0%
 
 Deep evidence reports were regenerated under:
 
@@ -18,7 +18,7 @@ Deep evidence reports were regenerated under:
 runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/
 ```
 
-The Codex comparison run `codex-compare-nonpassed-20260617` had eighteen completed comparisons at this snapshot: Codex passed `build-pov-ray`, `db-wal-recovery`, `extract-moves-from-video`, `gcode-to-text`, `gpt2-codegolf`, `mteb-leaderboard`, and `mteb-retrieve`; failed `configure-git-webserver`, `extract-elf`, `install-windows-3.11`, `overfull-hbox`, `polyglot-rust-c`, `raman-fitting`, `torch-tensor-parallelism`, `train-fasttext`, and `video-processing`; and timed out on `caffe-cifar-10` and `make-doom-for-mips`. Codex `protein-assembly` was running. Most task notes remain grounded in Wattle logs, verifier failures, and Terminal-Bench oracle/tests.
+The Codex comparison run `codex-compare-nonpassed-20260617` had nineteen completed comparisons at this snapshot: Codex passed `build-pov-ray`, `db-wal-recovery`, `extract-moves-from-video`, `gcode-to-text`, `gpt2-codegolf`, `mteb-leaderboard`, `mteb-retrieve`, and `protein-assembly`; failed `configure-git-webserver`, `extract-elf`, `install-windows-3.11`, `overfull-hbox`, `polyglot-rust-c`, `raman-fitting`, `torch-tensor-parallelism`, `train-fasttext`, and `video-processing`; and timed out on `caffe-cifar-10` and `make-doom-for-mips`. Codex `financial-document-processor` was running. Most task notes remain grounded in Wattle logs, verifier failures, and Terminal-Bench oracle/tests.
 
 ## Confirmed Failures And Exceptions
 
@@ -209,6 +209,7 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had eighteen complet
 - Verifier: fusion protein order was wrong; expected flag, donor, DHFR, acceptor, SNAP.
 - Oracle contrast: identifies binder/tag semantics, resolves SNAP/fluorescent protein choices from external sequence sources, then assembles the sequence in the specified order.
 - Wattle behavior: generated a valid DNA-looking `gblock.txt`, but the translated protein did not satisfy component ordering.
+- Codex comparison: Codex passed this task, so the required component-order grounding is achievable under the same task/harness.
 - Raw lesson: bio/design tasks need semantic validation against named components and ordering, not only sequence validity.
 
 ### `pytorch-model-recovery`
@@ -439,30 +440,37 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had eighteen complet
 
 ### `git-multibranch`
 
-- Status: one Wattle attempt passed and one retry is running.
-- Current evidence: passed attempt `git-multibranch__U6ApYrw` configured SSH remote `git@localhost:/git/project`, password auth, a bare repo, `post-receive` deployment for `main` and `dev`, and HTTPS nginx on port 8443, then cleaned validation-created refs/deployed payloads while preserving services and hooks.
+- Status: both synced Wattle attempts passed.
+- Current evidence: Wattle configured SSH remote `git@localhost:/git/project`, password auth, a bare repo, `post-receive` deployment for `main` and `dev`, and HTTPS nginx on port 8443, then cleaned validation-created refs/deployed payloads while preserving services and hooks.
 - Oracle contrast: leaves a Git/HTTPS service state that lets the verifier push branches and observe the correct branch-specific deployed content.
 - Raw lesson: service tasks can pass when Wattle validates the exact external workflow but then resets only validation payloads, not the required service/hook infrastructure.
 
+### `qemu-startup`
+
+- Status: one Wattle attempt passed and one retry timed out.
+- Current evidence: passed attempt `qemu-startup__3XE3wqu` left QEMU running in the background and validated that `telnet 127.0.0.1 6665` showed an Alpine login prompt. Retry `qemu-startup__DsGusbV` timed out with QEMU no longer running, port 6665 not ready, and `/tmp/data.txt` missing during verifier execution.
+- Oracle contrast: leaves the VM process and serial/telnet endpoint alive for the verifier's final liveness and version checks.
+- Raw lesson: service/VM tasks need final liveness checks that run immediately before final response, and those checks must verify all required side artifacts as well as the visible port.
+
 ## Running Or Incomplete At Snapshot
 
-### `qemu-startup` retry
+### `train-fasttext` retry
 
-- Status: Wattle retry `qemu-startup__DsGusbV` is running.
-- Current evidence: one prior Wattle attempt for this task already passed after launching QEMU in the background and validating that `telnet 127.0.0.1 6665` exposed an Alpine login prompt. The running retry is explicitly waiting for the exposed serial console login prompt.
-- Watch point: because a prior Wattle attempt passed, this retry should not change the failure taxonomy unless it later fails with a new verifier signature.
+- Status: Wattle retry `train-fasttext__tBeUiwP` is running.
+- Current evidence: prior Wattle attempt `train-fasttext__Lxx62u2` timed out and produced a model that only exceeded the threshold under Wattle's preprocessing path, while the verifier saw 0.539925 accuracy. Codex also failed this comparison below threshold at 0.58465.
+- Watch point: if the retry passes, compare its exact data conversion/evaluation command and model-size controls against both failed attempts.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### `git-multibranch` retry
+### `video-processing` retry
 
-- Status: Wattle retry `git-multibranch__pYxYnbz` is running.
-- Current evidence: one Wattle attempt for this task already passed after configuring the SSH Git remote, branch-specific post-receive deployment, HTTPS nginx on port 8443, and cleanup that preserved infrastructure but removed validation-created payloads. The running retry is applying the same requested SSH URL and HTTPS path setup.
-- Watch point: because a prior Wattle attempt passed, this retry should not change the failure taxonomy unless it later fails with a new verifier signature.
+- Status: Wattle retry `video-processing__paNaSez` is running.
+- Current evidence: prior Wattle attempt missed the landing frame by one frame; Codex also failed the comparison with a takeoff frame outside the accepted range. The running retry is analyzing foreground masks and trajectory signals.
+- Watch point: if the retry passes, compare its temporal calibration and boundary selection against the failed off-by-one/near-boundary approaches.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### Codex `protein-assembly` comparison
+### Codex `financial-document-processor` comparison
 
-- Status: Codex comparison `protein-assembly__HrW2aBe` is running.
-- Current evidence: Wattle wrote a valid-looking `gblock.txt` but the translated fusion protein was not in the required flag-donor-dhfr-acceptor-snap order. The oracle validates named component order and biological constraints, not just DNA syntax.
-- Watch point: if Codex passes, compare how it grounds component identity/order before codon optimization; if it fails, strengthen the bio/design semantic-validation recommendation.
+- Status: Codex comparison `financial-document-processor__6EzYPeC` is running.
+- Current evidence: Wattle began moving a classified subset and then exited before completing `/app/invoices/summary.csv` and full document movement. The oracle classifies every document, moves all files, and writes the invoice summary.
+- Watch point: if Codex passes, compare whether it stages classification and validates total coverage before moving/writing outputs; if it fails, strengthen the transaction-style staging recommendation.
 - Do not classify the Codex comparison outcome yet. It should be analyzed after a completed `result.json` is synced.

@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T06:56:03Z`
+Snapshot used: `2026-06-17T07:06:17Z`
 
 This summary intentionally avoids task-specific fixes. It ranks general Wattle improvements by expected pass-rate impact, breadth across failures, and implementation practicality.
 
@@ -15,6 +15,7 @@ Observed in:
 - `polyglot-c-py`: correct source, extra `cmain`.
 - `polyglot-rust-c`: correct source, extra `main` and `cmain` across three Wattle attempts; Codex also failed the comparison by leaving an extra `main`, so exact final inventory is a broad failure mode.
 - `configure-git-webserver`: smoke-tested successfully, then reset state so verifier saw 404; Codex also failed the comparison with HTTP 404, and a Wattle retry with a deployment hook/server still failed with HTTP 000.
+- `qemu-startup`: one Wattle attempt passed, but a retry timed out with the VM no longer running and required side artifacts missing, showing service liveness must be checked at final handoff.
 - `financial-document-processor`: partial file moves and missing `summary.csv`.
 - `build-pov-ray`: the first Wattle attempt built a working executable but missed source/provenance artifacts; a retry passed after preserving official 2.2 archives/layout, and Codex also passed the comparison.
 - `mcmc-sampling-stan`: plausible posterior mean files were produced, then later experimentation left bad verifier-visible outputs.
@@ -26,7 +27,8 @@ General fix:
 - Before final response, Wattle should run a lightweight "final state audit" derived from the task instruction:
   - required files exist
   - forbidden extra files are absent when directory contents are constrained
-  - services/ports/processes are still alive
+- services/ports/processes are still alive
+- required service side artifacts still exist
   - output paths match exactly
   - serialized output fields have the expected concrete types
   - validation artifacts are removed or written outside checked directories
@@ -154,7 +156,7 @@ Several outputs were syntactically valid but semantically wrong.
 
 Observed in:
 
-- `protein-assembly`: DNA sequence valid, protein component order wrong.
+- `protein-assembly`: DNA sequence valid, protein component order wrong; Codex passed the comparison, so component grounding/order validation is feasible under the same task/harness.
 - `extract-elf`: JSON valid, ELF memory/symbol content wrong; Codex also failed with 0% expected values, so full parser-backed binary extraction needs explicit support.
 - `raman-fitting`: JSON valid, scientific fit wrong; Codex failed similarly, reinforcing that generic curve fitting without domain windows is insufficient.
 - `torch-tensor-parallelism`: module valid, distributed gradients wrong.
@@ -176,7 +178,7 @@ General fix:
 
 ## Priority 8: Keep Prompt Caching Healthy But Do Not Optimize It Blindly
 
-The current run's aggregate prompt-cache hit rate is 85.2%, which is much better than the earlier 49.2% signal. The cache issue no longer appears to be the dominant cause of failures in this snapshot.
+The current run's aggregate prompt-cache hit rate is 85.0%, which is much better than the earlier 49.2% signal. The cache issue no longer appears to be the dominant cause of failures in this snapshot.
 
 General fix:
 
