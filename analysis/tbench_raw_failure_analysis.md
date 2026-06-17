@@ -2,11 +2,11 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T04:32:37Z`
+Snapshot used: `2026-06-17T04:35:43Z`
 
 Counts at snapshot:
 
-- Passed: 62
+- Passed: 63
 - Failed: 23
 - Exceptions: 6
 - Running or incomplete: 2
@@ -18,7 +18,7 @@ Deep evidence reports were regenerated under:
 runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/
 ```
 
-The Codex comparison run `codex-compare-nonpassed-20260617` had five completed comparisons at this snapshot: Codex passed `gpt2-codegolf` and `mteb-retrieve`, failed `configure-git-webserver` and `torch-tensor-parallelism`, and timed out on `caffe-cifar-10`. Codex `overfull-hbox` was still running. Most task notes remain grounded in Wattle logs, verifier failures, and Terminal-Bench oracle/tests.
+The Codex comparison run `codex-compare-nonpassed-20260617` had six completed comparisons at this snapshot: Codex passed `gpt2-codegolf` and `mteb-retrieve`, failed `configure-git-webserver`, `overfull-hbox`, and `torch-tensor-parallelism`, and timed out on `caffe-cifar-10`. Codex `polyglot-rust-c` was still running. Most task notes remain grounded in Wattle logs, verifier failures, and Terminal-Bench oracle/tests.
 
 ## Confirmed Failures And Exceptions
 
@@ -175,6 +175,7 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had five completed c
 - Verifier: modified `input.tex` using `veteran`, which was not an allowed synonym replacement for `old`.
 - Oracle contrast: parses `main.log`, builds substitutions only from `synonyms.txt`, repeatedly compiles and substitutes one allowed synonym until no overfull boxes remain.
 - Wattle behavior: achieved no overfull hbox warnings, but violated the allowed-edit contract.
+- Codex comparison: Codex also failed this task with the same allowed-edit contract pattern, replacing `old` with `veteran` even though that synonym was not present in `synonyms.txt`.
 - Raw lesson: validation should check both the desired effect and the permitted transformation set.
 
 ### `polyglot-c-py`
@@ -250,20 +251,29 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had five completed c
 - Wattle behavior: got very close but failed an off-by-one/tolerance-sensitive boundary.
 - Raw lesson: video/temporal tasks need exact boundary calibration and verifier-range checks before final answer.
 
-## Running Or Incomplete At Snapshot
+## Completed Passing Retries Since Prior Snapshot
 
-### `break-filter-js-from-html` retry
+### `break-filter-js-from-html`
 
-- Status: running at the snapshot.
-- Current evidence: one Wattle attempt for this task already passed by crafting `/app/out.html` that still triggered an alert after filtering. A retry `break-filter-js-from-html__wwLsocx` was running after confirming the verifier flow is filtered-copy plus headless Chromium alert detection, and was narrowing parser differentials where BeautifulSoup treats JavaScript as inert text but Chromium reparses it as active HTML.
+- Status: passed in both synced Wattle attempts.
+- Current evidence: the retry `break-filter-js-from-html__wwLsocx` completed successfully after crafting `/app/out.html` that survives the provided filter and still triggers an automatic Chromium `alert(1)`.
 - Oracle contrast: uses a malformed HTML comment that the filter mishandles but Chromium still parses into executable script.
-- Watch point: because a prior Wattle attempt passed, this retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
-- Do not classify yet. It should be analyzed after a completed `result.json` is synced.
+- Raw lesson: this remains a positive example for parser-differential adversarial validation; it does not change the general failure taxonomy.
+
+## Running Or Incomplete At Snapshot
 
 ### `reshard-c4-data` retry
 
 - Status: running at the snapshot.
 - Current evidence: one Wattle attempt for this task already passed. A retry `reshard-c4-data__WYFJgZy` was running with a plan to create `/app` project files and scripts, run `uv sync` plus CLI checks, then round-trip `c4_sample` while verifying content and the directory/file-size constraints.
 - Oracle contrast: writes `compress.py`, `decompress.py`, `pyproject.toml`, and uv metadata so the archive can be compressed and then reconstructed exactly in-place under the task's directory and file-size constraints.
+- Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
+- Do not classify yet. It should be analyzed after a completed `result.json` is synced.
+
+### `write-compressor` retry
+
+- Status: running at the snapshot.
+- Current evidence: one Wattle attempt for this task already passed by producing `/app/data.comp` at 2476 bytes and validating that `cat /app/data.comp | /app/decomp` exactly matches `/app/data.txt`.
+- Oracle contrast: reverse-engineers the decompressor format and emits a compact compressed stream below the 2500-byte limit.
 - Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
