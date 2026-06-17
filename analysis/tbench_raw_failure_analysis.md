@@ -2,11 +2,11 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T10:26:11Z`
+Snapshot used: `2026-06-17T10:31:19Z`
 
 Counts at snapshot:
 
-- Passed: 124
+- Passed: 125
 - Failed: 41
 - Exceptions: 13
 - Running or incomplete: 2
@@ -616,6 +616,13 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 - Oracle contrast: translates the RStan model and sampling hyperparameters to PyStan 3 while preserving model semantics, seed, posterior summaries, and CSV output schema.
 - Raw lesson: probabilistic-model translation tasks pass when Wattle preserves library-specific sampling semantics and validates persisted posterior summary files after the long run completes.
 
+### `llm-inference-batching-scheduler`
+
+- Status: all synced Wattle attempts passed.
+- Current evidence: retry `llm-inference-batching-scheduler__tfEmF5Y` generated `/app/task_file/output_data/plan_b1.jsonl` and `plan_b2.jsonl`, then validated exact request coverage, no duplicate IDs, batch-shape consistency, cost, padding ratio, p95 latency, and sequential timecost against `/app/task_file/scripts/cost_model.py`. Earlier passes `llm-inference-batching-scheduler__kbZUPgH` and `llm-inference-batching-scheduler__kgrrhCE` used the same metric-driven validation approach.
+- Oracle contrast: batches requests into valid plans that optimize cost/latency/padding metrics while preserving exact request coverage and shape constraints.
+- Raw lesson: optimization-planning tasks pass when Wattle uses the official cost model as the validation oracle and checks every hard constraint plus objective threshold before finalizing.
+
 ## Running Or Incomplete At Snapshot
 
 ### `gpt2-codegolf` retry
@@ -625,9 +632,9 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 - Watch point: if the retry passes, compare whether it validated exact argv/path/checkpoint/BPE behavior against verifier-like prompts instead of only smoke-testing plausible text generation.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### `llm-inference-batching-scheduler` retry
+### `break-filter-js-from-html` retry
 
-- Status: Wattle retry `llm-inference-batching-scheduler__tfEmF5Y` is running.
-- Current evidence: prior synced Wattle attempts passed after generating `/app/task_file/output_data/plan_b1.jsonl` and `plan_b2.jsonl`, validating exact request coverage, cost, padding ratio, p95 latency, sequential timecost, and shape consistency against `/app/task_file/scripts/cost_model.py`. The running retry is merging low-risk neighboring groups to reduce sequential execution time without crossing cost/padding/p95 limits.
-- Watch point: if the retry passes, keep this as positive evidence for metric-driven optimization with verifier-equivalent cost-model validation.
+- Status: Wattle retry `break-filter-js-from-html__UQZyZ5A` is running.
+- Current evidence: prior Wattle attempts `break-filter-js-from-html__pPj3PwT` and `break-filter-js-from-html__wwLsocx` passed after crafting `/app/out.html` payloads that survived `/app/filter.py` and triggered automatic Chromium `alert(1)`. The running retry is testing browser-supported automatic navigation payloads that preserve the `/app/out.html` to filter-in-place to browser-open contract.
+- Watch point: if the retry passes, keep this as positive evidence for parser/browser differential validation with actual headless-browser execution.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
