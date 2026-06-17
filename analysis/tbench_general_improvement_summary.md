@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T04:29:13Z`
+Snapshot used: `2026-06-17T04:32:37Z`
 
 This summary intentionally avoids task-specific fixes. It ranks general Wattle improvements by expected pass-rate impact, breadth across failures, and implementation practicality.
 
@@ -14,7 +14,7 @@ Observed in:
 
 - `polyglot-c-py`: correct source, extra `cmain`.
 - `polyglot-rust-c`: correct source, extra `main` and `cmain`.
-- `configure-git-webserver`: smoke-tested successfully, then reset state so verifier saw 404.
+- `configure-git-webserver`: smoke-tested successfully, then reset state so verifier saw 404; Codex also failed the comparison with an HTTP 404, so the service/root-state contract is brittle.
 - `financial-document-processor`: partial file moves and missing `summary.csv`.
 - `build-pov-ray`: executable worked, but required source/provenance artifacts were not verifier-visible.
 - `mcmc-sampling-stan`: plausible posterior mean files were produced, then later experimentation left bad verifier-visible outputs.
@@ -40,7 +40,7 @@ Observed in:
 - `mteb-retrieve`: wrong MTEB wrapper/prompt semantics produced the wrong ranked document; Codex passed the same task, reinforcing that exact API parity is achievable in the harness.
 - `mteb-leaderboard`: wrong leaderboard snapshot/aggregation semantics.
 - `train-fasttext`: internal validation did not match private verifier format/threshold.
-- `gpt2-codegolf`: implementation did not satisfy exact compile/path/CLI contract; Codex passed the same task, which points to Wattle's exact validation loop rather than an environment issue.
+- `gpt2-codegolf`: implementation did not satisfy exact compile/path/CLI/output contract across two Wattle attempts; Codex passed the same task, which points to Wattle's exact validation loop rather than an environment issue.
 - `torch-tensor-parallelism`: forward/syntax checks missed backward distributed gradient mismatch.
 - `pytorch-model-recovery`: TorchScript model saved with the wrong `forward(src, tgt)` interface, despite plausible model-recovery work.
 - `overfull-hbox`: no overfull boxes, but invalid edit set.

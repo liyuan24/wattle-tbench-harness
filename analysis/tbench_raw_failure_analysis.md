@@ -2,12 +2,12 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T04:29:13Z`
+Snapshot used: `2026-06-17T04:32:37Z`
 
 Counts at snapshot:
 
-- Passed: 61
-- Failed: 22
+- Passed: 62
+- Failed: 23
 - Exceptions: 6
 - Running or incomplete: 2
 - Prompt-cache hit rate: 85.2%
@@ -18,7 +18,7 @@ Deep evidence reports were regenerated under:
 runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/
 ```
 
-The Codex comparison run `codex-compare-nonpassed-20260617` had four completed comparisons at this snapshot: Codex passed `gpt2-codegolf` and `mteb-retrieve`, failed `torch-tensor-parallelism`, and timed out on `caffe-cifar-10`. Codex `configure-git-webserver` was still running. Most task notes remain grounded in Wattle logs, verifier failures, and Terminal-Bench oracle/tests.
+The Codex comparison run `codex-compare-nonpassed-20260617` had five completed comparisons at this snapshot: Codex passed `gpt2-codegolf` and `mteb-retrieve`, failed `configure-git-webserver` and `torch-tensor-parallelism`, and timed out on `caffe-cifar-10`. Codex `overfull-hbox` was still running. Most task notes remain grounded in Wattle logs, verifier failures, and Terminal-Bench oracle/tests.
 
 ## Confirmed Failures And Exceptions
 
@@ -44,6 +44,7 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had four completed c
 - Verifier: after its own clone/push/curl flow, the web server returned HTTP 404.
 - Oracle contrast: creates a bare repo at `/git/server`, deploys via `post-receive` to `/var/www/html`, and serves that root on port 8080.
 - Wattle behavior: validated a manual flow, then reset repo/web-root state so the verifier's fresh workflow did not see `hello.html`.
+- Codex comparison: Codex also failed this task with the same verifier-visible HTTP 404 pattern, which suggests the task is easy to invalidate with small service/root-state mismatches.
 - Raw lesson: Wattle should preserve the final state required by the verifier, not reset after a smoke test unless the instruction explicitly requires reset.
 
 ### `db-wal-recovery`
@@ -115,9 +116,9 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had four completed c
 - Status: failed.
 - Verifier: `gpt2.c` did not satisfy the full compile/run contract.
 - Oracle contrast: provides a dense under-5000-byte GPT-2 implementation with the exact expected CLI and checkpoint/vocab reading behavior.
-- Wattle behavior: created a small C implementation and smoke-tested it, but the verifier still rejected the implementation contract.
+- Wattle behavior: created small C implementations and smoke-tested them, but both Wattle trials failed the verifier; the retry had size/compile checks passing and then failed the semantic expected-continuation check for a known verifier prompt.
 - Codex comparison: Codex passed the same task in the comparison run, which suggests the harness/task is healthy and Wattle's miss is in exact contract execution rather than environment setup.
-- Raw lesson: code-golf/implementation tasks need verifier-like command reproduction, including exact file path, argv, size, compile flags, and output contract.
+- Raw lesson: code-golf/implementation tasks need verifier-like command reproduction and semantic output checks, including exact file path, argv, size, compile flags, tokenization, checkpoint layout, BPE mapping, and expected continuation contract.
 
 ### `install-windows-3.11`
 
@@ -251,18 +252,18 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had four completed c
 
 ## Running Or Incomplete At Snapshot
 
-### `gpt2-codegolf` retry
+### `break-filter-js-from-html` retry
 
 - Status: running at the snapshot.
-- Current evidence: the first Wattle `gpt2-codegolf` trial remains a confirmed failure, but a second trial `gpt2-codegolf__kUprDk6` was running at the snapshot with `/app/gpt2.c` interface/size/compile checks already passing and a narrow validation/fix cycle focused on tokenization and ID mapping; no completed verifier result was synced yet for the retry.
-- Oracle contrast: still requires a dependency-free `/app/gpt2.c` under 5000 bytes that compiles with `gcc -O3 -lm`, reads the checkpoint and BPE file, and emits exact argmax GPT-2 continuations for verifier prompts.
-- Watch point: keep the existing confirmed-failure lesson, but replace or augment it if the retry passes or fails with a different verifier signature.
+- Current evidence: one Wattle attempt for this task already passed by crafting `/app/out.html` that still triggered an alert after filtering. A retry `break-filter-js-from-html__wwLsocx` was running after confirming the verifier flow is filtered-copy plus headless Chromium alert detection, and was narrowing parser differentials where BeautifulSoup treats JavaScript as inert text but Chromium reparses it as active HTML.
+- Oracle contrast: uses a malformed HTML comment that the filter mishandles but Chromium still parses into executable script.
+- Watch point: because a prior Wattle attempt passed, this retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
 
-### `llm-inference-batching-scheduler` retry
+### `reshard-c4-data` retry
 
 - Status: running at the snapshot.
-- Current evidence: one Wattle attempt for this task already passed, but another attempt `llm-inference-batching-scheduler__kgrrhCE` was still marked running at the snapshot after writing both plan files and reporting local validation success against schema, request coverage, shape constraints, and provided cost-model thresholds; no completed verifier result was synced yet for the retry.
-- Oracle contrast: uses deterministic shape selection and dynamic programming to satisfy all request coverage, maximum-shape, cost, padding, latency, and sequential-time thresholds across both buckets.
+- Current evidence: one Wattle attempt for this task already passed. A retry `reshard-c4-data__WYFJgZy` was running with a plan to create `/app` project files and scripts, run `uv sync` plus CLI checks, then round-trip `c4_sample` while verifying content and the directory/file-size constraints.
+- Oracle contrast: writes `compress.py`, `decompress.py`, `pyproject.toml`, and uv metadata so the archive can be compressed and then reconstructed exactly in-place under the task's directory and file-size constraints.
 - Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
