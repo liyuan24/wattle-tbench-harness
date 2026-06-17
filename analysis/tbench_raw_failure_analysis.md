@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T09:45:11Z`
+Snapshot used: `2026-06-17T09:50:19Z`
 
 Counts at snapshot:
 
-- Passed: 111
-- Failed: 38
+- Passed: 112
+- Failed: 39
 - Exceptions: 13
 - Running or incomplete: 2
-- Prompt-cache hit rate: 85.2%
+- Prompt-cache hit rate: 85.0%
 
 Deep evidence reports were regenerated under:
 
@@ -155,10 +155,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `model-extraction-relu-logits`
 
-- Status: failed.
+- Status: one Wattle attempt failed and one retry is running.
 - Verifier: `stolen_A1.npy` existed, but row 11 of the verifier's original 30x10 matrix could not be matched up to scaling.
 - Oracle contrast: uses query-only ReLU critical-point sweeps that are robust to unknown hidden width and verifier-generated weights.
-- Wattle behavior: produced a script and locally validated perfect recovery against the visible `/app/forward.py` internals, including a visible 20x10 `A1`, but the verifier used a different generated matrix and exposed incomplete row recovery.
+- Wattle behavior: failed attempt produced a script and locally validated perfect recovery against the visible `/app/forward.py` internals, including a visible 20x10 `A1`, but the verifier used a different generated matrix and exposed incomplete row recovery. Running retry `model-extraction-relu-logits__ZuPA7xn` is adjusting the recovery/filtering step after re-running validation against the current script.
 - Raw lesson: model-extraction tasks need hidden-input robustness checks and should not rely on visible implementation constants as proof of correctness; validation should test generality over shape/seed variations where possible.
 
 ### `mteb-leaderboard`
@@ -234,11 +234,11 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `sam-cell-seg`
 
-- Status: failed.
-- Verifier: eight tests passed, including script execution, CSV shape, non-rectangular masks, alignment, non-overlap, and single-contiguous-mask checks. The only failure was `test_coords_are_flat_lists`: row 0 `coords_x` parsed as a tuple instead of a list.
+- Status: failed in both synced Wattle attempts.
+- Verifier: first attempt passed the substantive geometry checks but failed `test_coords_are_flat_lists`: row 0 `coords_x` parsed as a tuple instead of a list. Retry `sam-cell-seg__7DkFdAV` still failed the same flat-list serialization check and also failed `test_mask_alignment` with IoU 0.464338 below the 0.5 threshold.
 - Oracle contrast: uses MobileSAM box prompts, resolves overlaps/contiguity, then writes `coords_x` and `coords_y` as flat list-like fields accepted by the verifier.
-- Wattle behavior: solved the substantive segmentation geometry but missed the exact CSV serialization contract for coordinate columns.
-- Raw lesson: Wattle needs final output-type/schema validation at the serialized artifact level, not just in-memory data structure validation.
+- Wattle behavior: solved much of the segmentation workflow, but did not validate serialized coordinate fields by reading the output CSV exactly as the verifier does. The retry also shows the image-mask path is near a geometry threshold and needs verifier-like IoU/alignment validation, not only "polyline/non-overlap/contiguity" structural checks.
+- Raw lesson: Wattle needs final output-type/schema validation at the serialized artifact level and threshold-aware image-mask validation against the verifier's scoring path.
 
 ### `torch-tensor-parallelism`
 
@@ -553,18 +553,25 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 - Oracle contrast: clones the requested upstream tag, applies minimal compatibility edits for current Python/NumPy/Cython behavior, builds extensions in their original package context, and installs the package into the system environment.
 - Raw lesson: dependency/build tasks pass when Wattle preserves the requested upstream version and package structure, validates from outside the checkout/global install path, and checks both extension loader type and end-user README behavior.
 
+### `fix-ocaml-gc`
+
+- Status: both synced Wattle attempts passed.
+- Current evidence: retry `fix-ocaml-gc__8g7uSCu` passed after the same root-cause fix as the earlier pass: change `pool_sweep` in `/app/ocaml/runtime/shared_heap.c` to advance through fixed-width sizeclass pool slots with `p += wh` rather than `p += Whsize_hd(hd)`, preserving the separate compressed-free-run skip. Earlier pass `fix-ocaml-gc__YBa6r5m` built the compiler and ran `make -C testsuite one DIR=tests/basic`.
+- Oracle contrast: applies the targeted one-line slot-advance fix in `shared_heap.c`.
+- Raw lesson: low-level runtime repair tasks pass when Wattle localizes the invariant violation, makes the smallest semantic fix, and validates through the exact requested build/test path rather than only compiling the touched file.
+
 ## Running Or Incomplete At Snapshot
 
-### `fix-ocaml-gc` retry
+### `model-extraction-relu-logits` retry
 
-- Status: Wattle retry `fix-ocaml-gc__8g7uSCu` is running.
-- Current evidence: prior Wattle attempt `fix-ocaml-gc__YBa6r5m` passed after changing `pool_sweep` to advance by the pool slot size `wh` rather than `Whsize_hd(hd)`, then building and running the requested basic testsuite. The running retry has configured ocamltest and is building OCaml before running the same basic tests.
-- Watch point: if the retry passes, keep this as positive evidence for root-cause localization plus exact requested testsuite validation.
+- Status: Wattle retry `model-extraction-relu-logits__ZuPA7xn` is running.
+- Current evidence: prior Wattle attempt failed because verifier row 11 of the generated hidden matrix was not recovered, even though visible `forward.A1` validation matched perfectly. The running retry is re-running `/app/steal.py`, comparing recovered rows to the current visible matrix, and adjusting the recovery/filtering step.
+- Watch point: if the retry passes, compare whether it added hidden-width/seed robustness instead of only fitting visible internals more tightly.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### `sam-cell-seg` retry
+### `nginx-request-logging` retry
 
-- Status: Wattle retry `sam-cell-seg__7DkFdAV` is running.
-- Current evidence: prior Wattle attempt `sam-cell-seg__9URNaHD` solved the substantive segmentation geometry checks but failed because serialized CSV coordinate fields parsed as tuples rather than flat lists. The running retry is inspecting metadata/image dimensions without relying on unavailable local imports and is writing against the installed MobileSAM interface.
-- Watch point: if the retry passes, compare whether serialized artifact schema validation replaced in-memory shape validation.
+- Status: Wattle retry `nginx-request-logging__nTT8aiV` is running.
+- Current evidence: prior Wattle attempt `nginx-request-logging__NKPwBRb` passed after configuring Nginx on localhost:8080, writing the expected static root and custom 404 page, disabling the default site, and setting benchmark access/error logs. The running retry is syntax-testing Nginx, starting/restarting it, and verifying localhost:8080 plus log creation.
+- Watch point: if the retry passes, keep this as positive evidence for exact service configuration plus final liveness/log-path validation.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
