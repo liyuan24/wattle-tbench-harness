@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T05:23:48Z`
+Snapshot used: `2026-06-17T05:28:55Z`
 
 Counts at snapshot:
 
@@ -317,7 +317,7 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had nine completed c
 ### `regex-chess` retry
 
 - Status: running at the snapshot.
-- Current evidence: one Wattle attempt for this task already passed after generating `/app/re.json`, validating exact required sample output, running `python3 /app/check.py`, and satisfying file constraints with 6,863 pairs. Retry `regex-chess__e3gJsr6` was running a FEN comparison validation loop matching `check.py`, including its tolerated en-passant target normalization, and focusing on actual move legality/count mismatches.
+- Current evidence: one Wattle attempt for this task already passed after generating `/app/re.json`, validating exact required sample output, running `python3 /app/check.py`, and satisfying file constraints with 6,863 pairs. Retry `regex-chess__e3gJsr6` was running a FEN comparison validation loop matching `check.py`, including its tolerated en-passant target normalization, while restricting validation to legal positions reachable from normal play plus a few valid special-case setups to avoid invalid-FEN artifacts.
 - Oracle contrast: generates a regex/pattern inventory that makes the chess PGN checker pass while preserving the exact JSON interface expected by the tests.
 - Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
