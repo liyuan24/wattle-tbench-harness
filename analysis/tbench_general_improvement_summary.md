@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T04:47:57Z`
+Snapshot used: `2026-06-17T04:49:48Z`
 
 This summary intentionally avoids task-specific fixes. It ranks general Wattle improvements by expected pass-rate impact, breadth across failures, and implementation practicality.
 
@@ -16,7 +16,7 @@ Observed in:
 - `polyglot-rust-c`: correct source, extra `main` and `cmain`; Codex also failed the comparison by leaving an extra `main`, so exact final inventory is a broad failure mode.
 - `configure-git-webserver`: smoke-tested successfully, then reset state so verifier saw 404; Codex also failed the comparison with an HTTP 404, so the service/root-state contract is brittle.
 - `financial-document-processor`: partial file moves and missing `summary.csv`.
-- `build-pov-ray`: executable worked, but required source/provenance artifacts were not verifier-visible.
+- `build-pov-ray`: executable worked, but required source/provenance artifacts were not verifier-visible; Codex passed the comparison, so this is a Wattle final-state provenance miss rather than an apparent task/harness issue.
 - `mcmc-sampling-stan`: plausible posterior mean files were produced, then later experimentation left bad verifier-visible outputs.
 - `sam-cell-seg`: segmentation geometry was accepted, but the serialized CSV coordinate fields used tuple syntax instead of verifier-accepted flat lists.
 
@@ -175,7 +175,7 @@ General fix:
 
 ## Priority 8: Keep Prompt Caching Healthy But Do Not Optimize It Blindly
 
-The current run's aggregate prompt-cache hit rate is 85.0%, which is much better than the earlier 49.2% signal. The cache issue no longer appears to be the dominant cause of failures in this snapshot.
+The current run's aggregate prompt-cache hit rate is 85.1%, which is much better than the earlier 49.2% signal. The cache issue no longer appears to be the dominant cause of failures in this snapshot.
 
 General fix:
 

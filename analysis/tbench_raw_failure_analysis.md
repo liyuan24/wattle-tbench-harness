@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T04:47:57Z`
+Snapshot used: `2026-06-17T04:49:48Z`
 
 Counts at snapshot:
 
@@ -10,7 +10,7 @@ Counts at snapshot:
 - Failed: 23
 - Exceptions: 6
 - Running or incomplete: 2
-- Prompt-cache hit rate: 85.0%
+- Prompt-cache hit rate: 85.1%
 
 Deep evidence reports were regenerated under:
 
@@ -18,7 +18,7 @@ Deep evidence reports were regenerated under:
 runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/
 ```
 
-The Codex comparison run `codex-compare-nonpassed-20260617` had eight completed comparisons at this snapshot: Codex passed `db-wal-recovery`, `gpt2-codegolf`, and `mteb-retrieve`, failed `configure-git-webserver`, `overfull-hbox`, `polyglot-rust-c`, and `torch-tensor-parallelism`, and timed out on `caffe-cifar-10`. Codex `build-pov-ray` was running. Most task notes remain grounded in Wattle logs, verifier failures, and Terminal-Bench oracle/tests.
+The Codex comparison run `codex-compare-nonpassed-20260617` had nine completed comparisons at this snapshot: Codex passed `build-pov-ray`, `db-wal-recovery`, `gpt2-codegolf`, and `mteb-retrieve`, failed `configure-git-webserver`, `overfull-hbox`, `polyglot-rust-c`, and `torch-tensor-parallelism`, and timed out on `caffe-cifar-10`. Codex `train-fasttext` was running. Most task notes remain grounded in Wattle logs, verifier failures, and Terminal-Bench oracle/tests.
 
 ## Confirmed Failures And Exceptions
 
@@ -28,6 +28,7 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had eight completed 
 - Verifier: expected POV-Ray 2.2 source marker `file_id.diz`; it was missing, indicating the wrong extraction/build layout or wrong source version.
 - Oracle contrast: downloads the exact `Official-2.2` `POVDOC`, `POVSCN`, and `POVSRC` archives, extracts them in `/app`, copies `machine/unix/*` into `source`, patches build files, and installs the resulting binary.
 - Wattle behavior: reported a successful build and render but left the source tree in a layout the verifier considered wrong.
+- Codex comparison: Codex passed this task, strengthening the conclusion that Wattle's failure is not a task/harness issue but a final-state provenance audit miss.
 - Raw lesson: Wattle validated executable behavior without validating the verifier-visible provenance and required source artifacts.
 
 ### `caffe-cifar-10`
@@ -288,7 +289,7 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had eight completed 
 ### `pytorch-model-cli` retry
 
 - Status: running at the snapshot.
-- Current evidence: one Wattle attempt for this task already passed after creating `/app/cli_tool`, `/app/weights.json`, and `/app/prediction.txt`, validating that `./cli_tool weights.json image.png` outputs only `2`, and confirming `prediction.txt` matches. Retry `pytorch-model-cli__Ppsm6C6` was running after verifying the supplied `image.png` as a 28x28 grayscale digit, confirming MNIST-style scaling predicts `2`, and preparing to create the required executable and output artifacts.
+- Current evidence: one Wattle attempt for this task already passed after creating `/app/cli_tool`, `/app/weights.json`, and `/app/prediction.txt`, validating that `./cli_tool weights.json image.png` outputs only `2`, and confirming `prediction.txt` matches. Retry `pytorch-model-cli__Ppsm6C6` was running after confirming the runtime lacks native compilers, choosing a shebang executable for `/app/cli_tool`, and writing `/app/weights.json`.
 - Oracle contrast: builds a CLI around the supplied image/model assets, writes the expected prediction artifact, and preserves the exact command interface.
 - Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
@@ -301,9 +302,9 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had eight completed 
 - Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
 
-### Codex `build-pov-ray` comparison
+### Codex `train-fasttext` comparison
 
 - Status: running at the snapshot.
-- Current evidence: Wattle failed this task after installing a working POV-Ray binary but leaving the source/provenance layout without verifier-required `file_id.diz`. Codex comparison `build-pov-ray__Ypu62An` had started but had not yet emitted assistant/tool evidence or a verifier result.
-- Watch point: if Codex passes, that will strengthen the case that Wattle needs final-state provenance audits for source/build tasks. If Codex fails similarly, the lesson still points to verifier-visible source layout as a brittle general contract.
+- Current evidence: Wattle timed out on this task and still missed the private accuracy threshold. Codex comparison `train-fasttext__mHUHgSX` had started but had not yet emitted assistant/tool evidence or a verifier result.
+- Watch point: if Codex passes, that will strengthen the case that Wattle needs tighter private-format validation and faster minimal FastText training paths. If Codex fails similarly, the lesson still points to budget-aware ML validation, but with broader model difficulty.
 - Do not classify the Codex comparison outcome yet. It should be analyzed after a completed `result.json` is synced.
