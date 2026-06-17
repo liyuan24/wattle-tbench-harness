@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T03:46:38Z`
+Snapshot used: `2026-06-17T03:49:43Z`
 
 Counts at snapshot:
 
@@ -10,7 +10,7 @@ Counts at snapshot:
 - Failed: 18
 - Exceptions: 6
 - Running or incomplete: 2
-- Prompt-cache hit rate: 86.4%
+- Prompt-cache hit rate: 86.5%
 
 Deep evidence reports were regenerated under:
 
