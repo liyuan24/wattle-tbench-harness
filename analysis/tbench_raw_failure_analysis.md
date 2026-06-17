@@ -2,11 +2,11 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T04:42:50Z`
+Snapshot used: `2026-06-17T04:45:30Z`
 
 Counts at snapshot:
 
-- Passed: 65
+- Passed: 67
 - Failed: 23
 - Exceptions: 6
 - Running or incomplete: 2
@@ -18,7 +18,7 @@ Deep evidence reports were regenerated under:
 runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/
 ```
 
-The Codex comparison run `codex-compare-nonpassed-20260617` had seven completed comparisons at this snapshot: Codex passed `gpt2-codegolf` and `mteb-retrieve`, failed `configure-git-webserver`, `overfull-hbox`, `polyglot-rust-c`, and `torch-tensor-parallelism`, and timed out on `caffe-cifar-10`. Codex `db-wal-recovery` was running. Most task notes remain grounded in Wattle logs, verifier failures, and Terminal-Bench oracle/tests.
+The Codex comparison run `codex-compare-nonpassed-20260617` had eight completed comparisons at this snapshot: Codex passed `db-wal-recovery`, `gpt2-codegolf`, and `mteb-retrieve`, failed `configure-git-webserver`, `overfull-hbox`, `polyglot-rust-c`, and `torch-tensor-parallelism`, and timed out on `caffe-cifar-10`. Codex `build-pov-ray` was running. Most task notes remain grounded in Wattle logs, verifier failures, and Terminal-Bench oracle/tests.
 
 ## Confirmed Failures And Exceptions
 
@@ -53,6 +53,7 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had seven completed 
 - Verifier: `Apple` stayed at value `100`; expected WAL update value `150`, proving encrypted WAL changes were not applied.
 - Oracle contrast: detects the XOR-encrypted WAL, XOR-decrypts it with key `0x42`, replaces `/app/main.db-wal`, then lets SQLite apply the WAL before writing `recovered.json`.
 - Wattle behavior: produced valid-looking JSON with rows sorted by id, but from the base database state rather than recovered WAL state.
+- Codex comparison: Codex passed this task, strengthening the conclusion that the task and harness are healthy and Wattle's miss is semantic recovery of sidecar WAL state.
 - Raw lesson: Wattle should treat sidecar recovery files as first-class input and verify semantic deltas, not only output shape.
 
 ### `dna-assembly`
@@ -275,13 +276,20 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had seven completed 
 - Oracle contrast: writes `compress.py`, `decompress.py`, `pyproject.toml`, and uv metadata so the archive can be compressed and then reconstructed exactly in-place under the task's directory and file-size constraints.
 - Raw lesson: this remains a positive example for verifier-like artifact and round-trip validation under filesystem constraints; it does not change the general failure taxonomy.
 
+### `merge-diff-arc-agi-task`
+
+- Status: passed in both synced Wattle attempts.
+- Current evidence: retry `merge-diff-arc-agi-task__6XScxMA` completed successfully after initializing `/app/repo`, fetching both bundles into `branch1` and `branch2`, merging, resolving `algo.py`, and validating all examples. The earlier attempt `merge-diff-arc-agi-task__ofUGtxY` also passed with the same branch setup and example validation.
+- Oracle contrast: creates `branch1` and `branch2` from the bundles, uses branch1 as base, applies the branch2 state, then implements `algo.py` with a modulo-diagonal color mapping inferred from examples.
+- Raw lesson: this remains a positive example for exact repository-state setup plus verifier-like example validation; it does not change the general failure taxonomy.
+
 ## Running Or Incomplete At Snapshot
 
-### `merge-diff-arc-agi-task` retry
+### `pytorch-model-cli` retry
 
 - Status: running at the snapshot.
-- Current evidence: one Wattle attempt for this task already passed after initializing `/app/repo`, fetching both bundles into `branch1` and `branch2`, merging, resolving `algo.py`, and validating all examples. Retry `merge-diff-arc-agi-task__6XScxMA` was running after identifying the required `(row + col) % 3` diagonal color mapping and replacing the conflicted `algo.py`.
-- Oracle contrast: creates `branch1` and `branch2` from the bundles, uses branch1 as base, applies the branch2 state, then implements `algo.py` with a modulo-diagonal color mapping inferred from examples.
+- Current evidence: one Wattle attempt for this task already passed after creating `/app/cli_tool`, `/app/weights.json`, and `/app/prediction.txt`, validating that `./cli_tool weights.json image.png` outputs only `2`, and confirming `prediction.txt` matches. Retry `pytorch-model-cli__Ppsm6C6` had started but had not yet emitted assistant/tool evidence.
+- Oracle contrast: builds a CLI around the supplied image/model assets, writes the expected prediction artifact, and preserves the exact command interface.
 - Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
 
@@ -293,9 +301,9 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had seven completed 
 - Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
 
-### Codex `db-wal-recovery` comparison
+### Codex `build-pov-ray` comparison
 
 - Status: running at the snapshot.
-- Current evidence: Wattle failed this task by producing valid-looking JSON from the base database state instead of applying the XOR-encrypted WAL delta. Codex comparison `db-wal-recovery__d7QMisB` had started but had not yet emitted assistant/tool evidence or a verifier result.
-- Watch point: if Codex passes, that will strengthen the case that the task is healthy and Wattle needs better sidecar/WAL semantic validation. If Codex fails similarly, the lesson still points to hidden state recovery and semantic delta validation, but with broader model difficulty.
+- Current evidence: Wattle failed this task after installing a working POV-Ray binary but leaving the source/provenance layout without verifier-required `file_id.diz`. Codex comparison `build-pov-ray__Ypu62An` had started but had not yet emitted assistant/tool evidence or a verifier result.
+- Watch point: if Codex passes, that will strengthen the case that Wattle needs final-state provenance audits for source/build tasks. If Codex fails similarly, the lesson still points to verifier-visible source layout as a brittle general contract.
 - Do not classify the Codex comparison outcome yet. It should be analyzed after a completed `result.json` is synced.
