@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T07:06:17Z`
+Snapshot used: `2026-06-17T07:16:33Z`
 
 Counts at snapshot:
 
 - Passed: 93
-- Failed: 28
+- Failed: 29
 - Exceptions: 9
 - Running or incomplete: 2
-- Prompt-cache hit rate: 85.0%
+- Prompt-cache hit rate: 84.9%
 
 Deep evidence reports were regenerated under:
 
@@ -18,7 +18,7 @@ Deep evidence reports were regenerated under:
 runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/
 ```
 
-The Codex comparison run `codex-compare-nonpassed-20260617` had nineteen completed comparisons at this snapshot: Codex passed `build-pov-ray`, `db-wal-recovery`, `extract-moves-from-video`, `gcode-to-text`, `gpt2-codegolf`, `mteb-leaderboard`, `mteb-retrieve`, and `protein-assembly`; failed `configure-git-webserver`, `extract-elf`, `install-windows-3.11`, `overfull-hbox`, `polyglot-rust-c`, `raman-fitting`, `torch-tensor-parallelism`, `train-fasttext`, and `video-processing`; and timed out on `caffe-cifar-10` and `make-doom-for-mips`. Codex `financial-document-processor` was running. Most task notes remain grounded in Wattle logs, verifier failures, and Terminal-Bench oracle/tests.
+The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-one completed comparisons at this snapshot: Codex passed `build-pov-ray`, `db-wal-recovery`, `extract-moves-from-video`, `financial-document-processor`, `gcode-to-text`, `gpt2-codegolf`, `mteb-leaderboard`, `mteb-retrieve`, and `protein-assembly`; failed `configure-git-webserver`, `extract-elf`, `filter-js-from-html`, `install-windows-3.11`, `overfull-hbox`, `polyglot-rust-c`, `raman-fitting`, `torch-tensor-parallelism`, `train-fasttext`, and `video-processing`; and timed out on `caffe-cifar-10` and `make-doom-for-mips`. Codex `polyglot-c-py` was running. Most task notes remain grounded in Wattle logs, verifier failures, and Terminal-Bench oracle/tests.
 
 ## Confirmed Failures And Exceptions
 
@@ -97,6 +97,7 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had nineteen complet
 - Verifier: missed XSS vectors and modified 5 clean HTML files.
 - Oracle contrast: uses BeautifulSoup to remove dangerous tags and attributes while preserving benign structure.
 - Wattle behavior: validated a narrow sample but did not exercise the task's clean-preservation and adversarial-vector contract.
+- Codex comparison: Codex also failed this task with missed XSS vectors and clean-file modifications, reinforcing that sanitizer tasks need explicit positive and negative regression suites.
 - Raw lesson: when a task implies a filter/sanitizer, Wattle should build and run a representative adversarial and clean regression set before finalizing.
 
 ### `financial-document-processor`
@@ -105,6 +106,7 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had nineteen complet
 - Verifier: invoices and `summary.csv` were missing or incomplete.
 - Oracle contrast: implements OCR/text extraction for images/PDFs, content-based invoice classification, moves every document, and writes a structured invoice summary.
 - Wattle behavior: began moving a hand-classified subset and then exited before completing destination directories and summary output.
+- Codex comparison: Codex passed this task, showing the transaction-style all-files-then-summary workflow is achievable in the same task environment.
 - Raw lesson: multi-file classification tasks need transaction-style staging: classify all files, validate total coverage, then move/write outputs atomically.
 
 ### `gcode-to-text`
@@ -257,10 +259,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had nineteen complet
 
 ### `video-processing`
 
-- Status: failed.
-- Verifier: landing frame was 230; expected inclusive range 231 to 234.
+- Status: failed in both synced Wattle attempts.
+- Verifier: first attempt had landing frame 230 outside inclusive range 231 to 234; retry had example landing frame 61 below range 62 to 64 and test-video takeoff frame 239 above range 219 to 223.
 - Oracle contrast: uses frame-level movement/background subtraction and task-specific thresholds to locate jump start/end.
-- Wattle behavior: got very close but failed an off-by-one/tolerance-sensitive boundary.
+- Wattle behavior: produced the required TOML structure and plausible frame estimates, but failed tight temporal boundaries in different ways across attempts.
 - Codex comparison: Codex also failed a tight boundary check, but on takeoff rather than landing: takeoff frame 226 was outside the inclusive range 219 to 223.
 - Raw lesson: video/temporal tasks need exact boundary calibration and verifier-range checks before final answer.
 
@@ -452,6 +454,13 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had nineteen complet
 - Oracle contrast: leaves the VM process and serial/telnet endpoint alive for the verifier's final liveness and version checks.
 - Raw lesson: service/VM tasks need final liveness checks that run immediately before final response, and those checks must verify all required side artifacts as well as the visible port.
 
+### `qemu-alpine-ssh`
+
+- Status: one Wattle attempt passed and one retry is running.
+- Current evidence: passed attempt `qemu-alpine-ssh__2rXBcVb` left Alpine running in QEMU with SSH forwarded on `localhost:2222`, root password `password123`, and validated an SSH login to a root shell inside the VM.
+- Oracle contrast: leaves a booted VM with reachable SSH, not only a configured disk or launch command.
+- Raw lesson: VM service tasks pass when Wattle validates the exact externally reachable login path and leaves the long-running process alive for the verifier.
+
 ## Running Or Incomplete At Snapshot
 
 ### `train-fasttext` retry
@@ -461,16 +470,16 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had nineteen complet
 - Watch point: if the retry passes, compare its exact data conversion/evaluation command and model-size controls against both failed attempts.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### `video-processing` retry
+### `qemu-alpine-ssh` retry
 
-- Status: Wattle retry `video-processing__paNaSez` is running.
-- Current evidence: prior Wattle attempt missed the landing frame by one frame; Codex also failed the comparison with a takeoff frame outside the accepted range. The running retry is analyzing foreground masks and trajectory signals.
-- Watch point: if the retry passes, compare its temporal calibration and boundary selection against the failed off-by-one/near-boundary approaches.
+- Status: Wattle retry `qemu-alpine-ssh__EyRt9zU` is running.
+- Current evidence: one Wattle attempt already passed by booting Alpine under QEMU, forwarding host port 2222 to SSH, setting the root password, and validating an SSH login.
+- Watch point: because a prior Wattle attempt passed, this retry should not change the failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### Codex `financial-document-processor` comparison
+### Codex `polyglot-c-py` comparison
 
-- Status: Codex comparison `financial-document-processor__6EzYPeC` is running.
-- Current evidence: Wattle began moving a classified subset and then exited before completing `/app/invoices/summary.csv` and full document movement. The oracle classifies every document, moves all files, and writes the invoice summary.
-- Watch point: if Codex passes, compare whether it stages classification and validates total coverage before moving/writing outputs; if it fails, strengthen the transaction-style staging recommendation.
+- Status: Codex comparison `polyglot-c-py__dqTiFJR` is running.
+- Current evidence: Wattle produced the correct polyglot source but left `cmain` beside `main.py.c`, causing exact-directory verification to fail. The same cleanup/final-inventory issue also affected `polyglot-rust-c`.
+- Watch point: if Codex passes, compare its validation artifact cleanup path; if it fails, strengthen the final-inventory audit recommendation.
 - Do not classify the Codex comparison outcome yet. It should be analyzed after a completed `result.json` is synced.

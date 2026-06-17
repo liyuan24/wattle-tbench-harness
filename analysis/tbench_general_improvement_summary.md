@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T07:06:17Z`
+Snapshot used: `2026-06-17T07:16:33Z`
 
 This summary intentionally avoids task-specific fixes. It ranks general Wattle improvements by expected pass-rate impact, breadth across failures, and implementation practicality.
 
@@ -47,6 +47,7 @@ Observed in:
 - `torch-tensor-parallelism`: forward/syntax checks missed backward distributed gradient mismatch.
 - `pytorch-model-recovery`: TorchScript model saved with the wrong `forward(src, tgt)` interface, despite plausible model-recovery work.
 - `overfull-hbox`: failed attempts had no overfull boxes but used invalid substitutions; a Wattle retry passed after preserving the allowed edit set, while Codex still failed the comparison with the same contract miss.
+- `filter-js-from-html`: Wattle and Codex both missed XSS vectors and modified clean files, showing sanitizer tasks need paired adversarial and clean-preservation regression checks.
 - `sam-cell-seg`: all substantive image-mask tests passed, but exact serialized coordinate type failed.
 - `model-extraction-relu-logits`: local validation against visible model internals passed, but hidden verifier weights exposed incomplete recovery.
 - `dna-insert`: local validation reported matching primer Tm values, but the verifier reconstructed the primer pair in a different orientation and found the Tm delta above threshold.
@@ -136,8 +137,8 @@ Observed in:
 
 - `gcode-to-text`: decoded a plausible sentence instead of the hidden flag; Codex passed the comparison, so stronger rendering/OCR validation is feasible under the same environment.
 - `extract-moves-from-video`: command sequence similarity was too low; Codex passed the comparison, so a stronger extraction workflow is feasible under the same task/harness.
-- `video-processing`: Wattle's landing frame was off by one; Codex also failed a tight takeoff-frame boundary, so the issue is exact temporal calibration rather than only one implementation's heuristic.
-- `financial-document-processor`: manual/partial classification did not complete all files.
+- `video-processing`: two Wattle attempts and Codex all failed tight frame-boundary checks, so the issue is exact temporal calibration rather than only one implementation's heuristic.
+- `financial-document-processor`: manual/partial classification did not complete all files; Codex passed the comparison, so transaction-style staging and coverage validation are feasible.
 
 General fix:
 
@@ -178,7 +179,7 @@ General fix:
 
 ## Priority 8: Keep Prompt Caching Healthy But Do Not Optimize It Blindly
 
-The current run's aggregate prompt-cache hit rate is 85.0%, which is much better than the earlier 49.2% signal. The cache issue no longer appears to be the dominant cause of failures in this snapshot.
+The current run's aggregate prompt-cache hit rate is 84.9%, which is much better than the earlier 49.2% signal. The cache issue no longer appears to be the dominant cause of failures in this snapshot.
 
 General fix:
 
