@@ -33,6 +33,7 @@ install_system_packages() {
     jq \
     python3 \
     python3-venv \
+    rsync \
     tmux
 }
 

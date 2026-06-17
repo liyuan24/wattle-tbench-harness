@@ -273,6 +273,60 @@ Sync a specific older run:
 ./scripts/sync_gcp_run.py --run-label wattle-gpt55-tbench20-amd64-gcp-20260616
 ```
 
+`sync_gcp_run.py` uses `rsync` by default. It preserves local-only
+`analysis/failure_analysis/` files inside the synced run directory, so repeated
+syncs do not erase the failure-analysis ledger or per-task reports.
+
+9. Generate raw per-task failure reports for a synced run:
+
+```bash
+RUN_DIR=runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616
+CODEX_RUN_DIR=runs/gcp/codex-compare-nonpassed-20260617
+
+python - <<'PY'
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+run_dir = Path(os.environ["RUN_DIR"])
+codex_run_dir = Path(os.environ["CODEX_RUN_DIR"])
+snapshot = json.loads((run_dir / "analysis/incremental/snapshot.json").read_text())
+
+for trial in snapshot["trials"]:
+    if trial["status"] == "passed":
+        continue
+    subprocess.run(
+        [
+            sys.executable,
+            "scripts/analyze_task_failure.py",
+            trial["task"],
+            "--run-dir",
+            str(run_dir),
+            "--codex-run-dir",
+            str(codex_run_dir),
+            "--force",
+        ],
+        check=True,
+    )
+PY
+```
+
+This writes:
+
+```text
+runs/gcp/<label>/analysis/failure_analysis/ledger.jsonl
+runs/gcp/<label>/analysis/failure_analysis/tasks/<task>.md
+```
+
+The committed high-level analysis files for the current GCP run are:
+
+```text
+analysis/tbench_raw_failure_analysis.md
+analysis/tbench_general_improvement_summary.md
+```
+
 When running on a GCP Spot VM, keep the benchmark run under the VM's persistent
 boot disk, for example `~/repos/wattle-tbench-harness/runs/<label>`. If the VM is
 stopped or preempted, completed trial artifacts remain available after the next

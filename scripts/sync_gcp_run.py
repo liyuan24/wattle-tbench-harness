@@ -12,7 +12,7 @@ from pathlib import Path
 DEFAULT_PROJECT = "terminal-bench-for-wattle"
 DEFAULT_ZONE = "us-central1-a"
 DEFAULT_INSTANCE = "tbench-amd64"
-DEFAULT_REMOTE_REPO = "~/repos/wattle-tbench-harness"
+DEFAULT_REMOTE_REPO = "/home/liyuan/repos/wattle-tbench-harness"
 
 
 def parse_args() -> argparse.Namespace:
@@ -29,6 +29,12 @@ def parse_args() -> argparse.Namespace:
         help="Run label to sync, or 'latest' to use the VM's runs/latest symlink.",
     )
     parser.add_argument("--local-dir", type=Path, default=Path("runs/gcp"))
+    parser.add_argument(
+        "--method",
+        choices=("rsync", "scp"),
+        default="rsync",
+        help="Transfer method. rsync is incremental and preferred for active runs.",
+    )
     parser.add_argument("--no-analysis", action="store_true")
     return parser.parse_args()
 
@@ -56,17 +62,27 @@ def main() -> int:
     local_run_dir.parent.mkdir(parents=True, exist_ok=True)
     remote_run_dir = f"{args.remote_repo.rstrip('/')}/runs/{run_label}"
 
-    scp_cmd = [
-        gcloud,
-        "compute",
-        "scp",
-        "--recurse",
-        f"{args.instance}:{remote_run_dir}",
-        str(local_run_dir.parent),
-        f"--project={args.project}",
-        f"--zone={args.zone}",
-    ]
-    run(scp_cmd)
+    if args.method == "rsync":
+        sync_with_rsync(
+            gcloud=gcloud,
+            project=args.project,
+            zone=args.zone,
+            instance=args.instance,
+            remote_run_dir=remote_run_dir,
+            local_run_dir=local_run_dir,
+        )
+    else:
+        scp_cmd = [
+            gcloud,
+            "compute",
+            "scp",
+            "--recurse",
+            f"{args.instance}:{remote_run_dir}",
+            str(local_run_dir.parent),
+            f"--project={args.project}",
+            f"--zone={args.zone}",
+        ]
+        run(scp_cmd)
 
     if not args.no_analysis:
         repo = Path(__file__).resolve().parents[1]
@@ -118,6 +134,57 @@ def remote_latest_label(
         print("[error] Could not infer latest remote run label.", file=sys.stderr)
         raise SystemExit(2)
     return label
+
+
+def sync_with_rsync(
+    *,
+    gcloud: str,
+    project: str,
+    zone: str,
+    instance: str,
+    remote_run_dir: str,
+    local_run_dir: Path,
+) -> None:
+    if shutil.which("rsync") is None:
+        print("[error] rsync not found locally; rerun with --method scp.", file=sys.stderr)
+        raise SystemExit(2)
+
+    dry_run_cmd = [
+        gcloud,
+        "compute",
+        "ssh",
+        instance,
+        f"--project={project}",
+        f"--zone={zone}",
+        "--dry-run",
+    ]
+    proc = subprocess.run(dry_run_cmd, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if proc.returncode != 0:
+        print(proc.stderr, file=sys.stderr)
+        raise SystemExit(proc.returncode)
+
+    ssh_parts = shlex.split(proc.stdout.strip())
+    if len(ssh_parts) < 2:
+        print("[error] Could not parse gcloud SSH dry-run command.", file=sys.stderr)
+        raise SystemExit(2)
+    remote = ssh_parts[-1]
+    ssh_command_parts = [part for part in ssh_parts[:-1] if part != "-t"]
+    ssh_command = " ".join(shlex.quote(part) for part in ssh_command_parts)
+
+    local_run_dir.mkdir(parents=True, exist_ok=True)
+    rsync_cmd = [
+        "rsync",
+        "-az",
+        "--delete",
+        "--filter=P /analysis/failure_analysis/***",
+        "--filter=P /analysis/failure_analysis",
+        "--info=stats2,progress2",
+        "-e",
+        ssh_command,
+        f"{remote}:{remote_run_dir.rstrip('/')}/",
+        f"{local_run_dir}/",
+    ]
+    run(rsync_cmd)
 
 
 def run(command: list[str]) -> None:
