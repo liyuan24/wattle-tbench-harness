@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T10:15:56Z`
+Snapshot used: `2026-06-17T10:26:11Z`
 
 This summary intentionally avoids task-specific fixes. It ranks general Wattle improvements by expected pass-rate impact, breadth across failures, and implementation practicality.
 
@@ -53,7 +53,7 @@ Observed in:
 - `sam-cell-seg`: one attempt passed substantive image-mask checks but failed exact serialized coordinate type; a retry still failed that schema check and also missed a mask-alignment IoU threshold.
 - `model-extraction-relu-logits`: one failed attempt validated against visible model internals, but hidden verifier weights exposed incomplete recovery; a retry passed after improving the query-based recovery path.
 - `dna-insert`: repeated attempts reported matching primer Tm values locally, but the verifier reconstructed the primer pair in a different orientation and found the Tm delta above threshold.
-- `dna-assembly`: local validation reported all primer-pair Tm differences within threshold, but the verifier found a 5.071125 C delta against a 5 C limit.
+- `dna-assembly`: repeated local validation reported primer-pair Tm differences within threshold, but the verifier still found above-threshold deltas against the 5 C limit.
 
 General fix:
 
@@ -167,7 +167,7 @@ Observed in:
 - `pytorch-model-recovery`: model artifact valid enough to save, but not callable through the verifier's expected interface.
 - `model-extraction-relu-logits`: one failed attempt recovered rows that matched visible weights but not the verifier's hidden generated matrix; the later pass keeps the lesson focused on hidden-shape/seed robustness.
 - `dna-insert`: repeated primer sequences were syntactically valid and encoded the insert, but the annealing-arm orientation and Tm contract were not verifier-equivalent.
-- `dna-assembly`: primer inventory and assembly intent were plausible, but the exact Golden Gate reconstruction and annealing Tm margin still failed.
+- `dna-assembly`: primer inventory and assembly intent were plausible across attempts, but the exact Golden Gate reconstruction and annealing Tm margin still failed.
 
 General fix:
 
@@ -182,7 +182,7 @@ General fix:
 
 ## Priority 8: Keep Prompt Caching Healthy But Do Not Optimize It Blindly
 
-The current run's aggregate prompt-cache hit rate is 84.9%, which is much better than the earlier 49.2% signal. The cache issue no longer appears to be the dominant cause of failures in this snapshot.
+The current run's aggregate prompt-cache hit rate is 85.0%, which is much better than the earlier 49.2% signal. The cache issue no longer appears to be the dominant cause of failures in this snapshot.
 
 General fix:
 

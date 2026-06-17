@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T10:15:56Z`
+Snapshot used: `2026-06-17T10:26:11Z`
 
 Counts at snapshot:
 
-- Passed: 123
-- Failed: 40
+- Passed: 124
+- Failed: 41
 - Exceptions: 13
 - Running or incomplete: 2
-- Prompt-cache hit rate: 84.9%
+- Prompt-cache hit rate: 85.0%
 
 Deep evidence reports were regenerated under:
 
@@ -59,10 +59,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `dna-assembly`
 
-- Status: one Wattle attempt failed and one retry is running.
-- Verifier: `primers.fasta` existed and had the expected primer inventory, but at least one forward/reverse pair had an annealing Tm delta of 5.071125 C, just above the allowed 5 C threshold.
+- Status: failed in both synced Wattle attempts.
+- Verifier: first attempt's `primers.fasta` existed and had the expected primer inventory, but at least one forward/reverse pair had an annealing Tm delta of 5.071125 C, just above the allowed 5 C threshold. Retry `dna-assembly__eEHGCRK` failed the same contract with an even larger Tm delta of 7.260135 C.
 - Oracle contrast: chooses exact template cut boundaries, excludes insert start/stop codons where required, derives Golden Gate overhangs from the verifier-equivalent reverse-complement reconstruction, and validates every annealing tract with `oligotm -tp 1 -sc 1 -mv 50 -dv 2 -n 0.8 -d 500`.
-- Wattle behavior: failed attempt did substantial correct setup work and reported that all forward/reverse Tm differences were within 5 C, but its final local validation did not match the verifier closely enough near the threshold. Running retry `dna-assembly__eEHGCRK` is explicitly trying to use Primer3 `oligotm` for the requested Tm ground truth before final validation.
+- Wattle behavior: both attempts did substantial correct setup work and reported that primer-pair Tm differences were within 5 C, but final local validation still did not match the verifier's reconstruction/orientation path. The retry explicitly tried to use Primer3 `oligotm`, which shows the remaining gap is likely in which annealing segment/orientation is validated, not just which Tm binary is used.
 - Raw lesson: near-threshold scientific/design tasks need verifier-equivalent reconstruction with margin; Wattle should not accept a final design where an exact hidden check can fail by a small tolerance.
 
 ### `dna-insert`
@@ -120,10 +120,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `gpt2-codegolf`
 
-- Status: failed.
+- Status: two Wattle attempts failed and one retry is running.
 - Verifier: `gpt2.c` did not satisfy the full compile/run contract.
 - Oracle contrast: provides a dense under-5000-byte GPT-2 implementation with the exact expected CLI and checkpoint/vocab reading behavior.
-- Wattle behavior: created small C implementations and smoke-tested them, but both Wattle trials failed the verifier; the retry had size/compile checks passing and then failed the semantic expected-continuation check for a known verifier prompt.
+- Wattle behavior: created small C implementations and smoke-tested them, but both completed Wattle trials failed the verifier; the retry had size/compile checks passing and then failed the semantic expected-continuation check for a known verifier prompt. New running retry `gpt2-codegolf__bNUptDs` is starting from file/format inspection before writing another compact C implementation.
 - Codex comparison: Codex passed the same task in the comparison run, which suggests the harness/task is healthy and Wattle's miss is in exact contract execution rather than environment setup.
 - Raw lesson: code-golf/implementation tasks need verifier-like command reproduction and semantic output checks, including exact file path, argv, size, compile flags, tokenization, checkpoint layout, BPE mapping, and expected continuation contract.
 
@@ -609,18 +609,25 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 - Oracle contrast: extracts the hidden key and writes only the expected result artifact.
 - Raw lesson: exploit/secret-recovery tasks pass when Wattle keeps the final deliverable narrow and validates the exact file content instead of leaving broader exploratory artifacts.
 
+### `rstan-to-pystan`
+
+- Status: both synced Wattle attempts passed.
+- Current evidence: retry `rstan-to-pystan__eaDhx9s` completed PyStan posterior sampling with exit code 0 and produced the required `/app/alpha_est.csv`, `/app/sigma_est.csv`, `/app/rho_est.csv`, and `/app/beta_est.csv` files with the expected row counts. Earlier pass `rstan-to-pystan__TVwE9vy` installed PyStan 3.10.0, created `/app/pystan_analysis.py`, used `stan.build(..., random_seed=1)` with RStan-equivalent sampling settings, and validated numeric-only outputs.
+- Oracle contrast: translates the RStan model and sampling hyperparameters to PyStan 3 while preserving model semantics, seed, posterior summaries, and CSV output schema.
+- Raw lesson: probabilistic-model translation tasks pass when Wattle preserves library-specific sampling semantics and validates persisted posterior summary files after the long run completes.
+
 ## Running Or Incomplete At Snapshot
 
-### `dna-assembly` retry
+### `gpt2-codegolf` retry
 
-- Status: Wattle retry `dna-assembly__eEHGCRK` is running.
-- Current evidence: prior Wattle attempt `dna-assembly__dqikECR` failed by only 0.071125 C over the forward/reverse annealing Tm-difference threshold. The running retry is checking or installing the Primer3 `oligotm` binary so final validation can use the requested Tm ground truth.
-- Watch point: if the retry passes, compare whether verifier-equivalent reconstruction and margin replaced the prior near-threshold local validation.
+- Status: Wattle retry `gpt2-codegolf__bNUptDs` is running.
+- Current evidence: two completed Wattle attempts failed exact GPT-2 contract checks: one lacked the verifier-visible `gpt2.c` artifact and one compiled under the size limit but produced the wrong continuation. The running retry is inspecting available files and formats before writing a smaller contract-matched implementation.
+- Watch point: if the retry passes, compare whether it validated exact argv/path/checkpoint/BPE behavior against verifier-like prompts instead of only smoke-testing plausible text generation.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### `rstan-to-pystan` retry
+### `llm-inference-batching-scheduler` retry
 
-- Status: Wattle retry `rstan-to-pystan__eaDhx9s` is running.
-- Current evidence: prior Wattle attempt `rstan-to-pystan__TVwE9vy` passed after installing PyStan 3.10.0, creating `/app/pystan_analysis.py`, using `stan.build(..., random_seed=1)` with RStan-equivalent sampling settings, writing the four required posterior-mean CSV files, and validating row counts plus numeric-only contents.
-- Watch point: if the retry passes, keep this as positive evidence for preserving probabilistic-model hyperparameters and output schema while translating library APIs.
+- Status: Wattle retry `llm-inference-batching-scheduler__tfEmF5Y` is running.
+- Current evidence: prior synced Wattle attempts passed after generating `/app/task_file/output_data/plan_b1.jsonl` and `plan_b2.jsonl`, validating exact request coverage, cost, padding ratio, p95 latency, sequential timecost, and shape consistency against `/app/task_file/scripts/cost_model.py`. The running retry is merging low-risk neighboring groups to reduce sequential execution time without crossing cost/padding/p95 limits.
+- Watch point: if the retry passes, keep this as positive evidence for metric-driven optimization with verifier-equivalent cost-model validation.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
