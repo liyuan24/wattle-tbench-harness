@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T06:30:24Z`
+Snapshot used: `2026-06-17T06:40:41Z`
 
 This summary intentionally avoids task-specific fixes. It ranks general Wattle improvements by expected pass-rate impact, breadth across failures, and implementation practicality.
 
@@ -13,7 +13,7 @@ Wattle frequently did useful work but failed because the final verifier-visible 
 Observed in:
 
 - `polyglot-c-py`: correct source, extra `cmain`.
-- `polyglot-rust-c`: correct source, extra `main` and `cmain`; Codex also failed the comparison by leaving an extra `main`, so exact final inventory is a broad failure mode.
+- `polyglot-rust-c`: correct source, extra `main` and `cmain` across three Wattle attempts; Codex also failed the comparison by leaving an extra `main`, so exact final inventory is a broad failure mode.
 - `configure-git-webserver`: smoke-tested successfully, then reset state so verifier saw 404; Codex also failed the comparison with HTTP 404, and a Wattle retry with a deployment hook/server still failed with HTTP 000.
 - `financial-document-processor`: partial file moves and missing `summary.csv`.
 - `build-pov-ray`: executable worked, but required source/provenance artifacts were not verifier-visible; Codex passed the comparison, so this is a Wattle final-state provenance miss rather than an apparent task/harness issue.
@@ -39,7 +39,7 @@ Several failures passed Wattle's own smoke tests but not the real verifier. The 
 Observed in:
 
 - `mteb-retrieve`: wrong MTEB wrapper/prompt semantics produced the wrong ranked document; Codex passed the same task, reinforcing that exact API parity is achievable in the harness.
-- `mteb-leaderboard`: wrong leaderboard snapshot/aggregation semantics.
+- `mteb-leaderboard`: wrong leaderboard snapshot/aggregation semantics; Codex passed the comparison, so exact snapshot/completeness/aggregation reproduction is feasible in the same environment.
 - `train-fasttext`: internal validation did not match private verifier format/threshold; Codex also failed below threshold, so exact data conversion/training settings and margin matter broadly.
 - `gpt2-codegolf`: implementation did not satisfy exact compile/path/CLI/output contract across two Wattle attempts; Codex passed the same task, which points to Wattle's exact validation loop rather than an environment issue.
 - `torch-tensor-parallelism`: forward/syntax checks missed backward distributed gradient mismatch.
@@ -73,7 +73,7 @@ Benchmark/library tasks failed when Wattle approximated an API instead of matchi
 Observed in:
 
 - `mteb-retrieve`: `mteb.get_model`, model revision, `SciFact`, query/passage prompt types, and fifth-highest ranking all mattered; Codex passing this comparison points to Wattle's semantic reproduction rather than an environment limitation.
-- `mteb-leaderboard`: results repo commit, benchmark name, full-task filtering, and averaging mattered.
+- `mteb-leaderboard`: results repo commit, benchmark name, full-task filtering, and averaging mattered; Codex passing the comparison points to Wattle's semantic reproduction rather than a task/harness limitation.
 - `raman-fitting`: unit conversion and crop ranges mattered before fitting.
 - `db-wal-recovery`: SQLite WAL semantics and XOR decryption mattered before JSON extraction; Codex passed the comparison, so this is a Wattle semantic-fidelity miss rather than an apparent task/harness issue.
 - `mcmc-sampling-stan`: prior parameterization and final posterior files mattered, not just script/file existence.
@@ -132,7 +132,7 @@ Some failures came from accepting plausible extracted content too early.
 
 Observed in:
 
-- `gcode-to-text`: decoded a plausible sentence instead of the hidden flag.
+- `gcode-to-text`: decoded a plausible sentence instead of the hidden flag; Codex passed the comparison, so stronger rendering/OCR validation is feasible under the same environment.
 - `extract-moves-from-video`: command sequence similarity was too low; Codex passed the comparison, so a stronger extraction workflow is feasible under the same task/harness.
 - `video-processing`: Wattle's landing frame was off by one; Codex also failed a tight takeoff-frame boundary, so the issue is exact temporal calibration rather than only one implementation's heuristic.
 - `financial-document-processor`: manual/partial classification did not complete all files.
@@ -176,7 +176,7 @@ General fix:
 
 ## Priority 8: Keep Prompt Caching Healthy But Do Not Optimize It Blindly
 
-The current run's aggregate prompt-cache hit rate is 85.4%, which is much better than the earlier 49.2% signal. The cache issue no longer appears to be the dominant cause of failures in this snapshot.
+The current run's aggregate prompt-cache hit rate is 85.2%, which is much better than the earlier 49.2% signal. The cache issue no longer appears to be the dominant cause of failures in this snapshot.
 
 General fix:
 

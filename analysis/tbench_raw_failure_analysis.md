@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T06:30:24Z`
+Snapshot used: `2026-06-17T06:40:41Z`
 
 Counts at snapshot:
 
-- Passed: 87
-- Failed: 26
+- Passed: 89
+- Failed: 28
 - Exceptions: 8
 - Running or incomplete: 2
-- Prompt-cache hit rate: 85.4%
+- Prompt-cache hit rate: 85.2%
 
 Deep evidence reports were regenerated under:
 
@@ -18,7 +18,7 @@ Deep evidence reports were regenerated under:
 runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/
 ```
 
-The Codex comparison run `codex-compare-nonpassed-20260617` had fourteen completed comparisons at this snapshot: Codex passed `build-pov-ray`, `db-wal-recovery`, `extract-moves-from-video`, `gpt2-codegolf`, and `mteb-retrieve`; failed `configure-git-webserver`, `install-windows-3.11`, `overfull-hbox`, `polyglot-rust-c`, `torch-tensor-parallelism`, `train-fasttext`, and `video-processing`; and timed out on `caffe-cifar-10` and `make-doom-for-mips`. Codex `gcode-to-text` was running. Most task notes remain grounded in Wattle logs, verifier failures, and Terminal-Bench oracle/tests.
+The Codex comparison run `codex-compare-nonpassed-20260617` had sixteen completed comparisons at this snapshot: Codex passed `build-pov-ray`, `db-wal-recovery`, `extract-moves-from-video`, `gcode-to-text`, `gpt2-codegolf`, `mteb-leaderboard`, and `mteb-retrieve`; failed `configure-git-webserver`, `install-windows-3.11`, `overfull-hbox`, `polyglot-rust-c`, `torch-tensor-parallelism`, `train-fasttext`, and `video-processing`; and timed out on `caffe-cifar-10` and `make-doom-for-mips`. Codex `raman-fitting` was running. Most task notes remain grounded in Wattle logs, verifier failures, and Terminal-Bench oracle/tests.
 
 ## Confirmed Failures And Exceptions
 
@@ -112,6 +112,7 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had fourteen complet
 - Verifier: expected `flag{gc0d3_iz_ch4LLenGiNg}`, got `the quick brown fox jumps over the lazy dog`.
 - Oracle contrast: renders rotated 3D G-code segments and uses image/OCR tooling to recover the hidden text.
 - Wattle behavior: solved for a visually plausible decoded sentence, but not the verifier target.
+- Codex comparison: Codex passed this task, confirming the hidden flag is recoverable in the same environment when the rendering/OCR workflow is strong enough.
 - Raw lesson: Wattle should avoid accepting first plausible OCR/vision output without checking task-specific hidden-message criteria and alternative views.
 
 ### `gpt2-codegolf`
@@ -163,6 +164,7 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had fourteen complet
 - Verifier: expected `GritLM/GritLM-7B`; Wattle wrote `Salesforce/SFR-Embedding-2_R`.
 - Oracle contrast: checks out the MTEB results repo at a specific commit, loads the exact `MTEB(Scandinavian, v1)` benchmark, filters models with all tasks, and computes complete-task averages.
 - Wattle behavior: selected a plausible leaderboard winner but did not reproduce the exact dated result computation.
+- Codex comparison: Codex passed this task, strengthening the conclusion that Wattle needs exact benchmark snapshot/completeness/aggregation reproduction rather than a broader leaderboard heuristic.
 - Raw lesson: benchmark/leaderboard tasks require exact dataset snapshot, benchmark name, completeness filters, and aggregation semantics.
 
 ### `mteb-retrieve`
@@ -193,10 +195,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had fourteen complet
 
 ### `polyglot-rust-c`
 
-- Status: failed.
+- Status: failed in all three synced Wattle attempts.
 - Verifier: expected only `main.rs`; found `main`, `cmain`, and `main.rs`.
 - Oracle contrast: creates only `polyglot/main.rs`; build products are not left in place.
-- Wattle behavior: validated both Rust and C++ compilation but left generated executables/symlinks.
+- Wattle behavior: validated both Rust and C++ compilation but left generated executables/symlinks. Retry `polyglot-rust-c__ciAfnzW` repeated the same failure signature by leaving `cmain`, `main`, and `main.rs`.
 - Codex comparison: Codex also failed the task with the same final-inventory contract class, leaving `main` beside `main.rs`. That makes the failure pattern broader than Wattle-specific execution cleanup.
 - Raw lesson: exact output inventories should be treated as part of the task contract, not incidental filesystem state.
 
@@ -412,6 +414,13 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had fourteen complet
 - Oracle contrast: recovers the 7z password and extracts only the target secret file content into the required solution artifact.
 - Raw lesson: targeted artifact extraction and a minimal final answer file work well when Wattle keeps the verifier-visible deliverable narrow.
 
+### `headless-terminal`
+
+- Status: both synced Wattle attempts passed.
+- Current evidence: passed attempt `headless-terminal__LZLy2Dd` implemented `HeadlessTerminal(BaseTerminal)` using a real PTY-backed interactive `/bin/bash -i`, installed `pexpect`/`ptyprocess`, and validated command echo, interactive `read`, `.bashrc` sourcing, and Ctrl-C handling.
+- Oracle contrast: implements a headless terminal abstraction that behaves like an interactive terminal, not only a shell-command wrapper.
+- Raw lesson: when the task requires interactive behavior, Wattle succeeded by validating through a real PTY and testing interactive control flows, not just subprocess output.
+
 ## Running Or Incomplete At Snapshot
 
 ### `compile-compcert` retry
@@ -421,16 +430,16 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had fourteen complet
 - Watch point: because a prior Wattle attempt passed, this retry should not change the failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### `polyglot-rust-c` retry
+### `schemelike-metacircular-eval` retry
 
-- Status: Wattle retry `polyglot-rust-c__ciAfnzW` is running.
-- Current evidence: two prior Wattle attempts failed because compiled artifacts such as `main` and `cmain` remained beside `main.rs`, while the verifier expected only `main.rs`. Codex also failed this comparison by leaving an extra `main`.
-- Watch point: if the retry passes, compare whether it moved validation artifacts outside the checked directory or cleaned them before final validation.
+- Status: Wattle retry `schemelike-metacircular-eval__oCPHDYP` is running.
+- Current evidence: one prior Wattle attempt for this task already passed after implementing `eval.scm`, validating direct interpreter output against the self-interpreter, handling environment/closures/mutation/file I/O, and cleaning callback-test artifacts.
+- Watch point: because a prior Wattle attempt passed, this retry should not change the failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### Codex `gcode-to-text` comparison
+### Codex `raman-fitting` comparison
 
-- Status: Codex comparison `gcode-to-text__Den56ri` is running.
-- Current evidence: Wattle decoded a plausible sentence, `the quick brown fox jumps over the lazy dog`, but the verifier expected `flag{gc0d3_iz_ch4LLenGiNg}`. The oracle renders rotated G-code segments and applies image/OCR tooling to recover the hidden text.
-- Watch point: if Codex passes, compare its view-selection/rendering/OCR workflow to Wattle's first-plausible-output behavior; if it fails, this reinforces the need for stronger media extraction confidence checks.
+- Status: Codex comparison `raman-fitting__7aY2JPi` is running.
+- Current evidence: Wattle's fit placed the G peak at x0=1654.26 instead of 1580.3 and the 2D peak at x0=3745.38 instead of 2670.08. The oracle fits the intended Raman peak windows with correct units/ranges before writing peak parameters.
+- Watch point: if Codex passes, compare its preprocessing/window selection and fitting objective to Wattle's broad-range fit; if it fails, keep the semantic-fidelity recommendation focused on scientific unit/range constraints.
 - Do not classify the Codex comparison outcome yet. It should be analyzed after a completed `result.json` is synced.
