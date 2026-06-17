@@ -2,11 +2,11 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T04:04:23Z`
+Snapshot used: `2026-06-17T04:06:16Z`
 
 Counts at snapshot:
 
-- Passed: 56
+- Passed: 57
 - Failed: 20
 - Exceptions: 6
 - Running or incomplete: 2
@@ -241,9 +241,9 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had two completed co
 - Oracle contrast: installs PyStan 3.10.0 without R/RStan, translates the provided RStan Gaussian-process model and sampling hyperparameters to PyStan 3 semantics, sets `stan.build(..., random_seed=1)`, avoids storing large transformed matrices in draws, runs posterior sampling, and writes exact numeric posterior means to `alpha_est.csv`, `sigma_est.csv`, `rho_est.csv`, and `beta_est.csv`.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
 
-### `sqlite-with-gcov`
+### `openssl-selfsigned-cert`
 
 - Status: running at the snapshot.
-- Current evidence: Wattle had built SQLite in `/app/sqlite`, symlinked the instrumented CLI into `/usr/local/bin/sqlite3`, and locally observed `.gcda`/`.gcno` coverage files after running a PATH-resolved query; no completed verifier result was synced yet.
-- Oracle contrast: extracts the pre-vendored SQLite fossil release into `/app/sqlite`, configures it with gcov flags, builds it with `make`, exposes the resulting `sqlite3` in `PATH`, and relies on verifier execution to confirm both runtime behavior and generated gcov artifacts under `/app/sqlite`.
+- Current evidence: Wattle had generated `/app/ssl/server.crt` and was assembling derived certificate files plus `/app/check_cert.py`; no completed verifier result was synced yet.
+- Oracle contrast: creates `/app/ssl`, generates a 2048-bit RSA key with restrictive permissions, creates a 365-day self-signed certificate for organization `DevOps Team` and common name `dev-internal.company.local`, writes combined PEM and verification files, and provides a Python script that loads the cert/key and prints the expected success details.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
