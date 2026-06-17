@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T09:14:26Z`
+Snapshot used: `2026-06-17T09:29:49Z`
 
 Counts at snapshot:
 
-- Passed: 105
-- Failed: 35
+- Passed: 109
+- Failed: 37
 - Exceptions: 13
 - Running or incomplete: 2
-- Prompt-cache hit rate: 85.2%
+- Prompt-cache hit rate: 85.1%
 
 Deep evidence reports were regenerated under:
 
@@ -93,10 +93,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `filter-js-from-html`
 
-- Status: failed.
+- Status: failed in both synced Wattle attempts.
 - Verifier: missed XSS vectors and modified 5 clean HTML files.
 - Oracle contrast: uses BeautifulSoup to remove dangerous tags and attributes while preserving benign structure.
-- Wattle behavior: validated a narrow sample but did not exercise the task's clean-preservation and adversarial-vector contract.
+- Wattle behavior: validated narrow samples and made a robustness pass for style/meta JavaScript, but still missed generated XSS vectors and modified clean files.
 - Codex comparison: Codex also failed this task with missed XSS vectors and clean-file modifications, reinforcing that sanitizer tasks need explicit positive and negative regression suites.
 - Raw lesson: when a task implies a filter/sanitizer, Wattle should build and run a representative adversarial and clean regression set before finalizing.
 
@@ -147,11 +147,11 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `mcmc-sampling-stan`
 
-- Status: exception, `AgentTimeoutError`; retry `mcmc-sampling-stan__puVs8Uq` is running.
-- Verifier: posterior alpha and beta means were astronomically wrong relative to expected ranges, despite Wattle reporting plausible mean files before timeout.
+- Status: one Wattle attempt timed out with bad final artifacts and one retry passed.
+- Verifier: failed attempt's posterior alpha and beta means were astronomically wrong relative to expected ranges, despite Wattle reporting plausible mean files before timeout.
 - Oracle contrast: installs pinned RStan dependencies, uses a hierarchical binomial Stan model with the intended prior transformation, then runs a long reproducible sample to write posterior means.
-- Wattle behavior: generated the required files and an apparently good intermediate result, then changed the Stan model/rerun path and timed out with verifier-visible bad posterior files. The running retry is reinstalling RStan dependencies after adding BLAS/LAPACK/Fortran system dependencies.
-- Raw lesson: probabilistic/scientific tasks need stable final artifact protection; once a verifier-plausible result is produced, later experiments should not overwrite it without passing the same checks.
+- Wattle behavior: failed attempt generated the required files and an apparently good intermediate result, then changed the Stan model/rerun path and timed out with verifier-visible bad posterior files. Retry `mcmc-sampling-stan__puVs8Uq` passed with RStan 2.32.7, `rstan::sampling`, 4 chains, 100,000 iterations, seed 1, and final means `alpha = 2.871847972980092`, `beta = 16.35229149756377`.
+- Raw lesson: probabilistic/scientific tasks need stable final artifact protection; once a verifier-plausible result is produced, later experiments should not overwrite it without passing the same checks. The retry shows that a pinned oracle-like path plus preserved final artifacts can recover the task.
 
 ### `model-extraction-relu-logits`
 
@@ -525,18 +525,32 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 - Oracle contrast: patches the vulnerable header handling while preserving the existing Bottle test suite and producing the required vulnerability report.
 - Raw lesson: security-fix tasks pass when Wattle pairs a minimal targeted validation with the full existing regression suite and exact report schema.
 
+### `cancel-async-tasks`
+
+- Status: both synced Wattle attempts passed.
+- Current evidence: retry `cancel-async-tasks__xbh8cLr` implemented importable `/app/run.py` with `run_tasks`, enforced `max_concurrent >= 1`, limited concurrency, and validated that cancelled tasks are awaited so cleanup/finally blocks run. Earlier pass `cancel-async-tasks__eDRkrfd` validated the same import, concurrency, and cancellation cleanup behavior.
+- Oracle contrast: implements cancellation-safe async task orchestration using only the Python standard library.
+- Raw lesson: async/concurrency tasks pass when Wattle validates behavioral invariants, especially cancellation cleanup, not only successful completion.
+
+### `feal-differential-cryptanalysis`
+
+- Status: both synced Wattle attempts passed.
+- Current evidence: retry `feal-differential-cryptanalysis__9eLKx5J` implemented `/app/attack.py` with `attack(encrypt_fn)`, recovered `key[5]`, validated 20 randomized key trials, and kept per-attack runtime around `0.20s`. Earlier pass validated 100 random keys and stayed under the 30-second budget.
+- Oracle contrast: performs a chosen-plaintext differential attack and validates recovered key material against randomized FEAL keys.
+- Raw lesson: cryptanalysis tasks pass when Wattle validates recovered secrets across many randomized keys under the verifier's runtime budget.
+
 ## Running Or Incomplete At Snapshot
 
-### `filter-js-from-html` retry
+### `fix-ocaml-gc` retry
 
-- Status: Wattle retry `filter-js-from-html__N8pMUvb` is running.
-- Current evidence: prior Wattle and Codex attempts missed XSS vectors and modified clean files. The running retry is making another robustness pass for style contents and meta refresh JavaScript URLs while trying to preserve unchanged text.
-- Watch point: if the retry passes, compare whether paired malicious-vector and clean-file preservation validation replaced the earlier narrow sanitizer sample.
+- Status: Wattle retry `fix-ocaml-gc__8g7uSCu` is running.
+- Current evidence: prior Wattle attempt `fix-ocaml-gc__YBa6r5m` passed after changing `pool_sweep` to advance by the pool slot size `wh` rather than `Whsize_hd(hd)`, then building and running the requested basic testsuite. The running retry has configured ocamltest and is building OCaml before running the same basic tests.
+- Watch point: if the retry passes, keep this as positive evidence for root-cause localization plus exact requested testsuite validation.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### `mcmc-sampling-stan` retry
+### `git-leak-recovery` retry
 
-- Status: Wattle retry `mcmc-sampling-stan__puVs8Uq` is running.
-- Current evidence: prior Wattle attempt produced plausible posterior means, then overwrote the final state during a later rerun and timed out with invalid verifier-visible mean files. The running retry is rebuilding RStan dependencies after adding BLAS/LAPACK/Fortran packages.
-- Watch point: if the retry passes, compare whether stable artifact preservation and a pinned oracle-like Stan path replaced the failed late-rerun behavior.
+- Status: Wattle retry `git-leak-recovery__NDYYD3j` is running.
+- Current evidence: prior Wattle attempt `git-leak-recovery__KefH6Ny` passed after writing `/app/secret.txt`, expiring reflogs, pruning unreachable Git objects, preserving `HEAD`/reachable history/worktree status, and verifying no remaining `secret[...]` matches or dangling objects. The running retry has recovered the secret and written `/app/secret.txt`.
+- Watch point: if the retry fails, compare whether it skipped full Git metadata cleanup or repository-state preservation.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.

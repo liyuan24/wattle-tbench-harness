@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T09:14:26Z`
+Snapshot used: `2026-06-17T09:29:49Z`
 
 This summary intentionally avoids task-specific fixes. It ranks general Wattle improvements by expected pass-rate impact, breadth across failures, and implementation practicality.
 
@@ -18,7 +18,7 @@ Observed in:
 - `qemu-startup`: one Wattle attempt passed, but a retry timed out with the VM no longer running and required side artifacts missing, showing service liveness must be checked at final handoff.
 - `financial-document-processor`: two Wattle attempts moved a partial set of files and left `summary.csv` missing.
 - `build-pov-ray`: the first Wattle attempt built a working executable but missed source/provenance artifacts; a retry passed after preserving official 2.2 archives/layout, and Codex also passed the comparison.
-- `mcmc-sampling-stan`: plausible posterior mean files were produced, then later experimentation left bad verifier-visible outputs.
+- `mcmc-sampling-stan`: plausible posterior mean files were produced, then later experimentation left bad verifier-visible outputs; a retry passed after preserving the pinned RStan sampling path and final means.
 - `sam-cell-seg`: segmentation geometry was accepted, but the serialized CSV coordinate fields used tuple syntax instead of verifier-accepted flat lists.
 - `winning-avg-corewars`: a retry timed out and left an early placeholder/test warrior as the verifier-visible final file, even though no fully passing candidate had been validated.
 - `extract-moves-from-video`: retry's last logged tool wrote `/app/solution.txt`, but after timeout the verifier saw no such file, so final artifact persistence was not guaranteed.
@@ -49,7 +49,7 @@ Observed in:
 - `torch-tensor-parallelism`: forward/syntax checks missed backward distributed gradient mismatch.
 - `pytorch-model-recovery`: TorchScript model saved with the wrong `forward(src, tgt)` interface, despite plausible model-recovery work.
 - `overfull-hbox`: failed attempts had no overfull boxes but used invalid substitutions; a Wattle retry passed after preserving the allowed edit set, while Codex still failed the comparison with the same contract miss.
-- `filter-js-from-html`: Wattle and Codex both missed XSS vectors and modified clean files, showing sanitizer tasks need paired adversarial and clean-preservation regression checks.
+- `filter-js-from-html`: two Wattle attempts and Codex missed XSS vectors and modified clean files, showing sanitizer tasks need paired adversarial and clean-preservation regression checks.
 - `sam-cell-seg`: all substantive image-mask tests passed, but exact serialized coordinate type failed.
 - `model-extraction-relu-logits`: local validation against visible model internals passed, but hidden verifier weights exposed incomplete recovery.
 - `dna-insert`: local validation reported matching primer Tm values, but the verifier reconstructed the primer pair in a different orientation and found the Tm delta above threshold.
@@ -81,7 +81,7 @@ Observed in:
 - `mteb-leaderboard`: results repo commit, benchmark name, full-task filtering, and averaging mattered; two Wattle attempts picked the same plausible-but-wrong model while Codex passed, pointing to Wattle's semantic reproduction rather than a task/harness limitation.
 - `raman-fitting`: unit conversion and crop ranges mattered before fitting; two Wattle attempts and Codex all fit wrong peaks, so the improvement should enforce scientific preprocessing and window selection explicitly.
 - `db-wal-recovery`: SQLite WAL semantics and XOR decryption mattered before JSON extraction; Codex passed the comparison, so this is a Wattle semantic-fidelity miss rather than an apparent task/harness issue.
-- `mcmc-sampling-stan`: prior parameterization and final posterior files mattered, not just script/file existence.
+- `mcmc-sampling-stan`: prior parameterization and final posterior files mattered, not just script/file existence; a retry passed by keeping the requested RStan sampling path and posterior artifacts stable.
 
 General fix:
 
@@ -103,7 +103,7 @@ Observed in:
 - `make-doom-for-mips`: two Wattle attempts and Codex all timed out after partial Doom/VM progress without reaching the expected graphics initialization and reference-like frame.
 - `install-windows-3.11`: first Wattle attempt did not leave services running; retry fixed liveness/path but still failed visual feedback, while Codex also failed path/visual-feedback checks.
 - `train-fasttext`: both Wattle attempts timed out and still missed accuracy; Codex also completed below threshold, which keeps the lesson focused on fast oracle-like training paths plus verifier-matched validation rather than Wattle-only timeout handling.
-- `mcmc-sampling-stan`: long sampling and late reruns consumed budget and left bad final artifacts.
+- `mcmc-sampling-stan`: long sampling and late reruns consumed budget and left bad final artifacts, while the retry passed by avoiding late artifact-damaging experimentation.
 
 General fix:
 
@@ -181,7 +181,7 @@ General fix:
 
 ## Priority 8: Keep Prompt Caching Healthy But Do Not Optimize It Blindly
 
-The current run's aggregate prompt-cache hit rate is 85.2%, which is much better than the earlier 49.2% signal. The cache issue no longer appears to be the dominant cause of failures in this snapshot.
+The current run's aggregate prompt-cache hit rate is 85.1%, which is much better than the earlier 49.2% signal. The cache issue no longer appears to be the dominant cause of failures in this snapshot.
 
 General fix:
 
