@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T05:39:10Z`
+Snapshot used: `2026-06-17T05:44:18Z`
 
 Counts at snapshot:
 
-- Passed: 74
+- Passed: 75
 - Failed: 23
-- Exceptions: 6
+- Exceptions: 7
 - Running or incomplete: 2
-- Prompt-cache hit rate: 85.6%
+- Prompt-cache hit rate: 85.5%
 
 Deep evidence reports were regenerated under:
 
@@ -328,21 +328,37 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had eleven completed
 - Oracle contrast: modernizes the scientific stack while preserving the same data/config behavior and expected output without modifying the legacy file.
 - Raw lesson: this remains a positive example for preserving legacy behavior while modernizing dependencies and syntax; it does not change the general failure taxonomy.
 
-## Running Or Incomplete At Snapshot
-
 ### `torch-tensor-parallelism` retry
 
-- Status: running at the snapshot.
-- Current evidence: one Wattle attempt failed gradient checks for both column and row parallel linear layers, and Codex also failed row-parallel indexing/shape behavior. Retry `torch-tensor-parallelism__DJJCv6Q` was running after inspecting `/app/parallel_linear.py` for interface and shape consistency and locating exception-handling paths plus a `ValueError`.
+- Status: passed after an earlier Wattle failure.
+- Current evidence: retry `torch-tensor-parallelism__DJJCv6Q` completed successfully after implementing `/app/parallel_linear.py` with sharded column/row parallel layers plus custom autograd wrappers for gather/reduce behavior so local weight and bias gradients are preserved. The earlier Wattle attempt failed gradient checks, and Codex also failed row-parallel indexing/shape behavior.
 - Oracle contrast: implements Megatron-style distributed linear layers with exact forward and backward collective semantics across ranks.
-- Watch point: if the retry passes, the key differentiator should be exact multi-rank/backward validation; if it fails again, it reinforces this as a verifier-like distributed autograd gap.
-- Do not classify yet. It should be analyzed after a completed `result.json` is synced.
+- Raw lesson: this is positive evidence that exact distributed autograd semantics can turn the task around, but it still supports the broader need for multi-rank/backward verifier-like validation.
+
+## Completed Mixed-Outcome Retries Since Prior Snapshot
 
 ### `winning-avg-corewars` retry
 
-- Status: running at the snapshot.
-- Current evidence: one Wattle attempt for this task already passed with verifier-style `pmars -b -r 100 -f` validation above all required win thresholds. Retry `winning-avg-corewars__KJ5akir` was still running after a bounded parallel compact-scanner search hit its 600-second timeout without a completed verifier result.
+- Status: exception, `AgentTimeoutError`, after another Wattle attempt passed.
+- Current evidence: one Wattle attempt for this task already passed with verifier-style `pmars -b -r 100 -f` validation above all required win thresholds. Retry `winning-avg-corewars__KJ5akir` timed out after a bounded search; its final state left an early placeholder/test `my_warrior.red` that the verifier scored at 0% against `stone.red`, while the best temporary candidate still missed the `snake` and `g2-clear` thresholds.
 - Oracle contrast: writes a multi-component Redcode warrior and validates against stone, vampire, paper, snake, and G2-Clear without modifying opponent files.
+- Raw lesson: when search does not find a fully validated candidate before timeout, Wattle should not leave placeholder/test artifacts as the verifier-visible final answer. It should either preserve the best fully validated deliverable or clearly fail without an invalid placeholder.
+
+## Running Or Incomplete At Snapshot
+
+### `path-tracing` retry
+
+- Status: running at the snapshot.
+- Current evidence: one Wattle attempt for this task already passed after writing `/app/image.c`, compiling it, generating `/app/reconstructed.ppm`, staying under the compressed-size limit, and achieving high local normalized-L2 similarity against `/app/image.ppm`. Retry `path-tracing__dhCWrsR` was running after matching the sky to a standard pinhole ray setup and fitting camera/object parameters against silhouettes and checker pattern before compactly encoding the generator.
+- Oracle contrast: writes a compact C image generator that reconstructs the target path-traced image closely enough under the compressed-size limit.
+- Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
+- Do not classify yet. It should be analyzed after a completed `result.json` is synced.
+
+### `prove-plus-comm` retry
+
+- Status: running at the snapshot.
+- Current evidence: one Wattle attempt for this task already passed after completing `plus_comm.v` and compiling it with `coqc plus_comm.v`. Retry `prove-plus-comm__ZNbd2W4` was running after replacing the base-case `admit` with `apply plus_n_O`, replacing the inductive-step `admit` with `rewrite IHn'` and `apply plus_n_Sm`, and confirming `plus_comm.vo` was produced.
+- Oracle contrast: completes the Coq proof without admits and leaves the compiled proof artifact.
 - Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
 
