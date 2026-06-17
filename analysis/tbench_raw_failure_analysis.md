@@ -2,11 +2,11 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T10:51:49Z`
+Snapshot used: `2026-06-17T10:56:57Z`
 
 Counts at snapshot:
 
-- Passed: 130
+- Passed: 131
 - Failed: 42
 - Exceptions: 13
 - Running or incomplete: 2
@@ -299,15 +299,15 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `pytorch-model-cli`
 
-- Status: two completed Wattle attempts passed and one retry is running.
-- Current evidence: retry `pytorch-model-cli__Ppsm6C6` completed successfully after creating `/app/cli_tool`, `/app/weights.json`, and `/app/prediction.txt`, validating that `./cli_tool weights.json image.png` outputs only `2`, confirming `prediction.txt` contains only `2`, and checking that `/app/cli_tool` is an ELF executable. The earlier attempt `pytorch-model-cli__j8TEW5F` passed with the same exact CLI/output contract. Running retry `pytorch-model-cli__h3Hw5Xx` has written `/app/weights.json` and is preparing to run the exact requested command and save only the digit to `prediction.txt`.
+- Status: all synced Wattle attempts passed.
+- Current evidence: retry `pytorch-model-cli__h3Hw5Xx` completed successfully after creating `/app/cli_tool`, `/app/weights.json`, and `/app/prediction.txt`, validating that `./cli_tool weights.json image.png` outputs only `2`, and confirming the prediction artifact contains only `2`. Earlier attempts `pytorch-model-cli__Ppsm6C6` and `pytorch-model-cli__j8TEW5F` passed with the same exact executable, weights, CLI output, and artifact contract.
 - Oracle contrast: builds a CLI around the supplied image/model assets, writes the expected prediction artifact, and preserves the exact command interface.
 - Raw lesson: this remains a positive example for exact final command and artifact validation; it does not change the general failure taxonomy.
 
 ### `largest-eigenval`
 
-- Status: passed in both synced Wattle attempts.
-- Current evidence: retry `largest-eigenval__Vd5wSwF` completed successfully after implementing `/app/eigen.py` with NumPy's LAPACK-backed private eigen ufunc, selecting the dominant eigenvalue by magnitude, returning the corresponding right eigenvector, and validating `/app/eval.py` correctness and speed against the reference. The earlier pass `largest-eigenval__A5bGYJK` used the same lower-overhead LAPACK path plus exact 1x1 and 2x2 fast paths.
+- Status: two completed Wattle attempts passed and one retry is running.
+- Current evidence: retry `largest-eigenval__Vd5wSwF` completed successfully after implementing `/app/eigen.py` with NumPy's LAPACK-backed private eigen ufunc, selecting the dominant eigenvalue by magnitude, returning the corresponding right eigenvector, and validating `/app/eval.py` correctness and speed against the reference. The earlier pass `largest-eigenval__A5bGYJK` used the same lower-overhead LAPACK path plus exact 1x1 and 2x2 fast paths. Running retry `largest-eigenval__pXaQN7X` has implemented a SciPy low-level LAPACK `dgeev` path with complex-vector reconstruction, NumPy fallback, direct `1x1` handling, and correctness/speed validation over generated matrices.
 - Oracle contrast: implements the dominant eigenpair function with exact correctness and performance constraints against the evaluation harness.
 - Raw lesson: this remains a positive example for pairing performance optimization with verifier-like correctness checks across matrix sizes; it does not change the general failure taxonomy.
 
@@ -625,11 +625,11 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ## Running Or Incomplete At Snapshot
 
-### `pytorch-model-cli` retry
+### `largest-eigenval` retry
 
-- Status: Wattle retry `pytorch-model-cli__h3Hw5Xx` is running.
-- Current evidence: prior completed attempts passed after creating an executable `/app/cli_tool`, `/app/weights.json`, and `/app/prediction.txt`, then validating that `./cli_tool weights.json image.png` and `prediction.txt` both contain only `2`. The running retry has written `/app/weights.json` and is preparing to run the same exact CLI/output contract.
-- Watch point: if the retry passes, keep this as positive evidence for exact command-interface and final-artifact validation.
+- Status: Wattle retry `largest-eigenval__pXaQN7X` is running.
+- Current evidence: prior completed attempts passed after implementing a faster dominant-eigenpair path and validating correctness and speed against `/app/eval.py`. The running retry has implemented a SciPy low-level LAPACK `dgeev` path with complex-vector reconstruction, NumPy fallback, direct `1x1` handling, and validation over random, identity, zero, triangular, and block matrices.
+- Watch point: if the retry passes, keep this as positive evidence for combining verifier-like correctness checks with performance validation across edge-case matrix families.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
 ### `winning-avg-corewars` retry
