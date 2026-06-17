@@ -2,11 +2,11 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T04:40:07Z`
+Snapshot used: `2026-06-17T04:42:50Z`
 
 Counts at snapshot:
 
-- Passed: 63
+- Passed: 65
 - Failed: 23
 - Exceptions: 6
 - Running or incomplete: 2
@@ -261,21 +261,35 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had seven completed 
 - Oracle contrast: uses a malformed HTML comment that the filter mishandles but Chromium still parses into executable script.
 - Raw lesson: this remains a positive example for parser-differential adversarial validation; it does not change the general failure taxonomy.
 
+### `write-compressor`
+
+- Status: passed in both synced Wattle attempts.
+- Current evidence: the retry `write-compressor__kXTZ9Z9` completed successfully after producing `/app/data.comp` at 2280 bytes and validating that `cat data.comp | /app/decomp` exactly matches `/app/data.txt`. The earlier pass produced a 2476-byte `data.comp`.
+- Oracle contrast: reverse-engineers the decompressor format and emits a compact compressed stream below the 2500-byte limit.
+- Raw lesson: this remains a positive example for exact executable-output validation against a strict size budget; it does not change the general failure taxonomy.
+
+### `reshard-c4-data`
+
+- Status: passed in both synced Wattle attempts.
+- Current evidence: the retry `reshard-c4-data__WYFJgZy` completed successfully after passing focused validation: `uv sync`, syntax checks, CLI help checks, full `c4_sample` round-trip, directory entry and file-size limits, `diff -qr`, and an edge-case round-trip preserving `.reshard_*`-named original paths.
+- Oracle contrast: writes `compress.py`, `decompress.py`, `pyproject.toml`, and uv metadata so the archive can be compressed and then reconstructed exactly in-place under the task's directory and file-size constraints.
+- Raw lesson: this remains a positive example for verifier-like artifact and round-trip validation under filesystem constraints; it does not change the general failure taxonomy.
+
 ## Running Or Incomplete At Snapshot
 
-### `reshard-c4-data` retry
+### `merge-diff-arc-agi-task` retry
 
 - Status: running at the snapshot.
-- Current evidence: one Wattle attempt for this task already passed. A retry `reshard-c4-data__WYFJgZy` was running with a plan to create `/app` project files and scripts, run `uv sync` plus CLI checks, then round-trip `c4_sample` while verifying content and the directory/file-size constraints.
-- Oracle contrast: writes `compress.py`, `decompress.py`, `pyproject.toml`, and uv metadata so the archive can be compressed and then reconstructed exactly in-place under the task's directory and file-size constraints.
+- Current evidence: one Wattle attempt for this task already passed after initializing `/app/repo`, fetching both bundles into `branch1` and `branch2`, merging, resolving `algo.py`, and validating all examples. Retry `merge-diff-arc-agi-task__6XScxMA` was running after identifying the required `(row + col) % 3` diagonal color mapping and replacing the conflicted `algo.py`.
+- Oracle contrast: creates `branch1` and `branch2` from the bundles, uses branch1 as base, applies the branch2 state, then implements `algo.py` with a modulo-diagonal color mapping inferred from examples.
 - Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
 
-### `write-compressor` retry
+### `winning-avg-corewars` retry
 
 - Status: running at the snapshot.
-- Current evidence: one Wattle attempt for this task already passed by producing `/app/data.comp` at 2476 bytes and validating that `cat /app/data.comp | /app/decomp` exactly matches `/app/data.txt`.
-- Oracle contrast: reverse-engineers the decompressor format and emits a compact compressed stream below the 2500-byte limit.
+- Current evidence: one Wattle attempt for this task already passed with verifier-style `pmars -b -r 100 -f` validation above all required win thresholds. Retry `winning-avg-corewars__KJ5akir` was running after confirming the required single-file `my_warrior.red` interface and beginning simulator probes against the five opponents.
+- Oracle contrast: writes a multi-component Redcode warrior and validates against stone, vampire, paper, snake, and G2-Clear without modifying opponent files.
 - Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
 
