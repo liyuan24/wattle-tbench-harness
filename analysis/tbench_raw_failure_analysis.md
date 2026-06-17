@@ -2,12 +2,12 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T04:12:18Z`
+Snapshot used: `2026-06-17T04:14:23Z`
 
 Counts at snapshot:
 
 - Passed: 59
-- Failed: 20
+- Failed: 21
 - Exceptions: 6
 - Running or incomplete: 2
 - Prompt-cache hit rate: 85.8%
@@ -53,6 +53,14 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had two completed co
 - Oracle contrast: detects the XOR-encrypted WAL, XOR-decrypts it with key `0x42`, replaces `/app/main.db-wal`, then lets SQLite apply the WAL before writing `recovered.json`.
 - Wattle behavior: produced valid-looking JSON with rows sorted by id, but from the base database state rather than recovered WAL state.
 - Raw lesson: Wattle should treat sidecar recovery files as first-class input and verify semantic deltas, not only output shape.
+
+### `dna-insert`
+
+- Status: failed.
+- Verifier: `primers.fasta` existed and encoded the insert, but the forward and reverse annealing Tm values differed by 6.531905 C, above the allowed 5 C.
+- Oracle contrast: computes the reverse annealing segment in the primer/verifier orientation with `oligotm -tp 1 -sc 1 -mv 50 -dv 2 -n 0.8 -d 500`, writes exactly one forward/reverse pair, and validates the reconstructed `rc(reverse_primer) + forward_primer` insert plus vector overlaps.
+- Wattle behavior: wrote a plausible one-pair FASTA and locally reported a 0.074115 C Tm difference, but its local check used the reverse annealing sequence orientation differently from the verifier.
+- Raw lesson: scientific/design tasks need verifier-equivalent reconstruction and orientation checks, not only domain-plausible local validation.
 
 ### `extract-elf`
 
@@ -241,10 +249,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had two completed co
 - Oracle contrast: installs PyStan 3.10.0 without R/RStan, translates the provided RStan Gaussian-process model and sampling hyperparameters to PyStan 3 semantics, sets `stan.build(..., random_seed=1)`, avoids storing large transformed matrices in draws, runs posterior sampling, and writes exact numeric posterior means to `alpha_est.csv`, `sigma_est.csv`, `rho_est.csv`, and `beta_est.csv`.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
 
-### `dna-insert`
+### `vulnerable-secret`
 
 - Status: running at the snapshot.
-- Current evidence: Wattle had installed Primer3, enumerated insertion primer candidates, and was preparing a single Q5-style primer pair where the insertion is carried as a 5-prime tail and melting temperatures are computed only on the input-annealing segments; no completed verifier result was synced yet.
-- Oracle contrast: identifies the plasmid difference as a contiguous insert, uses one forward and one reverse primer, writes exactly four FASTA lines to `/app/primers.fasta`, and validates the annealing arms with `oligotm -tp 1 -sc 1 -mv 50 -dv 2 -n 0.8 -d 500`.
-- Watch point: Wattle's intermediate diff output showed a 37 nt insert candidate, while the verifier expects the exact insert sequence reconstructed from `rc(reverse_primer) + forward_primer` plus correct vector overlaps, annealing-arm lengths, and Tm bounds.
+- Current evidence: Wattle had found `/app/vulnerable`, attempted `strings` but the `file` utility was unavailable, and was inspecting ELF headers and symbols with `ldd`/`readelf`; no completed verifier result was synced yet.
+- Oracle contrast: triggers a buffer overflow with 64 bytes of padding plus a little-endian authenticated flag overwrite, extracts the printed `FLAG{...}` secret, and writes exactly that value to `/app/results.txt`.
+- Watch point: this should be judged by the final `/app/results.txt` contents. Do not classify based only on binary-inspection progress.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.

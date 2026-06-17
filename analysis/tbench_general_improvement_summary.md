@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T04:12:18Z`
+Snapshot used: `2026-06-17T04:14:23Z`
 
 This summary intentionally avoids task-specific fixes. It ranks general Wattle improvements by expected pass-rate impact, breadth across failures, and implementation practicality.
 
@@ -46,6 +46,7 @@ Observed in:
 - `overfull-hbox`: no overfull boxes, but invalid edit set.
 - `sam-cell-seg`: all substantive image-mask tests passed, but exact serialized coordinate type failed.
 - `model-extraction-relu-logits`: local validation against visible model internals passed, but hidden verifier weights exposed incomplete recovery.
+- `dna-insert`: local validation reported matching primer Tm values, but the verifier reconstructed the primer pair in a different orientation and found the Tm delta above threshold.
 
 General fix:
 
@@ -157,6 +158,7 @@ Observed in:
 - `torch-tensor-parallelism`: module valid, distributed gradients wrong.
 - `pytorch-model-recovery`: model artifact valid enough to save, but not callable through the verifier's expected interface.
 - `model-extraction-relu-logits`: recovered rows matched visible weights but not the verifier's hidden generated matrix.
+- `dna-insert`: primer sequences were syntactically valid and encoded the insert, but the annealing-arm orientation and Tm contract were not verifier-equivalent.
 
 General fix:
 
@@ -164,6 +166,7 @@ General fix:
   - translated protein contains components in required order
   - ELF sections and symbol tables are represented
   - scientific units/ranges are correct before optimization
+  - sequence orientation and reverse-complement conventions match the verifier's reconstruction path
   - distributed gradients match a non-parallel reference
   - model-extraction outputs generalize across random seeds and hidden widths
 - These checks should be run before declaring completion.
