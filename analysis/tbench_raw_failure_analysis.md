@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T03:44:54Z`
+Snapshot used: `2026-06-17T03:46:38Z`
 
 Counts at snapshot:
 
-- Passed: 49
+- Passed: 50
 - Failed: 18
 - Exceptions: 6
 - Running or incomplete: 2
-- Prompt-cache hit rate: 86.5%
+- Prompt-cache hit rate: 86.4%
 
 Deep evidence reports were regenerated under:
 
@@ -218,11 +218,11 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had two completed co
 
 ## Running Or Incomplete At Snapshot
 
-### `build-cython-ext`
+### `model-extraction-relu-logits`
 
 - Status: running at the snapshot.
-- Current evidence: Wattle was still iterating on `python setup.py build_ext --inplace` after installing build tooling and compatibility patches.
-- Oracle contrast: clone `pyknotid` at `0.5.3`, patch specific Python/NumPy/Cython incompatibilities, install pinned `setuptools` and `cython`, build in place, then install editable.
+- Current evidence: Wattle had inspected `forward.py` and found that the hidden layer shape is directly present in the importable implementation, but no completed `result.json` had been synced yet.
+- Oracle contrast: uses query-only critical-point sweeps against `forward()` to recover rows of `A1` up to permutation and scale, then writes `/app/steal.py` and `/app/stolen_A1.npy`.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
 
 ### `sam-cell-seg`
