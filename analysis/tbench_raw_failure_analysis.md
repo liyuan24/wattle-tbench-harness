@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T05:18:40Z`
+Snapshot used: `2026-06-17T05:23:48Z`
 
 Counts at snapshot:
 
@@ -317,7 +317,7 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had nine completed c
 ### `regex-chess` retry
 
 - Status: running at the snapshot.
-- Current evidence: one Wattle attempt for this task already passed after generating `/app/re.json`, validating exact required sample output, running `python3 /app/check.py`, and satisfying file constraints with 6,863 pairs. Retry `regex-chess__e3gJsr6` was running after inspecting the repository/checker and preparing to generate and validate `/app/re.json` against the expected interface.
+- Current evidence: one Wattle attempt for this task already passed after generating `/app/re.json`, validating exact required sample output, running `python3 /app/check.py`, and satisfying file constraints with 6,863 pairs. Retry `regex-chess__e3gJsr6` was running a FEN comparison validation loop matching `check.py`, including its tolerated en-passant target normalization, and focusing on actual move legality/count mismatches.
 - Oracle contrast: generates a regex/pattern inventory that makes the chess PGN checker pass while preserving the exact JSON interface expected by the tests.
 - Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
@@ -325,7 +325,7 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had nine completed c
 ### `winning-avg-corewars` retry
 
 - Status: running at the snapshot.
-- Current evidence: one Wattle attempt for this task already passed with verifier-style `pmars -b -r 100 -f` validation above all required win thresholds. Retry `winning-avg-corewars__KJ5akir` was running a narrow validation loop over compact strategy selectors, with the intent to write `my_warrior.red` only after a candidate clears the exact five fixed 100-round commands.
+- Current evidence: one Wattle attempt for this task already passed with verifier-style `pmars -b -r 100 -f` validation above all required win thresholds. Retry `winning-avg-corewars__KJ5akir` was running a bounded parallel search over compact scanner variants, screened only with the same fixed 100-round pMARS interface used for final evaluation.
 - Oracle contrast: writes a multi-component Redcode warrior and validates against stone, vampire, paper, snake, and G2-Clear without modifying opponent files.
 - Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
