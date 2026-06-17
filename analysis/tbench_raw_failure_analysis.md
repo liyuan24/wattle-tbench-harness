@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T11:07:11Z`
+Snapshot used: `2026-06-17T11:12:19Z`
 
 Counts at snapshot:
 
-- Passed: 134
+- Passed: 136
 - Failed: 42
 - Exceptions: 13
 - Running or incomplete: 2
-- Prompt-cache hit rate: 85.0%
+- Prompt-cache hit rate: 85.1%
 
 Deep evidence reports were regenerated under:
 
@@ -320,8 +320,8 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `path-tracing-reverse`
 
-- Status: two completed Wattle attempts passed and one retry is running.
-- Current evidence: retry `path-tracing-reverse__PfxM9GJ` completed successfully after writing standalone `/app/mystery.c`, compiling it with `gcc -static -o reversed mystery.c -lm`, confirming generated `image.ppm` matched the original output byte-for-byte, confirming the SHA256, and keeping compressed source size under 2k. The earlier pass `path-tracing-reverse__K2cVozH` used the same byte-for-byte image and stderr/progress validation. Running retry `path-tracing-reverse__yNGZHkV` is inspecting constants from `/app/mystery` and preparing a tight fixed-ray-tracer implementation followed by byte-level PPM/stderr comparison.
+- Status: all synced Wattle attempts passed.
+- Current evidence: retry `path-tracing-reverse__yNGZHkV` completed successfully after writing `/app/mystery.c`, compiling with `gcc -static -O2 -o reversed mystery.c -lm`, comparing original `/app/mystery` and `/app/reversed` in separate temp directories, matching exit code, stdout, stderr, and `image.ppm` byte-for-byte, and keeping compressed source under 2k. Earlier attempts `path-tracing-reverse__PfxM9GJ` and `path-tracing-reverse__K2cVozH` passed with the same standalone-source, static-compile, byte-level image/progress validation.
 - Oracle contrast: reconstructs a compact C renderer that reproduces the hidden path-tracing output and progress behavior under the compressed-size constraint.
 - Raw lesson: this remains a positive example for exact behavioral reproduction plus compressed-source validation; it does not change the general failure taxonomy.
 
@@ -355,15 +355,15 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `regex-chess`
 
-- Status: passed in both synced Wattle attempts.
-- Current evidence: retry `regex-chess__e3gJsr6` completed successfully after writing `/app/re.json` as a JSON list of regex/replacement pairs, validating the sample output, passing `/app/check.py`, satisfying the pair-count and size limits, and passing additional valid-position comparisons against `python-chess` for castling, queen promotion, and en-passant cases. The earlier pass `regex-chess__eBbYn7d` generated 6,863 pairs and passed the same checker.
+- Status: two completed Wattle attempts passed and one retry is running.
+- Current evidence: retry `regex-chess__e3gJsr6` completed successfully after writing `/app/re.json` as a JSON list of regex/replacement pairs, validating the sample output, passing `/app/check.py`, satisfying the pair-count and size limits, and passing additional valid-position comparisons against `python-chess` for castling, queen promotion, and en-passant cases. The earlier pass `regex-chess__eBbYn7d` generated 6,863 pairs and passed the same checker. Running retry `regex-chess__Zv766pg` has inspected the checker behavior and is generating regex rules that expand FEN, emit candidate next positions, filter illegal king-in-check positions, and recompress.
 - Oracle contrast: generates a regex/pattern inventory that makes the chess PGN checker pass while preserving the exact JSON interface expected by the tests.
 - Raw lesson: this remains a positive example for matching the verifier's normalization contract and then broadening validation over legal edge cases; it does not change the general failure taxonomy.
 
 ### `modernize-scientific-stack`
 
-- Status: passed in both synced Wattle attempts.
-- Current evidence: retry `modernize-scientific-stack__mWcAi6j` completed successfully after creating `/app/analyze_climate_modern.py` and `/app/requirements.txt`, preserving the same data/config inputs, running the script, and validating the expected station mean-temperature output. The earlier pass `modernize-scientific-stack__wrSjEGR` also compile-checked the modern script and preserved the legacy `/app/climate_analyzer/analyze_climate.py`.
+- Status: two completed Wattle attempts passed and one retry is running.
+- Current evidence: retry `modernize-scientific-stack__mWcAi6j` completed successfully after creating `/app/analyze_climate_modern.py` and `/app/requirements.txt`, preserving the same data/config inputs, running the script, and validating the expected station mean-temperature output. The earlier pass `modernize-scientific-stack__wrSjEGR` also compile-checked the modern script and preserved the legacy `/app/climate_analyzer/analyze_climate.py`. Running retry `modernize-scientific-stack__yXQwSEJ` has confirmed the sample CSV columns and config location and is about to add the modern script and dependency file.
 - Oracle contrast: modernizes the scientific stack while preserving the same data/config behavior and expected output without modifying the legacy file.
 - Raw lesson: this remains a positive example for preserving legacy behavior while modernizing dependencies and syntax; it does not change the general failure taxonomy.
 
@@ -392,8 +392,8 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `winning-avg-corewars` retry
 
-- Status: exception, `AgentTimeoutError`, after another Wattle attempt passed.
-- Current evidence: one Wattle attempt for this task already passed with verifier-style `pmars -b -r 100 -f` validation above all required win thresholds. Retry `winning-avg-corewars__KJ5akir` timed out after a bounded search; its final state left an early placeholder/test `my_warrior.red` that the verifier scored at 0% against `stone.red`, while the best temporary candidate still missed the `snake` and `g2-clear` thresholds.
+- Status: mixed outcome: two Wattle attempts passed, and one retry ended with `AgentTimeoutError`.
+- Current evidence: retry `winning-avg-corewars__eL6NiVq` passed after final validation with the required `pmars -b -r 100 -f my_warrior.red warriors/<opponent>.red` command form, meeting thresholds against stone, vampire, paper, snake, and G2-Clear. Earlier pass `winning-avg-corewars__Figpaws` also validated above all required win thresholds. Retry `winning-avg-corewars__KJ5akir` timed out after a bounded search; its final state left an early placeholder/test `my_warrior.red` that the verifier scored at 0% against `stone.red`, while the best temporary candidate still missed the `snake` and `g2-clear` thresholds.
 - Oracle contrast: writes a multi-component Redcode warrior and validates against stone, vampire, paper, snake, and G2-Clear without modifying opponent files.
 - Raw lesson: when search does not find a fully validated candidate before timeout, Wattle should not leave placeholder/test artifacts as the verifier-visible final answer. It should either preserve the best fully validated deliverable or clearly fail without an invalid placeholder.
 
@@ -625,16 +625,16 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ## Running Or Incomplete At Snapshot
 
-### `path-tracing-reverse` retry
+### `modernize-scientific-stack` retry
 
-- Status: Wattle retry `path-tracing-reverse__yNGZHkV` is running.
-- Current evidence: prior completed attempts passed after writing standalone `/app/mystery.c`, compiling with the required static GCC command, matching generated `image.ppm` byte-for-byte, matching stderr/progress output, and keeping compressed source size below 2k. The running retry is inspecting constants from the existing binary and preparing a fixed-ray-tracer implementation followed by byte-level output comparison.
-- Watch point: if the retry passes, keep this as positive evidence for exact binary-behavior reproduction with final byte-level artifact validation.
+- Status: Wattle retry `modernize-scientific-stack__yXQwSEJ` is running.
+- Current evidence: prior completed attempts passed after creating `/app/analyze_climate_modern.py` and `/app/requirements.txt`, preserving the legacy script, using the same CSV/config inputs, and validating the expected station mean-temperature output. The running retry has confirmed the sample CSV columns and config location and is preparing the same modern script/dependency artifacts.
+- Watch point: if the retry passes, keep this as positive evidence for preserving legacy inputs while validating exact modern-script output and dependency constraints.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### `winning-avg-corewars` retry
+### `regex-chess` retry
 
-- Status: Wattle retry `winning-avg-corewars__eL6NiVq` is running.
-- Current evidence: one Wattle attempt passed with required `pmars -b -r 100 -f` validation above all opponent thresholds, while another timed out after leaving a placeholder verifier-visible warrior. The running retry is inspecting opponent warriors and pMARS behavior before iterating on `my_warrior.red`.
-- Watch point: if the retry passes, compare whether it preserves a fully validated candidate instead of leaving a placeholder when search is incomplete.
+- Status: Wattle retry `regex-chess__Zv766pg` is running.
+- Current evidence: prior completed attempts passed after generating `/app/re.json` within size and pair-count limits, matching the sample output, passing `/app/check.py`, and validating special move cases against `python-chess`. The running retry has inspected checker behavior and is generating regex rules that expand FEN, emit candidate next positions, filter illegal king-in-check positions, and recompress.
+- Watch point: if the retry passes, keep this as positive evidence for using an executable reference model to generate compact regex-rewrite artifacts under strict file constraints.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
