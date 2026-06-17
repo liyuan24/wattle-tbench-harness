@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T11:12:19Z`
+Snapshot used: `2026-06-17T11:17:26Z`
 
 Counts at snapshot:
 
-- Passed: 136
+- Passed: 137
 - Failed: 42
 - Exceptions: 13
 - Running or incomplete: 2
-- Prompt-cache hit rate: 85.1%
+- Prompt-cache hit rate: 85.0%
 
 Deep evidence reports were regenerated under:
 
@@ -362,15 +362,15 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `modernize-scientific-stack`
 
-- Status: two completed Wattle attempts passed and one retry is running.
-- Current evidence: retry `modernize-scientific-stack__mWcAi6j` completed successfully after creating `/app/analyze_climate_modern.py` and `/app/requirements.txt`, preserving the same data/config inputs, running the script, and validating the expected station mean-temperature output. The earlier pass `modernize-scientific-stack__wrSjEGR` also compile-checked the modern script and preserved the legacy `/app/climate_analyzer/analyze_climate.py`. Running retry `modernize-scientific-stack__yXQwSEJ` has confirmed the sample CSV columns and config location and is about to add the modern script and dependency file.
+- Status: all synced Wattle attempts passed.
+- Current evidence: retry `modernize-scientific-stack__yXQwSEJ` completed successfully after creating `/app/analyze_climate_modern.py` and `/app/requirements.txt`, using Python 3 syntax, reading CSV data with pandas and UTF-8 encoding, using `pathlib.Path` and `configparser`, processing stations `101` and `102`, and validating the required mean-temperature output. Earlier attempts `modernize-scientific-stack__mWcAi6j` and `modernize-scientific-stack__wrSjEGR` passed with the same data/config behavior and legacy-file preservation.
 - Oracle contrast: modernizes the scientific stack while preserving the same data/config behavior and expected output without modifying the legacy file.
 - Raw lesson: this remains a positive example for preserving legacy behavior while modernizing dependencies and syntax; it does not change the general failure taxonomy.
 
 ### `torch-tensor-parallelism` retry
 
-- Status: passed after an earlier Wattle failure.
-- Current evidence: retry `torch-tensor-parallelism__DJJCv6Q` completed successfully after implementing `/app/parallel_linear.py` with sharded column/row parallel layers plus custom autograd wrappers for gather/reduce behavior so local weight and bias gradients are preserved. The earlier Wattle attempt failed gradient checks, and Codex also failed row-parallel indexing/shape behavior.
+- Status: mixed completed outcomes with one retry running: one Wattle retry passed, and earlier attempts failed gradient/indexing checks.
+- Current evidence: retry `torch-tensor-parallelism__DJJCv6Q` completed successfully after implementing `/app/parallel_linear.py` with sharded column/row parallel layers plus custom autograd wrappers for gather/reduce behavior so local weight and bias gradients are preserved. Earlier Wattle attempts failed column/row parallel weight-gradient checks and row-parallel indexing behavior, and Codex also failed row-parallel indexing/shape behavior. Running retry `torch-tensor-parallelism__9Nbajku` has implemented sharded column/row layers, gathers column-parallel outputs, all-reduces row-parallel partial outputs, and syntax-validated `/app/parallel_linear.py`, but full distributed runtime validation has not yet completed in the synced logs.
 - Oracle contrast: implements Megatron-style distributed linear layers with exact forward and backward collective semantics across ranks.
 - Raw lesson: this is positive evidence that exact distributed autograd semantics can turn the task around, but it still supports the broader need for multi-rank/backward verifier-like validation.
 
@@ -625,16 +625,16 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ## Running Or Incomplete At Snapshot
 
-### `modernize-scientific-stack` retry
-
-- Status: Wattle retry `modernize-scientific-stack__yXQwSEJ` is running.
-- Current evidence: prior completed attempts passed after creating `/app/analyze_climate_modern.py` and `/app/requirements.txt`, preserving the legacy script, using the same CSV/config inputs, and validating the expected station mean-temperature output. The running retry has confirmed the sample CSV columns and config location and is preparing the same modern script/dependency artifacts.
-- Watch point: if the retry passes, keep this as positive evidence for preserving legacy inputs while validating exact modern-script output and dependency constraints.
-- Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
-
 ### `regex-chess` retry
 
 - Status: Wattle retry `regex-chess__Zv766pg` is running.
-- Current evidence: prior completed attempts passed after generating `/app/re.json` within size and pair-count limits, matching the sample output, passing `/app/check.py`, and validating special move cases against `python-chess`. The running retry has inspected checker behavior and is generating regex rules that expand FEN, emit candidate next positions, filter illegal king-in-check positions, and recompress.
+- Current evidence: prior completed attempts passed after generating `/app/re.json` within size and pair-count limits, matching the sample output, passing `/app/check.py`, and validating special move cases against `python-chess`. The running retry has inspected checker behavior and is generating regex rules that expand FEN, emit candidate next positions, filter illegal king-in-check positions, and recompress; it is now adjusting validation to the checker's accepted FEN contract for en-passant targets.
 - Watch point: if the retry passes, keep this as positive evidence for using an executable reference model to generate compact regex-rewrite artifacts under strict file constraints.
+- Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
+
+### `torch-tensor-parallelism` retry
+
+- Status: Wattle retry `torch-tensor-parallelism__9Nbajku` is running.
+- Current evidence: prior synced attempts include one pass after custom autograd wrappers and earlier failures on distributed weight gradients and row-parallel indexing. The running retry has implemented `/app/parallel_linear.py` with output/input sharding, gathered column-parallel outputs, all-reduced row-parallel partial outputs, and passed syntax validation, but full distributed runtime validation has not yet completed in the synced logs.
+- Watch point: if the retry passes, compare whether it includes real distributed backward validation instead of relying on syntax checks.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
