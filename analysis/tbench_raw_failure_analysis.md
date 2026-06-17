@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T04:02:40Z`
+Snapshot used: `2026-06-17T04:04:23Z`
 
 Counts at snapshot:
 
-- Passed: 55
+- Passed: 56
 - Failed: 20
 - Exceptions: 6
 - Running or incomplete: 2
-- Prompt-cache hit rate: 86.1%
+- Prompt-cache hit rate: 86.0%
 
 Deep evidence reports were regenerated under:
 
@@ -241,9 +241,9 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had two completed co
 - Oracle contrast: installs PyStan 3.10.0 without R/RStan, translates the provided RStan Gaussian-process model and sampling hyperparameters to PyStan 3 semantics, sets `stan.build(..., random_seed=1)`, avoids storing large transformed matrices in draws, runs posterior sampling, and writes exact numeric posterior means to `alpha_est.csv`, `sigma_est.csv`, `rho_est.csv`, and `beta_est.csv`.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
 
-### `sanitize-git-repo`
+### `sqlite-with-gcov`
 
 - Status: running at the snapshot.
-- Current evidence: Wattle had completed setup/install work for sanitizing `/app/dclm`; no completed verifier result was synced yet.
-- Oracle contrast: performs targeted regex replacements for AWS access keys, AWS secrets, GitHub tokens, and HuggingFace tokens in the contaminated files, preserves the required placeholder strings, and leaves unrelated files unchanged.
+- Current evidence: Wattle had built SQLite in `/app/sqlite`, symlinked the instrumented CLI into `/usr/local/bin/sqlite3`, and locally observed `.gcda`/`.gcno` coverage files after running a PATH-resolved query; no completed verifier result was synced yet.
+- Oracle contrast: extracts the pre-vendored SQLite fossil release into `/app/sqlite`, configures it with gcov flags, builds it with `make`, exposes the resulting `sqlite3` in `PATH`, and relies on verifier execution to confirm both runtime behavior and generated gcov artifacts under `/app/sqlite`.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
