@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T04:14:23Z`
+Snapshot used: `2026-06-17T04:17:18Z`
 
 Counts at snapshot:
 
-- Passed: 59
+- Passed: 61
 - Failed: 21
 - Exceptions: 6
 - Running or incomplete: 2
-- Prompt-cache hit rate: 85.8%
+- Prompt-cache hit rate: 85.7%
 
 Deep evidence reports were regenerated under:
 
@@ -242,17 +242,18 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had two completed co
 
 ## Running Or Incomplete At Snapshot
 
-### `rstan-to-pystan`
+### `dna-assembly`
 
 - Status: running at the snapshot.
-- Current evidence: Wattle had written `/app/pystan_analysis.py`, installed the compiler toolchain, adjusted the posterior extraction path, and was rerunning the PyStan script with the same model/data/sampling interface; no completed verifier result was synced yet.
-- Oracle contrast: installs PyStan 3.10.0 without R/RStan, translates the provided RStan Gaussian-process model and sampling hyperparameters to PyStan 3 semantics, sets `stan.build(..., random_seed=1)`, avoids storing large transformed matrices in draws, runs posterior sampling, and writes exact numeric posterior means to `alpha_est.csv`, `sigma_est.csv`, `rho_est.csv`, and `beta_est.csv`.
+- Current evidence: Wattle had parsed `sequences.fasta`, located how the input plasmid and insert templates map into the desired circular output, and was inspecting junction contexts for Golden Gate primer overhang design; no completed verifier result was synced yet.
+- Oracle contrast: designs one BsaI-ready primer pair for each template (`input`, `egfp`, `flag`, `snap`), uses unique four-base Golden Gate junction overhangs, excludes start/stop codons where required, validates each annealing tract with the exact `oligotm` flags, and writes a 16-line `primers.fasta` with exact `>TEMPLATENAME_DIR` headers and no blank lines.
+- Watch point: this is another orientation-sensitive DNA design task. The completed result should be judged against verifier-style reconstruction of all fragments and overhang junctions, not only primer Tm checks.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
 
-### `vulnerable-secret`
+### `gpt2-codegolf` retry
 
 - Status: running at the snapshot.
-- Current evidence: Wattle had found `/app/vulnerable`, attempted `strings` but the `file` utility was unavailable, and was inspecting ELF headers and symbols with `ldd`/`readelf`; no completed verifier result was synced yet.
-- Oracle contrast: triggers a buffer overflow with 64 bytes of padding plus a little-endian authenticated flag overwrite, extracts the printed `FLAG{...}` secret, and writes exactly that value to `/app/results.txt`.
-- Watch point: this should be judged by the final `/app/results.txt` contents. Do not classify based only on binary-inspection progress.
+- Current evidence: the first Wattle `gpt2-codegolf` trial remains a confirmed failure, but a second trial `gpt2-codegolf__kUprDk6` was running at the snapshot; no completed verifier result was synced yet for the retry.
+- Oracle contrast: still requires a dependency-free `/app/gpt2.c` under 5000 bytes that compiles with `gcc -O3 -lm`, reads the checkpoint and BPE file, and emits exact argmax GPT-2 continuations for verifier prompts.
+- Watch point: keep the existing confirmed-failure lesson, but replace or augment it if the retry passes or fails with a different verifier signature.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
