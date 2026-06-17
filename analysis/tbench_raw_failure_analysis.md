@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T04:06:16Z`
+Snapshot used: `2026-06-17T04:07:04Z`
 
 Counts at snapshot:
 
@@ -10,7 +10,7 @@ Counts at snapshot:
 - Failed: 20
 - Exceptions: 6
 - Running or incomplete: 2
-- Prompt-cache hit rate: 86.0%
+- Prompt-cache hit rate: 85.9%
 
 Deep evidence reports were regenerated under:
 
@@ -237,7 +237,7 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had two completed co
 ### `rstan-to-pystan`
 
 - Status: running at the snapshot.
-- Current evidence: the trial had been created but no agent output or verifier result was synced yet.
+- Current evidence: Wattle had written `/app/pystan_analysis.py`, installed the compiler toolchain, and was running the converted PyStan script; no completed verifier result was synced yet.
 - Oracle contrast: installs PyStan 3.10.0 without R/RStan, translates the provided RStan Gaussian-process model and sampling hyperparameters to PyStan 3 semantics, sets `stan.build(..., random_seed=1)`, avoids storing large transformed matrices in draws, runs posterior sampling, and writes exact numeric posterior means to `alpha_est.csv`, `sigma_est.csv`, `rho_est.csv`, and `beta_est.csv`.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
 
