@@ -1,26 +1,79 @@
 # Terminal-Bench 2.0 Raw Failure Analysis
 
-Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
+Generated from the completed GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T13:10:19Z`
+Final snapshot used: `2026-06-17T18:01:39Z`
 
-Counts at snapshot:
+Final counts:
 
-- Passed: 155
-- Failed: 49
-- Exceptions: 16
-- Running or incomplete: 2
-- Prompt-cache hit rate: 85.1%
+- Trials: 267 / 267
+- Tasks: 89, with exactly 3 attempts each
+- Passed attempts: 174
+- Failed attempts: 61
+- Exception attempts: 32
+- Harbor mean reward: 66.29%
+- Prompt-cache hit rate: 85.5%
 
-Deep evidence reports were regenerated under:
+Deep evidence reports are under:
 
 ```text
 runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/
 ```
 
-The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two completed comparisons at this snapshot: Codex passed `build-pov-ray`, `db-wal-recovery`, `extract-moves-from-video`, `financial-document-processor`, `gcode-to-text`, `gpt2-codegolf`, `mteb-leaderboard`, `mteb-retrieve`, and `protein-assembly`; failed `configure-git-webserver`, `extract-elf`, `filter-js-from-html`, `install-windows-3.11`, `overfull-hbox`, `polyglot-c-py`, `polyglot-rust-c`, `raman-fitting`, `torch-tensor-parallelism`, `train-fasttext`, and `video-processing`; and timed out on `caffe-cifar-10` and `make-doom-for-mips`. No Codex comparisons were running at this snapshot. Most task notes remain grounded in Wattle logs, verifier failures, and Terminal-Bench oracle/tests.
+This file is the consolidated per-task analysis/index. The linked task reports contain raw Wattle logs, verifier failures, oracle solution excerpts, test excerpts, and Codex comparison evidence when available.
+
+## Final Non-Perfect Task Index
+
+| Task | Attempts | Passed | Failed | Exceptions | Mean reward | Raw analysis |
+|---|---:|---:|---:|---:|---:|---|
+| `build-pmars` | 3 | 2 | 0 | 1 | 0.667 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/build-pmars.md` |
+| `build-pov-ray` | 3 | 2 | 1 | 0 | 0.667 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/build-pov-ray.md` |
+| `caffe-cifar-10` | 3 | 0 | 0 | 3 | 0.000 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/caffe-cifar-10.md` |
+| `configure-git-webserver` | 3 | 0 | 3 | 0 | 0.000 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/configure-git-webserver.md` |
+| `constraints-scheduling` | 3 | 2 | 0 | 1 | 0.667 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/constraints-scheduling.md` |
+| `crack-7z-hash` | 3 | 2 | 0 | 1 | 0.667 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/crack-7z-hash.md` |
+| `db-wal-recovery` | 3 | 0 | 3 | 0 | 0.000 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/db-wal-recovery.md` |
+| `dna-assembly` | 3 | 0 | 2 | 1 | 0.000 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/dna-assembly.md` |
+| `dna-insert` | 3 | 0 | 2 | 1 | 0.000 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/dna-insert.md` |
+| `extract-elf` | 3 | 1 | 2 | 0 | 0.333 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/extract-elf.md` |
+| `extract-moves-from-video` | 3 | 0 | 2 | 1 | 0.000 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/extract-moves-from-video.md` |
+| `filter-js-from-html` | 3 | 0 | 3 | 0 | 0.000 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/filter-js-from-html.md` |
+| `financial-document-processor` | 3 | 0 | 0 | 3 | 0.000 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/financial-document-processor.md` |
+| `gcode-to-text` | 3 | 0 | 3 | 0 | 0.000 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/gcode-to-text.md` |
+| `gpt2-codegolf` | 3 | 0 | 3 | 0 | 0.000 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/gpt2-codegolf.md` |
+| `install-windows-3.11` | 3 | 0 | 2 | 1 | 0.000 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/install-windows-3.11.md` |
+| `large-scale-text-editing` | 3 | 2 | 0 | 1 | 0.667 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/large-scale-text-editing.md` |
+| `make-doom-for-mips` | 3 | 0 | 1 | 2 | 0.000 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/make-doom-for-mips.md` |
+| `make-mips-interpreter` | 3 | 1 | 1 | 1 | 0.333 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/make-mips-interpreter.md` |
+| `mcmc-sampling-stan` | 3 | 2 | 0 | 1 | 0.667 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/mcmc-sampling-stan.md` |
+| `model-extraction-relu-logits` | 3 | 2 | 1 | 0 | 0.667 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/model-extraction-relu-logits.md` |
+| `mteb-leaderboard` | 3 | 0 | 3 | 0 | 0.000 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/mteb-leaderboard.md` |
+| `mteb-retrieve` | 3 | 0 | 3 | 0 | 0.000 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/mteb-retrieve.md` |
+| `openssl-selfsigned-cert` | 3 | 2 | 0 | 1 | 0.667 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/openssl-selfsigned-cert.md` |
+| `overfull-hbox` | 3 | 2 | 1 | 0 | 0.667 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/overfull-hbox.md` |
+| `path-tracing` | 3 | 2 | 0 | 1 | 0.667 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/path-tracing.md` |
+| `polyglot-c-py` | 3 | 0 | 3 | 0 | 0.000 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/polyglot-c-py.md` |
+| `polyglot-rust-c` | 3 | 0 | 3 | 0 | 0.000 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/polyglot-rust-c.md` |
+| `protein-assembly` | 3 | 0 | 3 | 0 | 0.000 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/protein-assembly.md` |
+| `pypi-server` | 3 | 1 | 2 | 0 | 0.333 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/pypi-server.md` |
+| `pytorch-model-recovery` | 3 | 0 | 3 | 0 | 0.000 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/pytorch-model-recovery.md` |
+| `qemu-startup` | 3 | 2 | 0 | 1 | 0.667 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/qemu-startup.md` |
+| `raman-fitting` | 3 | 0 | 3 | 0 | 0.000 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/raman-fitting.md` |
+| `rstan-to-pystan` | 3 | 2 | 0 | 1 | 0.667 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/rstan-to-pystan.md` |
+| `sam-cell-seg` | 3 | 0 | 3 | 0 | 0.000 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/sam-cell-seg.md` |
+| `sanitize-git-repo` | 3 | 2 | 0 | 1 | 0.667 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/sanitize-git-repo.md` |
+| `sparql-university` | 3 | 2 | 0 | 1 | 0.667 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/sparql-university.md` |
+| `sqlite-db-truncate` | 3 | 2 | 0 | 1 | 0.667 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/sqlite-db-truncate.md` |
+| `sqlite-with-gcov` | 3 | 2 | 0 | 1 | 0.667 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/sqlite-with-gcov.md` |
+| `torch-tensor-parallelism` | 3 | 1 | 2 | 0 | 0.333 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/torch-tensor-parallelism.md` |
+| `train-fasttext` | 3 | 0 | 0 | 3 | 0.000 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/train-fasttext.md` |
+| `tune-mjcf` | 3 | 2 | 0 | 1 | 0.667 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/tune-mjcf.md` |
+| `video-processing` | 3 | 0 | 3 | 0 | 0.000 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/video-processing.md` |
+| `vulnerable-secret` | 3 | 2 | 0 | 1 | 0.667 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/vulnerable-secret.md` |
+| `winning-avg-corewars` | 3 | 2 | 0 | 1 | 0.667 | `runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/winning-avg-corewars.md` |
 
 ## Confirmed Failures And Exceptions
+
 
 ### `build-pov-ray`
 
@@ -637,18 +690,6 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 - Oracle contrast: batches requests into valid plans that optimize cost/latency/padding metrics while preserving exact request coverage and shape constraints.
 - Raw lesson: optimization-planning tasks pass when Wattle uses the official cost model as the validation oracle and checks every hard constraint plus objective threshold before finalizing.
 
-## Running Or Incomplete At Snapshot
+## Final Completion Note
 
-### `train-fasttext` retry
-
-- Status: Wattle retry `train-fasttext__76KNeuA` is running.
-- Current evidence: prior completed attempts timed out and missed the private accuracy threshold after validating on mismatched or insufficient local formats. The running retry is testing a lowercasing and punctuation-separated FastText input conversion, staging normalized train/test files such as `/tmp/yelp_train_norm.ft` and `/tmp/yelp_test_norm.ft` before moving any model to `/app/model.bin`.
-- Watch point: check that validation uses the verifier-equivalent text conversion and clears the 0.62 accuracy threshold with margin before finalizing `/app/model.bin`.
-- Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
-
-### `qemu-alpine-ssh` retry
-
-- Status: Wattle retry `qemu-alpine-ssh__dumJjxx` is running.
-- Current evidence: prior completed attempts passed by leaving Alpine running in QEMU, forwarding SSH on host port 2222, and validating `ssh -p 2222 root@localhost` with password `password123`. The running retry has QEMU running and is using the TCP serial console to finish the VM-side SSH setup before final SSH validation.
-- Watch point: check that SSH, not only serial login, is reachable at final handoff and that the VM process remains alive.
-- Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
+The earlier analysis snapshot had two running attempts. The final run completed all 267 attempts. The last two attempts (`sam-cell-seg__XNyc3YF` and `fix-ocaml-gc__s3iaJTn`) are included in the final counts above and in their per-task reports.

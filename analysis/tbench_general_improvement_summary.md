@@ -1,10 +1,21 @@
 # Terminal-Bench 2.0 General Wattle Improvement Summary
 
-Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
+Generated from the completed GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T13:00:03Z`
+Final snapshot used: `2026-06-17T18:01:39Z`
 
 This summary intentionally avoids task-specific fixes. It ranks general Wattle improvements by expected pass-rate impact, breadth across failures, and implementation practicality.
+
+
+Final run shape:
+
+- Trials: 267 / 267
+- Tasks: 89, with exactly 3 attempts each
+- Passed attempts: 174
+- Failed attempts: 61
+- Exception attempts: 32
+- Harbor mean reward: 66.29%
+- Prompt-cache hit rate: 85.5%
 
 ## Priority 1: Add Final-State Contract Validation
 
@@ -25,14 +36,14 @@ Observed in:
 
 General fix:
 
-- Before final response, Wattle should run a lightweight "final state audit" derived from the task instruction:
-  - required files exist
-  - forbidden extra files are absent when directory contents are constrained
-- services/ports/processes are still alive
-- required service side artifacts still exist
-  - output paths match exactly
-  - serialized output fields have the expected concrete types
-  - validation artifacts are removed or written outside checked directories
+- Before final response, Wattle should run a lightweight "final state audit" derived from the task instruction. The clean implementation path is a Stop-hook-style lifecycle gate: when the model has no next tool call and would otherwise end the turn, run the audit and, if it blocks, inject a grounded continuation prompt into the same turn.
+- The audit should check that required files exist.
+- The audit should check that forbidden extra files are absent when directory contents are constrained.
+- The audit should check that services, ports, and processes are still alive.
+- The audit should check that required service side artifacts still exist.
+- The audit should check that output paths match exactly.
+- The audit should check that serialized output fields have the expected concrete types after reloading from disk.
+- The audit should check that validation artifacts are removed or written outside verifier-checked directories.
 - The audit should be a separate final tool phase, not just natural-language confidence.
 
 ## Priority 2: Infer And Reproduce Verifier-Like Checks
@@ -183,7 +194,7 @@ General fix:
 
 ## Priority 8: Keep Prompt Caching Healthy But Do Not Optimize It Blindly
 
-The current run's aggregate prompt-cache hit rate is 85.1%, which is much better than the earlier 49.2% signal. The cache issue no longer appears to be the dominant cause of failures in this snapshot.
+The completed run's aggregate prompt-cache hit rate is 85.5%, which is much better than the earlier 49.2% signal. The cache issue no longer appears to be the dominant cause of failures in the final run.
 
 General fix:
 
