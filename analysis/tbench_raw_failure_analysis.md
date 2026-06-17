@@ -2,12 +2,12 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T12:03:37Z`
+Snapshot used: `2026-06-17T12:13:52Z`
 
 Counts at snapshot:
 
-- Passed: 142
-- Failed: 45
+- Passed: 145
+- Failed: 46
 - Exceptions: 15
 - Running or incomplete: 2
 - Prompt-cache hit rate: 85.1%
@@ -41,10 +41,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `configure-git-webserver`
 
-- Status: failed in both synced Wattle attempts.
-- Verifier: after its own clone/push/curl flow, the first Wattle attempt returned HTTP 404 and the retry returned HTTP 000.
+- Status: all synced Wattle attempts failed.
+- Verifier: after its own clone/push/curl flow, the first completed Wattle attempt returned HTTP 404 and both retries returned HTTP 000.
 - Oracle contrast: creates a bare repo at `/git/server`, deploys via `post-receive` to `/var/www/html`, and serves that root on port 8080.
-- Wattle behavior: validated a manual flow, then reset repo/web-root state in the first attempt; the retry installed a hook and server but still did not leave the verifier's fresh workflow reachable.
+- Wattle behavior: validated a manual flow, then reset repo/web-root state in the first attempt; the second attempt installed a hook and server but still did not leave the verifier's fresh workflow reachable. Retry `configure-git-webserver__d9xi3Ws` switched to a managed persistent command and locally validated clone/push/curl, but the verifier still saw HTTP 000.
 - Codex comparison: Codex also failed this task with the same verifier-visible HTTP 404 pattern, which suggests the task is easy to invalidate with small service/root-state mismatches.
 - Raw lesson: Wattle should preserve the final state required by the verifier, not reset after a smoke test unless the instruction explicitly requires reset.
 
@@ -341,8 +341,8 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `adaptive-rejection-sampler`
 
-- Status: two completed Wattle attempts passed and one retry is running.
-- Current evidence: retry `adaptive-rejection-sampler__E68fkod` completed successfully after installing R, implementing `/app/ars.R`, generating `/app/normal_samples.txt`, and running the formal `test()` function through `Rscript`. The earlier pass `adaptive-rejection-sampler__joi43Xi` validated normal, exponential, invalid-input, and non-log-concavity behavior. Running retry `adaptive-rejection-sampler__WP4UrZo` has detected that R is missing and is installing the system R package before writing and validating the required script.
+- Status: all synced Wattle attempts passed.
+- Current evidence: retry `adaptive-rejection-sampler__WP4UrZo` completed successfully after installing R, implementing `/app/ars.R`, writing `/app/normal_samples.txt` with 4000 samples, and passing the formal validation for normal, exponential, invalid-input, and non-log-concavity cases. Earlier attempts `adaptive-rejection-sampler__E68fkod` and `adaptive-rejection-sampler__joi43Xi` passed with the same pattern of dependency installation, script implementation, sample generation, and formal `Rscript` validation.
 - Oracle contrast: implements the adaptive rejection sampler in R with validation over target distributions and invalid inputs.
 - Raw lesson: this remains a positive example for installing missing runtime dependencies and running the task's formal statistical validation; it does not change the general failure taxonomy.
 
@@ -366,6 +366,13 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 - Current evidence: retry `modernize-scientific-stack__yXQwSEJ` completed successfully after creating `/app/analyze_climate_modern.py` and `/app/requirements.txt`, using Python 3 syntax, reading CSV data with pandas and UTF-8 encoding, using `pathlib.Path` and `configparser`, processing stations `101` and `102`, and validating the required mean-temperature output. Earlier attempts `modernize-scientific-stack__mWcAi6j` and `modernize-scientific-stack__wrSjEGR` passed with the same data/config behavior and legacy-file preservation.
 - Oracle contrast: modernizes the scientific stack while preserving the same data/config behavior and expected output without modifying the legacy file.
 - Raw lesson: this remains a positive example for preserving legacy behavior while modernizing dependencies and syntax; it does not change the general failure taxonomy.
+
+### `multi-source-data-merger`
+
+- Status: all synced Wattle attempts passed.
+- Current evidence: retry `multi-source-data-merger__FcGDpD8` completed successfully after writing `/app/merged_users.parquet` and `/app/conflicts.json`, including users `101`, `102`, `103`, and `104`, preserving the exact required columns, integer `user_id` type, `YYYY-MM-DD` dates, source priority `source_a > source_b > source_c`, and conflict report counts for user `101`. Earlier attempts `multi-source-data-merger__3tK68GQ` and `multi-source-data-merger__Q9GKREX` passed with the same schema-aware merge and conflict-report validation.
+- Oracle contrast: merges multiple sources with deterministic source priority, strict output schema, and explicit conflict accounting.
+- Raw lesson: this remains a positive example for schema-aware data transformation tasks: validate row coverage, column inventory, dtypes, formatting, priority resolution, and conflict metadata before finalizing.
 
 ### `torch-tensor-parallelism` retry
 
@@ -415,15 +422,15 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `cobol-modernization`
 
-- Status: both synced Wattle attempts passed.
-- Current evidence: Wattle implemented `/app/program.py`, preserved COBOL fixed-width no-newline `.DAT` records, updated account/book/transaction data, and compared Python outputs byte-for-byte against the original COBOL program from identical copied inputs.
+- Status: two completed Wattle attempts passed and one retry is running.
+- Current evidence: completed attempts `cobol-modernization__QVV6rkL` and `cobol-modernization__rAWsAXG` implemented `/app/program.py`, preserved COBOL fixed-width no-newline `.DAT` records, updated account/book/transaction data, and compared Python outputs byte-for-byte against the original COBOL program from identical copied inputs. Running retry `cobol-modernization__Fs5ZfGw` has finished inspecting the COBOL behavior and written a Python implementation with fixed-width record handling and COBOL-style validation/update ordering.
 - Oracle contrast: reimplements the COBOL data-processing behavior in Python while preserving exact fixed-width data files and transaction semantics.
 - Raw lesson: this is positive evidence for a robust pattern: for legacy-program modernization tasks, Wattle should execute the original implementation as an oracle where available and compare final persisted artifacts byte-for-byte.
 
 ### `crack-7z-hash`
 
-- Status: both synced Wattle attempts passed.
-- Current evidence: Wattle recovered the password and wrote `/app/solution.txt` with the expected secret content `honeybear`; the retry also confirmed the target path `secrets/secret_file.txt` before finishing.
+- Status: two completed Wattle attempts passed and one retry is running.
+- Current evidence: completed attempts `crack-7z-hash__3cRohUv` and `crack-7z-hash__YcfD75w` recovered the password and wrote `/app/solution.txt` with the expected secret content `honeybear`; the retry also confirmed the target path `secrets/secret_file.txt` before finishing. Running retry `crack-7z-hash__nP5CPFd` has generated a 7z hash, is using John with `/app/john/run/password.lst`, and is continuing through a parser/decrypt/extract path.
 - Oracle contrast: recovers the 7z password and extracts only the target secret file content into the required solution artifact.
 - Raw lesson: targeted artifact extraction and a minimal final answer file work well when Wattle keeps the verifier-visible deliverable narrow.
 
@@ -625,16 +632,16 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ## Running Or Incomplete At Snapshot
 
-### `adaptive-rejection-sampler` retry
+### `cobol-modernization` retry
 
-- Status: Wattle retry `adaptive-rejection-sampler__WP4UrZo` is running.
-- Current evidence: prior completed attempts passed after installing R, implementing `/app/ars.R`, generating `/app/normal_samples.txt`, and running the formal R `test()` function over target distributions and invalid-input/log-concavity checks. The running retry has detected that R is not installed and is installing the system R package before writing and validating the required script.
-- Watch point: if the retry passes, keep this as positive evidence for installing missing runtime dependencies and running the task's formal statistical validation.
+- Status: Wattle retry `cobol-modernization__Fs5ZfGw` is running.
+- Current evidence: prior completed attempts passed after implementing `/app/program.py` and comparing resulting `.DAT` files byte-for-byte against the original COBOL program from identical initial data. The running retry has written a Python implementation with fixed-width record handling and COBOL-style validation/update ordering.
+- Watch point: if the retry passes, keep this as positive evidence for running the original legacy implementation as an executable oracle and comparing persisted artifacts byte-for-byte.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### `multi-source-data-merger` retry
+### `crack-7z-hash` retry
 
-- Status: Wattle retry `multi-source-data-merger__FcGDpD8` is running.
-- Current evidence: prior completed attempts passed after writing `/app/merged_users.parquet` and `/app/conflicts.json`, including all unique users, applying source priority `source_a > source_b > source_c`, preserving the required schema and integer/date types, and matching conflict counts. The running retry is inspecting source schemas and dependency availability before running a merge script and validating row counts, types, and conflicts.
-- Watch point: if the retry passes, keep this as positive evidence for schema-aware merge validation plus explicit conflict-report checks.
+- Status: Wattle retry `crack-7z-hash__nP5CPFd` is running.
+- Current evidence: prior completed attempts passed by recovering `honeybear` and writing only the secret file content to `/app/solution.txt`. The running retry has created `/tmp/secrets_hash.txt`, is running John against that hash using `/app/john/run/password.lst`, and is continuing with the same narrow parser/decrypt/extract target.
+- Watch point: if the retry passes, keep this as positive evidence for minimal verifier-visible output and targeted extraction.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
