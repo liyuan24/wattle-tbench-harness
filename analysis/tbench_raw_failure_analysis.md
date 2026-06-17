@@ -2,11 +2,11 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T12:49:47Z`
+Snapshot used: `2026-06-17T12:54:55Z`
 
 Counts at snapshot:
 
-- Passed: 153
+- Passed: 155
 - Failed: 48
 - Exceptions: 16
 - Running or incomplete: 2
@@ -251,19 +251,19 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `train-fasttext`
 
-- Status: exception, `AgentTimeoutError`, in both synced Wattle attempts.
+- Status: exception, `AgentTimeoutError`, in completed Wattle attempts; one retry is running.
 - Verifier: first Wattle attempt had private accuracy 0.539925 and retry had 0.602975, both below threshold 0.62.
 - Oracle contrast: converts the provided parquet train set to FastText supervised format and trains with `wordNgrams 2` and `dim 5`.
-- Wattle behavior: first attempt reported acceptable validation on its own processed split, but verifier used the real private evaluation contract and failed. Retry produced a smaller valid model but still missed the accuracy threshold before timeout.
+- Wattle behavior: first attempt reported acceptable validation on its own processed split, but verifier used the real private evaluation contract and failed. Retry produced a smaller valid model but still missed the accuracy threshold before timeout. Running retry `train-fasttext__76KNeuA` is rerunning FastText supervised training directly after an earlier shell `time` issue, targeting `/app/model.bin` only after validation.
 - Codex comparison: Codex also failed, with private accuracy 0.58465 below the same 0.62 threshold. This makes the issue broader than Wattle-only execution and reinforces the need for exact data conversion/training settings and validation with margin.
 - Raw lesson: ML tasks need validation that matches the verifier input format and threshold with margin; internal split success can be misleading.
 
 ### `video-processing`
 
-- Status: failed in both synced Wattle attempts.
+- Status: failed in completed Wattle attempts; one retry is running.
 - Verifier: first attempt had landing frame 230 outside inclusive range 231 to 234; retry had example landing frame 61 below range 62 to 64 and test-video takeoff frame 239 above range 219 to 223.
 - Oracle contrast: uses frame-level movement/background subtraction and task-specific thresholds to locate jump start/end.
-- Wattle behavior: produced the required TOML structure and plausible frame estimates, but failed tight temporal boundaries in different ways across attempts.
+- Wattle behavior: produced the required TOML structure and plausible frame estimates, but failed tight temporal boundaries in different ways across attempts. Running retry `video-processing__ZPuX76L` is creating `/app/jump_analyzer.py` with fixed-camera foreground detection and jump-event logic informed by hurdle/track geometry.
 - Codex comparison: Codex also failed a tight boundary check, but on takeoff rather than landing: takeoff frame 226 was outside the inclusive range 219 to 223.
 - Raw lesson: video/temporal tasks need exact boundary calibration and verifier-range checks before final answer.
 
@@ -457,15 +457,15 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `schemelike-metacircular-eval`
 
-- Status: two completed Wattle attempts passed, and one retry is running.
-- Current evidence: completed attempts `schemelike-metacircular-eval__H9Agtat` and `schemelike-metacircular-eval__oCPHDYP` implemented `eval.scm`, preserved STDIN for interpreted programs, handled closures/environments/mutation/file I/O, compared direct `interp.py` output against `eval.scm` and nested self-interpretation, and removed generated callback artifacts. Running retry `schemelike-metacircular-eval__saABBoR` has confirmed host primitives and is checking test-program language features before implementing the same behavior.
+- Status: all synced Wattle attempts passed.
+- Current evidence: retry `schemelike-metacircular-eval__saABBoR` completed successfully after implementing `eval.scm`, validating the required examples, preserving remaining STDIN after reading the initial path line, and comparing against `interp.py` for every `.scm` program in `test/`. Earlier attempts `schemelike-metacircular-eval__H9Agtat` and `schemelike-metacircular-eval__oCPHDYP` passed with the same differential validation and artifact cleanup pattern.
 - Oracle contrast: implements a Scheme-level evaluator that can run target programs through the provided interpreter while preserving observable behavior.
 - Raw lesson: interpreter tasks benefit from differential validation against the baseline interpreter across the whole provided test corpus, plus cleanup of artifacts produced by tests.
 
 ### `git-multibranch`
 
-- Status: two completed Wattle attempts passed, and one retry is running.
-- Current evidence: completed attempts `git-multibranch__U6ApYrw` and `git-multibranch__pYxYnbz` configured SSH remote `git@localhost:/git/project`, password auth, a bare repo, `post-receive` deployment for `main` and `dev`, and HTTPS nginx on port 8443, then cleaned validation-created refs/deployed payloads while preserving services and hooks. Running retry `git-multibranch__HGYP3GA` is checking active Nginx process state and planning compact end-to-end validation.
+- Status: all synced Wattle attempts passed.
+- Current evidence: retry `git-multibranch__HGYP3GA` completed successfully after configuring SSH Git remote `git@localhost:/git/project`, password auth, a bare repo, `post-receive` deployment for `main` and `dev`, HTTPS nginx on port 8443, validating password SSH clone/push/deploy flows, then resetting validation-created branch refs and web payloads while preserving infrastructure. Earlier attempts `git-multibranch__U6ApYrw` and `git-multibranch__pYxYnbz` passed with the same service-preserving cleanup pattern.
 - Oracle contrast: leaves a Git/HTTPS service state that lets the verifier push branches and observe the correct branch-specific deployed content.
 - Raw lesson: service tasks can pass when Wattle validates the exact external workflow but then resets only validation payloads, not the required service/hook infrastructure.
 
@@ -639,16 +639,16 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ## Running Or Incomplete At Snapshot
 
-### `git-multibranch` retry
+### `train-fasttext` retry
 
-- Status: Wattle retry `git-multibranch__HGYP3GA` is running.
-- Current evidence: prior completed attempts passed by preserving SSH/Git/Nginx service infrastructure while cleaning only validation-created branch refs and deployed payloads. The running retry is checking Nginx process state and preparing compact end-to-end validation.
-- Watch point: check that any final cleanup preserves the bare repo, hooks, auth, TLS config, web roots, and live Nginx service.
+- Status: Wattle retry `train-fasttext__76KNeuA` is running.
+- Current evidence: prior completed attempts timed out and missed the private accuracy threshold after validating on mismatched or insufficient local formats. The running retry is rerunning FastText supervised training directly after a shell `time` issue, using `/tmp/yelp_train.ft` and `/tmp/yelp_test.ft` before moving any model to `/app/model.bin`.
+- Watch point: check that validation uses the verifier-equivalent text conversion and clears the 0.62 accuracy threshold with margin before finalizing `/app/model.bin`.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### `schemelike-metacircular-eval` retry
+### `video-processing` retry
 
-- Status: Wattle retry `schemelike-metacircular-eval__saABBoR` is running.
-- Current evidence: prior completed attempts passed by implementing `eval.scm`, preserving STDIN, supporting closures/mutation/file I/O, differentially validating against `interp.py`, and cleaning generated callback artifacts. The running retry has implemented `eval.scm`, validated the required examples, and is comparing it against `interp.py` across provided test programs.
-- Watch point: if the retry passes, keep this as positive evidence for broad differential interpreter validation plus artifact cleanup.
+- Status: Wattle retry `video-processing__ZPuX76L` is running.
+- Current evidence: prior completed attempts failed tight takeoff/landing frame windows despite producing valid TOML output. The running retry is using fixed-camera foreground detection and task-specific hurdle/track geometry after inspecting frames.
+- Watch point: check exact frame-boundary ranges on both example and hidden-style videos, not only plausible jump timing on the example.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
