@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T04:45:30Z`
+Snapshot used: `2026-06-17T04:47:57Z`
 
 Counts at snapshot:
 
@@ -10,7 +10,7 @@ Counts at snapshot:
 - Failed: 23
 - Exceptions: 6
 - Running or incomplete: 2
-- Prompt-cache hit rate: 85.1%
+- Prompt-cache hit rate: 85.0%
 
 Deep evidence reports were regenerated under:
 
@@ -288,7 +288,7 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had eight completed 
 ### `pytorch-model-cli` retry
 
 - Status: running at the snapshot.
-- Current evidence: one Wattle attempt for this task already passed after creating `/app/cli_tool`, `/app/weights.json`, and `/app/prediction.txt`, validating that `./cli_tool weights.json image.png` outputs only `2`, and confirming `prediction.txt` matches. Retry `pytorch-model-cli__Ppsm6C6` had started but had not yet emitted assistant/tool evidence.
+- Current evidence: one Wattle attempt for this task already passed after creating `/app/cli_tool`, `/app/weights.json`, and `/app/prediction.txt`, validating that `./cli_tool weights.json image.png` outputs only `2`, and confirming `prediction.txt` matches. Retry `pytorch-model-cli__Ppsm6C6` was running after verifying the supplied `image.png` as a 28x28 grayscale digit, confirming MNIST-style scaling predicts `2`, and preparing to create the required executable and output artifacts.
 - Oracle contrast: builds a CLI around the supplied image/model assets, writes the expected prediction artifact, and preserves the exact command interface.
 - Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
@@ -296,7 +296,7 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had eight completed 
 ### `winning-avg-corewars` retry
 
 - Status: running at the snapshot.
-- Current evidence: one Wattle attempt for this task already passed with verifier-style `pmars -b -r 100 -f` validation above all required win thresholds. Retry `winning-avg-corewars__KJ5akir` was running after confirming the required single-file `my_warrior.red` interface and beginning simulator probes against the five opponents.
+- Current evidence: one Wattle attempt for this task already passed with verifier-style `pmars -b -r 100 -f` validation above all required win thresholds. Retry `winning-avg-corewars__KJ5akir` was running a bounded `/tmp/search_corewar.py` scoring loop while explicitly preserving final output as only `my_warrior.red` and matching the requested pMARS interface.
 - Oracle contrast: writes a multi-component Redcode warrior and validates against stone, vampire, paper, snake, and G2-Clear without modifying opponent files.
 - Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
