@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T10:31:19Z`
+Snapshot used: `2026-06-17T10:41:34Z`
 
 This summary intentionally avoids task-specific fixes. It ranks general Wattle improvements by expected pass-rate impact, breadth across failures, and implementation practicality.
 
@@ -44,7 +44,7 @@ Observed in:
 - `mteb-retrieve`: wrong MTEB wrapper/prompt semantics produced the wrong ranked document; Codex passed the same task, reinforcing that exact API parity is achievable in the harness.
 - `mteb-leaderboard`: two Wattle attempts repeated the same wrong leaderboard answer; Codex passed the comparison, so exact snapshot/completeness/aggregation reproduction is feasible in the same environment.
 - `train-fasttext`: two Wattle attempts and Codex all failed below the private verifier threshold, so exact data conversion/training settings and validation margin matter broadly.
-- `gpt2-codegolf`: implementation did not satisfy exact compile/path/CLI/output contract across two Wattle attempts; Codex passed the same task, which points to Wattle's exact validation loop rather than an environment issue.
+- `gpt2-codegolf`: implementation did not satisfy exact compile/path/CLI/output contract across three Wattle attempts; Codex passed the same task, which points to Wattle's exact validation loop rather than an environment issue.
 - `make-mips-interpreter`: one Wattle attempt passed, but a retry accepted a booting Doom run and valid BMP container while missing exact graphics-init stdout and the required frame-similarity threshold.
 - `torch-tensor-parallelism`: forward/syntax checks missed backward distributed gradient mismatch.
 - `pytorch-model-recovery`: TorchScript model saved with the wrong `forward(src, tgt)` interface, despite plausible model-recovery work.

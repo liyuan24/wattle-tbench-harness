@@ -2,12 +2,12 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T10:31:19Z`
+Snapshot used: `2026-06-17T10:41:34Z`
 
 Counts at snapshot:
 
 - Passed: 125
-- Failed: 41
+- Failed: 42
 - Exceptions: 13
 - Running or incomplete: 2
 - Prompt-cache hit rate: 85.0%
@@ -120,10 +120,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `gpt2-codegolf`
 
-- Status: two Wattle attempts failed and one retry is running.
+- Status: failed in three synced Wattle attempts.
 - Verifier: `gpt2.c` did not satisfy the full compile/run contract.
 - Oracle contrast: provides a dense under-5000-byte GPT-2 implementation with the exact expected CLI and checkpoint/vocab reading behavior.
-- Wattle behavior: created small C implementations and smoke-tested them, but both completed Wattle trials failed the verifier; the retry had size/compile checks passing and then failed the semantic expected-continuation check for a known verifier prompt. New running retry `gpt2-codegolf__bNUptDs` is starting from file/format inspection before writing another compact C implementation.
+- Wattle behavior: created small C implementations and smoke-tested them, but all completed Wattle trials failed the verifier. Two attempts failed the verifier-visible artifact/path/compile contract, including retry `gpt2-codegolf__bNUptDs` despite reporting `/app/gpt2.c` size and compile checks locally; another attempt passed size/compile locally but failed the semantic expected-continuation check for a known verifier prompt.
 - Codex comparison: Codex passed the same task in the comparison run, which suggests the harness/task is healthy and Wattle's miss is in exact contract execution rather than environment setup.
 - Raw lesson: code-golf/implementation tasks need verifier-like command reproduction and semantic output checks, including exact file path, argv, size, compile flags, tokenization, checkpoint layout, BPE mapping, and expected continuation contract.
 
@@ -625,16 +625,16 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ## Running Or Incomplete At Snapshot
 
-### `gpt2-codegolf` retry
-
-- Status: Wattle retry `gpt2-codegolf__bNUptDs` is running.
-- Current evidence: two completed Wattle attempts failed exact GPT-2 contract checks: one lacked the verifier-visible `gpt2.c` artifact and one compiled under the size limit but produced the wrong continuation. The running retry is inspecting available files and formats before writing a smaller contract-matched implementation.
-- Watch point: if the retry passes, compare whether it validated exact argv/path/checkpoint/BPE behavior against verifier-like prompts instead of only smoke-testing plausible text generation.
-- Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
-
 ### `break-filter-js-from-html` retry
 
 - Status: Wattle retry `break-filter-js-from-html__UQZyZ5A` is running.
 - Current evidence: prior Wattle attempts `break-filter-js-from-html__pPj3PwT` and `break-filter-js-from-html__wwLsocx` passed after crafting `/app/out.html` payloads that survived `/app/filter.py` and triggered automatic Chromium `alert(1)`. The running retry is testing browser-supported automatic navigation payloads that preserve the `/app/out.html` to filter-in-place to browser-open contract.
 - Watch point: if the retry passes, keep this as positive evidence for parser/browser differential validation with actual headless-browser execution.
+- Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
+
+### `reshard-c4-data` retry
+
+- Status: Wattle retry `reshard-c4-data__waCkgeY` is running.
+- Current evidence: prior Wattle attempts passed after implementing `/app/compress.py`, `/app/decompress.py`, `pyproject.toml`, uv environment setup, full round-trip validation on `/app/c4_sample`, directory fanout limits, file-size limits, and edge-case preservation of `.reshard_*`-named original paths. The running retry is tightening the 15,000,000-byte restore limit and bounded fanout behavior for larger similarly structured slices.
+- Watch point: if the retry passes, keep this as positive evidence for round-trip filesystem validation with explicit archive-structure constraints.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
