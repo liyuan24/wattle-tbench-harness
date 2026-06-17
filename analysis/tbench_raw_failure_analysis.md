@@ -2,11 +2,11 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T12:13:52Z`
+Snapshot used: `2026-06-17T12:19:00Z`
 
 Counts at snapshot:
 
-- Passed: 145
+- Passed: 147
 - Failed: 46
 - Exceptions: 15
 - Running or incomplete: 2
@@ -199,10 +199,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `polyglot-rust-c`
 
-- Status: failed in all three synced Wattle attempts.
-- Verifier: expected only `main.rs`; found `main`, `cmain`, and `main.rs`.
+- Status: two completed Wattle attempts failed, and one retry is running.
+- Verifier: expected only `main.rs`; completed attempts found `main`, `cmain`, and `main.rs`.
 - Oracle contrast: creates only `polyglot/main.rs`; build products are not left in place.
-- Wattle behavior: validated both Rust and C++ compilation but left generated executables/symlinks. Retry `polyglot-rust-c__ciAfnzW` repeated the same failure signature by leaving `cmain`, `main`, and `main.rs`.
+- Wattle behavior: validated both Rust and C++ compilation but left generated executables/symlinks. Retry `polyglot-rust-c__ciAfnzW` repeated the same failure signature by leaving `cmain`, `main`, and `main.rs`; retry `polyglot-rust-c__6Fc3Lbb` is running and has not produced analyzable evidence yet.
 - Codex comparison: Codex also failed the task with the same final-inventory contract class, leaving `main` beside `main.rs`. That makes the failure pattern broader than Wattle-specific execution cleanup.
 - Raw lesson: exact output inventories should be treated as part of the task contract, not incidental filesystem state.
 
@@ -422,8 +422,8 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `cobol-modernization`
 
-- Status: two completed Wattle attempts passed and one retry is running.
-- Current evidence: completed attempts `cobol-modernization__QVV6rkL` and `cobol-modernization__rAWsAXG` implemented `/app/program.py`, preserved COBOL fixed-width no-newline `.DAT` records, updated account/book/transaction data, and compared Python outputs byte-for-byte against the original COBOL program from identical copied inputs. Running retry `cobol-modernization__Fs5ZfGw` has finished inspecting the COBOL behavior and written a Python implementation with fixed-width record handling and COBOL-style validation/update ordering.
+- Status: all synced Wattle attempts passed.
+- Current evidence: retry `cobol-modernization__Fs5ZfGw` completed successfully after implementing `/app/program.py`, validating in temporary copies without mutating `/app/data`, comparing Python output against compiled GnuCOBOL output for current and valid transaction cases, and verifying byte-for-byte matches for `ACCOUNTS.DAT`, `BOOKS.DAT`, `TRANSACTIONS.DAT`, and stdout. Earlier attempts `cobol-modernization__QVV6rkL` and `cobol-modernization__rAWsAXG` passed with the same fixed-width record handling and byte-for-byte COBOL comparison pattern.
 - Oracle contrast: reimplements the COBOL data-processing behavior in Python while preserving exact fixed-width data files and transaction semantics.
 - Raw lesson: this is positive evidence for a robust pattern: for legacy-program modernization tasks, Wattle should execute the original implementation as an oracle where available and compare final persisted artifacts byte-for-byte.
 
@@ -632,16 +632,16 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ## Running Or Incomplete At Snapshot
 
-### `cobol-modernization` retry
-
-- Status: Wattle retry `cobol-modernization__Fs5ZfGw` is running.
-- Current evidence: prior completed attempts passed after implementing `/app/program.py` and comparing resulting `.DAT` files byte-for-byte against the original COBOL program from identical initial data. The running retry has written a Python implementation with fixed-width record handling and COBOL-style validation/update ordering.
-- Watch point: if the retry passes, keep this as positive evidence for running the original legacy implementation as an executable oracle and comparing persisted artifacts byte-for-byte.
-- Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
-
 ### `crack-7z-hash` retry
 
 - Status: Wattle retry `crack-7z-hash__nP5CPFd` is running.
-- Current evidence: prior completed attempts passed by recovering `honeybear` and writing only the secret file content to `/app/solution.txt`. The running retry has created `/tmp/secrets_hash.txt`, is running John against that hash using `/app/john/run/password.lst`, and is continuing with the same narrow parser/decrypt/extract target.
+- Current evidence: prior completed attempts passed by recovering `honeybear` and writing only the secret file content to `/app/solution.txt`. The running retry has created `/tmp/secrets_hash.txt`, tried John against `/app/john/run/password.lst`, and is now attempting bounded direct AES/CRC validation over likely archive passwords.
 - Watch point: if the retry passes, keep this as positive evidence for minimal verifier-visible output and targeted extraction.
+- Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
+
+### `polyglot-rust-c` retry
+
+- Status: Wattle retry `polyglot-rust-c__6Fc3Lbb` is running.
+- Current evidence: prior completed attempts failed because Wattle validated the polyglot source by compiling it in the verifier-checked directory and left `main`/`cmain` artifacts beside `main.rs`. The running retry has not produced enough synced evidence to judge whether it preserves the exact final inventory.
+- Watch point: check whether validation build products are created outside `/app/polyglot` or cleaned before final handoff.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.

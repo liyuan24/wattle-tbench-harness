@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T12:13:52Z`
+Snapshot used: `2026-06-17T12:19:00Z`
 
 This summary intentionally avoids task-specific fixes. It ranks general Wattle improvements by expected pass-rate impact, breadth across failures, and implementation practicality.
 
@@ -13,7 +13,7 @@ Wattle frequently did useful work but failed because the final verifier-visible 
 Observed in:
 
 - `polyglot-c-py`: correct source, extra `cmain`; Codex also failed the comparison with the same leftover artifact.
-- `polyglot-rust-c`: correct source, extra `main` and `cmain` across three Wattle attempts; Codex also failed the comparison by leaving an extra `main`, so exact final inventory is a broad failure mode.
+- `polyglot-rust-c`: correct source, extra `main` and `cmain` across completed Wattle attempts, with one retry still running; Codex also failed the comparison by leaving an extra `main`, so exact final inventory is a broad failure mode.
 - `configure-git-webserver`: smoke-tested successfully, then reset state so verifier saw 404; Codex also failed the comparison with HTTP 404, and Wattle retries with a deployment hook/server plus a managed persistent service still failed with verifier-visible HTTP 000.
 - `qemu-startup`: one Wattle attempt passed, but a retry timed out with the VM no longer running and required side artifacts missing, showing service liveness must be checked at final handoff.
 - `financial-document-processor`: two Wattle attempts moved a partial set of files and left `summary.csv` missing.
