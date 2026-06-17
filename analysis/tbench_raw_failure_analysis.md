@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T11:37:57Z`
+Snapshot used: `2026-06-17T11:43:05Z`
 
 Counts at snapshot:
 
-- Passed: 139
+- Passed: 140
 - Failed: 43
 - Exceptions: 13
 - Running or incomplete: 2
-- Prompt-cache hit rate: 85.0%
+- Prompt-cache hit rate: 85.1%
 
 Deep evidence reports were regenerated under:
 
@@ -33,10 +33,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `caffe-cifar-10`
 
-- Status: exception, `AgentTimeoutError`, in both synced Wattle attempts.
+- Status: two synced Wattle attempts ended with `AgentTimeoutError`, and one retry is running.
 - Verifier: expected `/app/caffe/examples/cifar10/cifar10_quick_iter_500.caffemodel` and `/app/caffe/training_output.txt`; neither existed.
 - Oracle contrast: installs Caffe dependencies, checks out BVLC Caffe at `9b89154`, applies CPU/OpenCV/HDF5 compatibility patches, builds Caffe, runs CIFAR data prep, then runs exactly 500 iterations with output tee'd to `training_output.txt`.
-- Wattle behavior: the retry built CPU-only Caffe tools/examples and configured the solver for `max_iter: 500`, `snapshot: 500`, and CPU mode, but again timed out before producing the required caffemodel and `training_output.txt`.
+- Wattle behavior: the completed retry built CPU-only Caffe tools/examples and configured the solver for `max_iter: 500`, `snapshot: 500`, and CPU mode, but timed out before producing the required caffemodel and `training_output.txt`. Running retry `caffe-cifar-10__ZUbhad7` is correcting the build invocation to use Caffe's actual `tools` and `examples` targets while preserving the requested output/model paths; the latest synced build attempt hit missing generated `caffe/proto/caffe.pb.h` headers.
 - Raw lesson: long build/train tasks need earlier task-plan compression, deadline-aware fallbacks, and explicit artifact checkpoints before continuing expensive work.
 
 ### `configure-git-webserver`
@@ -376,8 +376,8 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `feal-linear-cryptanalysis`
 
-- Status: two completed Wattle attempts passed and one retry is running.
-- Current evidence: retry `feal-linear-cryptanalysis__eX5XQT8` completed successfully after recovering the 20-bit seeds, expanding round keys, validating encryption/decryption across all 32 known pairs, generating `/app/plaintexts.txt` from `/app/ciphertexts.txt`, and confirming 100 output lines. The earlier pass `feal-linear-cryptanalysis__9FwPG5V` recovered the same seeds and validated the same plaintext output. Running retry `feal-linear-cryptanalysis__mpaH5hc` is inspecting the cipher/decrypt implementations and provided pairs before deriving the key schedule, writing a focused recovery script, and producing `/app/plaintexts.txt`.
+- Status: all synced Wattle attempts passed.
+- Current evidence: retry `feal-linear-cryptanalysis__mpaH5hc` completed successfully after implementing known-plaintext key recovery in `/app/attack.py`, recovering 20-bit key seeds `0x68E63`, `0x62571`, `0x1F61C`, and `0xB74A5`, expanding round keys, validating against all 32 known pairs, decrypting all 100 ciphertexts, writing `/app/plaintexts.txt`, and independently confirming it matches `/app/decrypt` output. Earlier attempts `feal-linear-cryptanalysis__eX5XQT8` and `feal-linear-cryptanalysis__9FwPG5V` passed with the same seed recovery, known-pair validation, and plaintext output checks.
 - Oracle contrast: recovers the FEAL key material from known pairs and writes the exact decrypted plaintext list.
 - Raw lesson: this remains a positive example for end-to-end cryptanalytic validation against all known pairs plus final output cardinality; it does not change the general failure taxonomy.
 
@@ -632,9 +632,9 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 - Watch point: if the retry passes, keep this as positive evidence for combining compact source-size checks with independent image-similarity validation.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### `feal-linear-cryptanalysis` retry
+### `caffe-cifar-10` retry
 
-- Status: Wattle retry `feal-linear-cryptanalysis__mpaH5hc` is running.
-- Current evidence: prior completed attempts passed after recovering the 20-bit seeds, validating encryption/decryption against all 32 known plaintext/ciphertext pairs, generating `/app/plaintexts.txt` from 100 ciphertexts, and confirming output cardinality. The running retry is inspecting the cipher/decrypt implementations and known pairs before deriving the key schedule and producing `/app/plaintexts.txt`.
-- Watch point: if the retry passes, keep this as positive evidence for end-to-end cryptanalytic validation against all known pairs plus final output cardinality.
+- Status: Wattle retry `caffe-cifar-10__ZUbhad7` is running.
+- Current evidence: prior completed attempts timed out before producing `/app/caffe/examples/cifar10/cifar10_quick_iter_500.caffemodel` and `/app/caffe/training_output.txt`. The running retry is correcting the Caffe build invocation to use the actual `tools` and `examples` targets while preserving the requested output/model paths; the latest synced build attempt hit missing generated `caffe/proto/caffe.pb.h` headers.
+- Watch point: if the retry passes, compare whether it front-loads generated protobuf headers, exact Caffe target builds, and artifact checkpoints before the expensive 500-iteration training step.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
