@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T10:10:49Z`
+Snapshot used: `2026-06-17T10:15:56Z`
 
 Counts at snapshot:
 
-- Passed: 122
+- Passed: 123
 - Failed: 40
 - Exceptions: 13
 - Running or incomplete: 2
-- Prompt-cache hit rate: 85.0%
+- Prompt-cache hit rate: 84.9%
 
 Deep evidence reports were regenerated under:
 
@@ -59,10 +59,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `dna-assembly`
 
-- Status: failed.
+- Status: one Wattle attempt failed and one retry is running.
 - Verifier: `primers.fasta` existed and had the expected primer inventory, but at least one forward/reverse pair had an annealing Tm delta of 5.071125 C, just above the allowed 5 C threshold.
 - Oracle contrast: chooses exact template cut boundaries, excludes insert start/stop codons where required, derives Golden Gate overhangs from the verifier-equivalent reverse-complement reconstruction, and validates every annealing tract with `oligotm -tp 1 -sc 1 -mv 50 -dv 2 -n 0.8 -d 500`.
-- Wattle behavior: did substantial correct setup work and reported that all forward/reverse Tm differences were within 5 C, but its final local validation did not match the verifier closely enough near the threshold.
+- Wattle behavior: failed attempt did substantial correct setup work and reported that all forward/reverse Tm differences were within 5 C, but its final local validation did not match the verifier closely enough near the threshold. Running retry `dna-assembly__eEHGCRK` is explicitly trying to use Primer3 `oligotm` for the requested Tm ground truth before final validation.
 - Raw lesson: near-threshold scientific/design tasks need verifier-equivalent reconstruction with margin; Wattle should not accept a final design where an exact hidden check can fail by a small tolerance.
 
 ### `dna-insert`
@@ -602,18 +602,25 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 - Oracle contrast: uses OpenSSL commands to produce the exact certificate/key/combined-PEM artifacts, records certificate metadata, and leaves a verifier script that loads and reports the certificate.
 - Raw lesson: cryptographic artifact tasks pass when Wattle validates file permissions, subject/validity/fingerprint metadata, combined artifact format, and the supplied verification script output.
 
+### `vulnerable-secret`
+
+- Status: both synced Wattle attempts passed.
+- Current evidence: retry `vulnerable-secret__TcZukxw` extracted the secret key, wrote `/app/results.txt`, and verified the file exactly equals `FLAG{b4ff3r_0v3rfl0w_m4st3r_k3y_2024}`. Earlier pass `vulnerable-secret__ryQwcnH` recovered the same secret into the same final artifact.
+- Oracle contrast: extracts the hidden key and writes only the expected result artifact.
+- Raw lesson: exploit/secret-recovery tasks pass when Wattle keeps the final deliverable narrow and validates the exact file content instead of leaving broader exploratory artifacts.
+
 ## Running Or Incomplete At Snapshot
+
+### `dna-assembly` retry
+
+- Status: Wattle retry `dna-assembly__eEHGCRK` is running.
+- Current evidence: prior Wattle attempt `dna-assembly__dqikECR` failed by only 0.071125 C over the forward/reverse annealing Tm-difference threshold. The running retry is checking or installing the Primer3 `oligotm` binary so final validation can use the requested Tm ground truth.
+- Watch point: if the retry passes, compare whether verifier-equivalent reconstruction and margin replaced the prior near-threshold local validation.
+- Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
 ### `rstan-to-pystan` retry
 
 - Status: Wattle retry `rstan-to-pystan__eaDhx9s` is running.
 - Current evidence: prior Wattle attempt `rstan-to-pystan__TVwE9vy` passed after installing PyStan 3.10.0, creating `/app/pystan_analysis.py`, using `stan.build(..., random_seed=1)` with RStan-equivalent sampling settings, writing the four required posterior-mean CSV files, and validating row counts plus numeric-only contents.
 - Watch point: if the retry passes, keep this as positive evidence for preserving probabilistic-model hyperparameters and output schema while translating library APIs.
-- Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
-
-### `vulnerable-secret` retry
-
-- Status: Wattle retry `vulnerable-secret__TcZukxw` is running.
-- Current evidence: prior Wattle attempt `vulnerable-secret__ryQwcnH` passed after extracting the secret key and writing `/app/results.txt` with `FLAG{b4ff3r_0v3rfl0w_m4st3r_k3y_2024}`. The running retry has not produced enough synced log evidence yet for a completed analysis.
-- Watch point: if the retry passes, keep this as positive evidence for targeted exploit/secret extraction with a narrow final artifact.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
