@@ -2,11 +2,11 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T06:25:17Z`
+Snapshot used: `2026-06-17T06:30:24Z`
 
 Counts at snapshot:
 
-- Passed: 85
+- Passed: 87
 - Failed: 26
 - Exceptions: 8
 - Running or incomplete: 2
@@ -176,10 +176,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had fourteen complet
 
 ### `overfull-hbox`
 
-- Status: failed.
+- Status: two Wattle attempts failed and one retry passed.
 - Verifier: modified `input.tex` using `veteran`, which was not an allowed synonym replacement for `old`.
 - Oracle contrast: parses `main.log`, builds substitutions only from `synonyms.txt`, repeatedly compiles and substitutes one allowed synonym until no overfull boxes remain.
-- Wattle behavior: achieved no overfull hbox warnings, but violated the allowed-edit contract.
+- Wattle behavior: failed attempts achieved no overfull hbox warnings but violated the allowed-edit contract. Retry `overfull-hbox__iv3p9dd` passed after editing only `input.tex`, preserving `main.tex` and `synonyms.txt`, recompiling, and verifying no `Overfull \hbox` warnings.
 - Codex comparison: Codex also failed this task with the same allowed-edit contract pattern, replacing `old` with `veteran` even though that synonym was not present in `synonyms.txt`.
 - Raw lesson: validation should check both the desired effect and the permitted transformation set.
 
@@ -414,11 +414,11 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had fourteen complet
 
 ## Running Or Incomplete At Snapshot
 
-### `overfull-hbox` retry
+### `compile-compcert` retry
 
-- Status: Wattle retry `overfull-hbox__iv3p9dd` is running.
-- Current evidence: two prior Wattle attempts failed because `input.tex` used words outside the allowed `synonyms.txt` edit set even though the TeX output itself avoided overfull boxes. Codex also failed this comparison with the same allowed-edit contract miss.
-- Watch point: if the retry passes, compare whether it introduced an explicit allowed-synonym audit before finalizing.
+- Status: Wattle retry `compile-compcert__Ypa3qhV` is running.
+- Current evidence: one prior Wattle attempt for this task already passed after downloading upstream CompCert `v3.13.1`, building it under `/tmp/CompCert`, validating `/tmp/CompCert/ccomp -version`, and compiling/running a smoke program through the absolute required path.
+- Watch point: because a prior Wattle attempt passed, this retry should not change the failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
 ### `polyglot-rust-c` retry

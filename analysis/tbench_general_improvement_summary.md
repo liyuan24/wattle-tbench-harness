@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T06:25:17Z`
+Snapshot used: `2026-06-17T06:30:24Z`
 
 This summary intentionally avoids task-specific fixes. It ranks general Wattle improvements by expected pass-rate impact, breadth across failures, and implementation practicality.
 
@@ -44,7 +44,7 @@ Observed in:
 - `gpt2-codegolf`: implementation did not satisfy exact compile/path/CLI/output contract across two Wattle attempts; Codex passed the same task, which points to Wattle's exact validation loop rather than an environment issue.
 - `torch-tensor-parallelism`: forward/syntax checks missed backward distributed gradient mismatch.
 - `pytorch-model-recovery`: TorchScript model saved with the wrong `forward(src, tgt)` interface, despite plausible model-recovery work.
-- `overfull-hbox`: no overfull boxes, but invalid edit set; Codex also failed the comparison with the same allowed-synonym contract miss.
+- `overfull-hbox`: failed attempts had no overfull boxes but used invalid substitutions; a Wattle retry passed after preserving the allowed edit set, while Codex still failed the comparison with the same contract miss.
 - `sam-cell-seg`: all substantive image-mask tests passed, but exact serialized coordinate type failed.
 - `model-extraction-relu-logits`: local validation against visible model internals passed, but hidden verifier weights exposed incomplete recovery.
 - `dna-insert`: local validation reported matching primer Tm values, but the verifier reconstructed the primer pair in a different orientation and found the Tm delta above threshold.
