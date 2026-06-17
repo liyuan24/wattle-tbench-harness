@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T05:03:18Z`
+Snapshot used: `2026-06-17T05:08:26Z`
 
 Counts at snapshot:
 
-- Passed: 70
+- Passed: 71
 - Failed: 23
 - Exceptions: 6
 - Running or incomplete: 2
-- Prompt-cache hit rate: 85.3%
+- Prompt-cache hit rate: 85.1%
 
 Deep evidence reports were regenerated under:
 
@@ -298,20 +298,27 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had nine completed c
 - Oracle contrast: implements the dominant eigenpair function with exact correctness and performance constraints against the evaluation harness.
 - Raw lesson: this remains a positive example for pairing performance optimization with verifier-like correctness checks across matrix sizes; it does not change the general failure taxonomy.
 
+### `portfolio-optimization`
+
+- Status: passed in both synced Wattle attempts.
+- Current evidence: retry `portfolio-optimization__3N3WX9B` completed successfully after implementing C-backed `portfolio_risk_c` and `portfolio_return_c`, converting Python inputs to contiguous NumPy `float64` arrays, preserving the public wrapper API, building the extension, and validating with `benchmark.py`. The earlier pass `portfolio-optimization__e5C3zxs` used the same C-backed risk/return implementation and validation path.
+- Oracle contrast: implements fast C-backed portfolio risk and return functions while preserving the exact Python wrapper contract and benchmark correctness.
+- Raw lesson: this remains a positive example for exact wrapper-preserving optimization plus benchmark validation; it does not change the general failure taxonomy.
+
 ## Running Or Incomplete At Snapshot
 
-### `portfolio-optimization` retry
+### `path-tracing-reverse` retry
 
 - Status: running at the snapshot.
-- Current evidence: one Wattle attempt for this task already passed after implementing C-backed `portfolio_risk_c` and `portfolio_return_c`, adding shape/dtype/contiguity validation, converting Python inputs to contiguous `float64` arrays, building the extension, and validating with `benchmark.py`. Retry `portfolio-optimization__3N3WX9B` was running after updating the C file and preparing a targeted patch for the Python wrapper, which still contained `NotImplementedError` placeholders.
-- Oracle contrast: implements fast C-backed portfolio risk and return functions while preserving the exact Python wrapper contract and benchmark correctness.
+- Current evidence: one Wattle attempt for this task already passed after writing `/app/mystery.c`, compiling it statically, comparing generated `image.ppm` and stderr/progress output byte-for-byte against `/app/mystery`, and verifying the compressed source stayed under the size limit. Retry `path-tracing-reverse__PfxM9GJ` was running after deciding to reproduce the renderer formula rather than embed the generated image, and had started size/compressibility checks on `image.ppm`.
+- Oracle contrast: reconstructs a compact C renderer that reproduces the hidden path-tracing output and progress behavior under the compressed-size constraint.
 - Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
 
 ### `winning-avg-corewars` retry
 
 - Status: running at the snapshot.
-- Current evidence: one Wattle attempt for this task already passed with verifier-style `pmars -b -r 100 -f` validation above all required win thresholds. Retry `winning-avg-corewars__KJ5akir` was running a focused `/tmp/nonce_search.py` scoring loop that writes disposable `/tmp` candidates while explicitly preserving final output as only `my_warrior.red` and matching the requested pMARS interface.
+- Current evidence: one Wattle attempt for this task already passed with verifier-style `pmars -b -r 100 -f` validation above all required win thresholds. Retry `winning-avg-corewars__KJ5akir` had moved from broader search to a compact adaptive warrior path, testing the exact `my_warrior.red` with required pMARS-style commands while preserving final output as only that file.
 - Oracle contrast: writes a multi-component Redcode warrior and validates against stone, vampire, paper, snake, and G2-Clear without modifying opponent files.
 - Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
