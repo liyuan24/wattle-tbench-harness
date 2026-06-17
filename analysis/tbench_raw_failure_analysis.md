@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T12:24:08Z`
+Snapshot used: `2026-06-17T12:34:23Z`
 
 Counts at snapshot:
 
-- Passed: 147
-- Failed: 46
+- Passed: 148
+- Failed: 47
 - Exceptions: 16
 - Running or incomplete: 2
-- Prompt-cache hit rate: 85.2%
+- Prompt-cache hit rate: 85.1%
 
 Deep evidence reports were regenerated under:
 
@@ -50,10 +50,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `db-wal-recovery`
 
-- Status: failed.
+- Status: failed in completed Wattle attempts, and one retry is running.
 - Verifier: `Apple` stayed at value `100`; expected WAL update value `150`, proving encrypted WAL changes were not applied.
 - Oracle contrast: detects the XOR-encrypted WAL, XOR-decrypts it with key `0x42`, replaces `/app/main.db-wal`, then lets SQLite apply the WAL before writing `recovered.json`.
-- Wattle behavior: produced valid-looking JSON with rows sorted by id, but from the base database state rather than recovered WAL state.
+- Wattle behavior: produced valid-looking JSON with rows sorted by id, but from the base database state rather than recovered WAL state. Running retry `db-wal-recovery__8hrDzqy` is inspecting saved session data and WAL hexdump/output before producing `/app/recovered.json`.
 - Codex comparison: Codex passed this task, strengthening the conclusion that the task and harness are healthy and Wattle's miss is semantic recovery of sidecar WAL state.
 - Raw lesson: Wattle should treat sidecar recovery files as first-class input and verify semantic deltas, not only output shape.
 
@@ -199,10 +199,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `polyglot-rust-c`
 
-- Status: two completed Wattle attempts failed, and one retry is running.
-- Verifier: expected only `main.rs`; completed attempts found `main`, `cmain`, and `main.rs`.
+- Status: all synced Wattle attempts failed.
+- Verifier: expected only `main.rs`; all synced attempts found `main`, `cmain`, and `main.rs`.
 - Oracle contrast: creates only `polyglot/main.rs`; build products are not left in place.
-- Wattle behavior: validated both Rust and C++ compilation but left generated executables/symlinks. Retry `polyglot-rust-c__ciAfnzW` repeated the same failure signature by leaving `cmain`, `main`, and `main.rs`; retry `polyglot-rust-c__6Fc3Lbb` is running and has not produced analyzable evidence yet.
+- Wattle behavior: validated both Rust and C++ compilation but left generated executables/symlinks. Retry `polyglot-rust-c__ciAfnzW` repeated the same failure signature by leaving `cmain`, `main`, and `main.rs`; retry `polyglot-rust-c__6Fc3Lbb` explicitly removed old binaries before validating, then recreated `main` and `cmain` in `/app/polyglot` and left them there for the verifier.
 - Codex comparison: Codex also failed the task with the same final-inventory contract class, leaving `main` beside `main.rs`. That makes the failure pattern broader than Wattle-specific execution cleanup.
 - Raw lesson: exact output inventories should be treated as part of the task contract, not incidental filesystem state.
 
@@ -441,10 +441,17 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 - Oracle contrast: implements a headless terminal abstraction that behaves like an interactive terminal, not only a shell-command wrapper.
 - Raw lesson: when the task requires interactive behavior, Wattle succeeded by validating through a real PTY and testing interactive control flows, not just subprocess output.
 
+### `hf-model-inference`
+
+- Status: all synced Wattle attempts passed.
+- Current evidence: retry `hf-model-inference__ksnosZg` completed successfully after downloading the model to `/app/model_cache/sentiment_model`, creating `/app/sentiment_service.py`, running the Flask service on `0.0.0.0:5000`, and validating both positive sentiment output and HTTP 400 error handling. Earlier attempts `hf-model-inference__CZavqGK` and `hf-model-inference__L8xeFB3` passed with the same service contract.
+- Oracle contrast: exposes a stable local sentiment API with the expected model cache path, `/sentiment` endpoint, confidence schema, and invalid-input behavior.
+- Raw lesson: model-service tasks pass when Wattle validates both successful inference and error handling against the exact service port/schema, and confirms the background process remains bound.
+
 ### `compile-compcert`
 
-- Status: both synced Wattle attempts passed.
-- Current evidence: Wattle built upstream CompCert tag `v3.13.1` under `/tmp/CompCert`, produced `/tmp/CompCert/ccomp`, installed the required runtime/config pieces, and validated the compiler through `ccomp -version` plus smoke C programs compiled from outside the source tree.
+- Status: two completed Wattle attempts passed and one retry is running.
+- Current evidence: completed attempts `compile-compcert__FYotYgk` and `compile-compcert__Ypa3qhV` built upstream CompCert tag `v3.13.1` under `/tmp/CompCert`, produced `/tmp/CompCert/ccomp`, installed the required runtime/config pieces, and validated the compiler through `ccomp -version` plus smoke C programs compiled from outside the source tree. Running retry `compile-compcert__Feo3jb9` hit an out-of-memory kill during parallel Coq proof compilation and is resuming the same build with reduced parallelism.
 - Oracle contrast: builds the requested CompCert release at the required filesystem path and leaves the compiler invocable for verifier use.
 - Raw lesson: build-heavy tasks can pass when Wattle keeps to a narrow upstream release path, validates the exact required executable path, and confirms invocation from outside the build directory.
 
@@ -632,16 +639,16 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ## Running Or Incomplete At Snapshot
 
-### `hf-model-inference` retry
+### `compile-compcert` retry
 
-- Status: Wattle retry `hf-model-inference__ksnosZg` is running.
-- Current evidence: prior completed attempts passed after downloading the sentiment model to `/app/model_cache/sentiment_model`, creating a Flask API on port 5000, and validating positive/error responses. The running retry's background process exited without binding the port, with an empty log, and it is now running `/app/sentiment_service.py` in the foreground to capture the import/startup error.
-- Watch point: check whether the service binds `0.0.0.0:5000`, survives into verifier execution, and returns the same sentiment/error schema as the passing attempts.
+- Status: Wattle retry `compile-compcert__Feo3jb9` is running.
+- Current evidence: prior completed attempts passed after building CompCert `v3.13.1` under `/tmp/CompCert` and validating `/tmp/CompCert/ccomp` from outside the build directory. The running retry identified an out-of-memory kill during parallel Coq proof compilation and resumed with `make -j2`.
+- Watch point: if the retry fails, check whether Wattle should cap parallelism earlier for proof/build-heavy workloads.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### `polyglot-rust-c` retry
+### `db-wal-recovery` retry
 
-- Status: Wattle retry `polyglot-rust-c__6Fc3Lbb` is running.
-- Current evidence: prior completed attempts failed because Wattle validated the polyglot source by compiling it in the verifier-checked directory and left `main`/`cmain` artifacts beside `main.rs`. The running retry has written `/app/polyglot/main.rs` and is iterating on Rust/C++ comment fencing, but it has not yet produced a completed result to judge final inventory cleanup.
-- Watch point: check whether validation build products are created outside `/app/polyglot` or cleaned before final handoff.
+- Status: Wattle retry `db-wal-recovery__8hrDzqy` is running.
+- Current evidence: prior completed attempts failed by writing sorted JSON from the base database without applying encrypted WAL updates, leaving `Apple` at `100` instead of `150`. The running retry is inspecting saved session data and WAL hexdump/output before producing `/app/recovered.json`.
+- Watch point: check whether the retry validates the recovered semantic delta, not just JSON shape/count.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
