@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T04:58:11Z`
+Snapshot used: `2026-06-17T05:03:18Z`
 
 Counts at snapshot:
 
-- Passed: 68
+- Passed: 70
 - Failed: 23
 - Exceptions: 6
 - Running or incomplete: 2
-- Prompt-cache hit rate: 85.4%
+- Prompt-cache hit rate: 85.3%
 
 Deep evidence reports were regenerated under:
 
@@ -291,13 +291,20 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had nine completed c
 - Oracle contrast: builds a CLI around the supplied image/model assets, writes the expected prediction artifact, and preserves the exact command interface.
 - Raw lesson: this remains a positive example for exact final command and artifact validation; it does not change the general failure taxonomy.
 
+### `largest-eigenval`
+
+- Status: passed in both synced Wattle attempts.
+- Current evidence: retry `largest-eigenval__Vd5wSwF` completed successfully after implementing `/app/eigen.py` with NumPy's LAPACK-backed private eigen ufunc, selecting the dominant eigenvalue by magnitude, returning the corresponding right eigenvector, and validating `/app/eval.py` correctness and speed against the reference. The earlier pass `largest-eigenval__A5bGYJK` used the same lower-overhead LAPACK path plus exact 1x1 and 2x2 fast paths.
+- Oracle contrast: implements the dominant eigenpair function with exact correctness and performance constraints against the evaluation harness.
+- Raw lesson: this remains a positive example for pairing performance optimization with verifier-like correctness checks across matrix sizes; it does not change the general failure taxonomy.
+
 ## Running Or Incomplete At Snapshot
 
-### `largest-eigenval` retry
+### `portfolio-optimization` retry
 
 - Status: running at the snapshot.
-- Current evidence: one Wattle attempt for this task already passed after implementing `/app/eigen.py::find_dominant_eigenvalue_and_eigenvector`, using NumPy's lower-overhead LAPACK path plus exact fast paths for 1x1 and 2x2 matrices, and validating eigenpair correctness and speedups with `python eval.py`. Retry `largest-eigenval__Vd5wSwF` was running after a 60-second low-level LAPACK experiment timed out while trying to reduce wrapper overhead further.
-- Oracle contrast: implements the dominant eigenpair function with exact correctness and performance constraints against the evaluation harness.
+- Current evidence: one Wattle attempt for this task already passed after implementing C-backed `portfolio_risk_c` and `portfolio_return_c`, adding shape/dtype/contiguity validation, converting Python inputs to contiguous `float64` arrays, building the extension, and validating with `benchmark.py`. Retry `portfolio-optimization__3N3WX9B` was running after updating the C file and preparing a targeted patch for the Python wrapper, which still contained `NotImplementedError` placeholders.
+- Oracle contrast: implements fast C-backed portfolio risk and return functions while preserving the exact Python wrapper contract and benchmark correctness.
 - Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
 
