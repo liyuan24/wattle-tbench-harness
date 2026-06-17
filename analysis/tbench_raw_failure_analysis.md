@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T04:09:26Z`
+Snapshot used: `2026-06-17T04:12:18Z`
 
 Counts at snapshot:
 
-- Passed: 58
+- Passed: 59
 - Failed: 20
 - Exceptions: 6
 - Running or incomplete: 2
-- Prompt-cache hit rate: 85.9%
+- Prompt-cache hit rate: 85.8%
 
 Deep evidence reports were regenerated under:
 
@@ -237,14 +237,14 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had two completed co
 ### `rstan-to-pystan`
 
 - Status: running at the snapshot.
-- Current evidence: Wattle had written `/app/pystan_analysis.py`, installed the compiler toolchain, and was running the converted PyStan script; no completed verifier result was synced yet.
+- Current evidence: Wattle had written `/app/pystan_analysis.py`, installed the compiler toolchain, adjusted the posterior extraction path, and was rerunning the PyStan script with the same model/data/sampling interface; no completed verifier result was synced yet.
 - Oracle contrast: installs PyStan 3.10.0 without R/RStan, translates the provided RStan Gaussian-process model and sampling hyperparameters to PyStan 3 semantics, sets `stan.build(..., random_seed=1)`, avoids storing large transformed matrices in draws, runs posterior sampling, and writes exact numeric posterior means to `alpha_est.csv`, `sigma_est.csv`, `rho_est.csv`, and `beta_est.csv`.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
 
-### `constraints-scheduling`
+### `dna-insert`
 
 - Status: running at the snapshot.
-- Current evidence: Wattle had selected Wednesday, January 17, 2024 from 11:00-12:00 UTC and written `/app/meeting_scheduled.ics`; no completed verifier result was synced yet.
-- Oracle contrast: parses the three read-only input calendars, enumerates valid meeting slots, applies the task's hard availability and conflict constraints, then writes a valid `Team Planning Meeting` VEVENT with the three attendees. The verifier independently checks calendar integrity, hard constraints, conflicts, minute-level earliest-valid behavior, Carol's Monday tie-breaker, Alice's morning preference, and Carol's late buffer rule.
-- Watch point: the selected slot may be valid in isolation, but the verifier requires no earlier valid minute slot before it. Do not classify yet; use the completed verifier result once synced.
+- Current evidence: Wattle had installed Primer3, enumerated insertion primer candidates, and was preparing a single Q5-style primer pair where the insertion is carried as a 5-prime tail and melting temperatures are computed only on the input-annealing segments; no completed verifier result was synced yet.
+- Oracle contrast: identifies the plasmid difference as a contiguous insert, uses one forward and one reverse primer, writes exactly four FASTA lines to `/app/primers.fasta`, and validates the annealing arms with `oligotm -tp 1 -sc 1 -mv 50 -dv 2 -n 0.8 -d 500`.
+- Watch point: Wattle's intermediate diff output showed a 37 nt insert candidate, while the verifier expects the exact insert sequence reconstructed from `rc(reverse_primer) + forward_primer` plus correct vector overlaps, annealing-arm lengths, and Tm bounds.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
