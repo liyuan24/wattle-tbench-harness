@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T08:28:19Z`
+Snapshot used: `2026-06-17T08:38:34Z`
 
 This summary intentionally avoids task-specific fixes. It ranks general Wattle improvements by expected pass-rate impact, breadth across failures, and implementation practicality.
 
@@ -21,6 +21,7 @@ Observed in:
 - `mcmc-sampling-stan`: plausible posterior mean files were produced, then later experimentation left bad verifier-visible outputs.
 - `sam-cell-seg`: segmentation geometry was accepted, but the serialized CSV coordinate fields used tuple syntax instead of verifier-accepted flat lists.
 - `winning-avg-corewars`: a retry timed out and left an early placeholder/test warrior as the verifier-visible final file, even though no fully passing candidate had been validated.
+- `extract-moves-from-video`: retry's last logged tool wrote `/app/solution.txt`, but after timeout the verifier saw no such file, so final artifact persistence was not guaranteed.
 
 General fix:
 
@@ -41,7 +42,7 @@ Several failures passed Wattle's own smoke tests but not the real verifier. The 
 Observed in:
 
 - `mteb-retrieve`: wrong MTEB wrapper/prompt semantics produced the wrong ranked document; Codex passed the same task, reinforcing that exact API parity is achievable in the harness.
-- `mteb-leaderboard`: wrong leaderboard snapshot/aggregation semantics; Codex passed the comparison, so exact snapshot/completeness/aggregation reproduction is feasible in the same environment.
+- `mteb-leaderboard`: two Wattle attempts repeated the same wrong leaderboard answer; Codex passed the comparison, so exact snapshot/completeness/aggregation reproduction is feasible in the same environment.
 - `train-fasttext`: two Wattle attempts and Codex all failed below the private verifier threshold, so exact data conversion/training settings and validation margin matter broadly.
 - `gpt2-codegolf`: implementation did not satisfy exact compile/path/CLI/output contract across two Wattle attempts; Codex passed the same task, which points to Wattle's exact validation loop rather than an environment issue.
 - `make-mips-interpreter`: one Wattle attempt passed, but a retry accepted a booting Doom run and valid BMP container while missing exact graphics-init stdout and the required frame-similarity threshold.
@@ -77,7 +78,7 @@ Benchmark/library tasks failed when Wattle approximated an API instead of matchi
 Observed in:
 
 - `mteb-retrieve`: `mteb.get_model`, model revision, `SciFact`, query/passage prompt types, and fifth-highest ranking all mattered; Codex passing this comparison points to Wattle's semantic reproduction rather than an environment limitation.
-- `mteb-leaderboard`: results repo commit, benchmark name, full-task filtering, and averaging mattered; Codex passing the comparison points to Wattle's semantic reproduction rather than a task/harness limitation.
+- `mteb-leaderboard`: results repo commit, benchmark name, full-task filtering, and averaging mattered; two Wattle attempts picked the same plausible-but-wrong model while Codex passed, pointing to Wattle's semantic reproduction rather than a task/harness limitation.
 - `raman-fitting`: unit conversion and crop ranges mattered before fitting; Codex also failed with broad wrong peaks, so the improvement should enforce scientific preprocessing and window selection explicitly.
 - `db-wal-recovery`: SQLite WAL semantics and XOR decryption mattered before JSON extraction; Codex passed the comparison, so this is a Wattle semantic-fidelity miss rather than an apparent task/harness issue.
 - `mcmc-sampling-stan`: prior parameterization and final posterior files mattered, not just script/file existence.
@@ -137,7 +138,7 @@ Some failures came from accepting plausible extracted content too early.
 Observed in:
 
 - `gcode-to-text`: two Wattle attempts failed; the first decoded a plausible sentence, while the retry produced a near-flag string with exact-character errors. Codex passed the comparison, so stronger rendering/OCR and character-level validation are feasible under the same environment.
-- `extract-moves-from-video`: command sequence similarity was too low; Codex passed the comparison, so a stronger extraction workflow is feasible under the same task/harness.
+- `extract-moves-from-video`: one attempt had low command-sequence similarity, and the retry timed out with the verifier seeing no final `solution.txt`; Codex passed the comparison, so a stronger extraction workflow plus final artifact persistence is feasible under the same task/harness.
 - `video-processing`: two Wattle attempts and Codex all failed tight frame-boundary checks, so the issue is exact temporal calibration rather than only one implementation's heuristic.
 - `financial-document-processor`: manual/partial classification did not complete all files; Codex passed the comparison, so transaction-style staging and coverage validation are feasible.
 

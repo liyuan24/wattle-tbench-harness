@@ -2,13 +2,13 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T08:28:19Z`
+Snapshot used: `2026-06-17T08:38:34Z`
 
 Counts at snapshot:
 
-- Passed: 99
-- Failed: 32
-- Exceptions: 11
+- Passed: 100
+- Failed: 33
+- Exceptions: 12
 - Running or incomplete: 2
 - Prompt-cache hit rate: 85.3%
 
@@ -84,12 +84,12 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `extract-moves-from-video`
 
-- Status: failed.
-- Verifier: solution text similarity was 63.37%, below the 90% threshold.
+- Status: one Wattle attempt failed and one retry ended with `AgentTimeoutError`.
+- Verifier: first attempt's solution text similarity was 63.37%, below the 90% threshold. Retry `extract-moves-from-video__Gd4fao8` timed out and verifier execution saw no `/app/solution.txt`, despite the last logged tool writing 1,797 bytes to that path.
 - Oracle contrast: derives the Zork command transcript from the video rather than producing a merely plausible command list.
-- Wattle behavior: wrote a syntactically clean `solution.txt`, but the extracted sequence was materially different.
+- Wattle behavior: first attempt wrote a syntactically clean `solution.txt`, but the extracted sequence was materially different. Retry spent more time on OCR/frame extraction but still did not leave a verifier-visible final artifact before timeout.
 - Codex comparison: Codex passed this task, so the failure points to Wattle's video/transcript extraction strategy rather than a task or harness issue.
-- Raw lesson: media/OCR tasks need confidence-aware extraction and cross-validation, not just format validation.
+- Raw lesson: media/OCR tasks need confidence-aware extraction and cross-validation, and long extraction retries need final artifact persistence checks before timeout.
 
 ### `filter-js-from-html`
 
@@ -163,10 +163,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `mteb-leaderboard`
 
-- Status: failed in one Wattle attempt; retry `mteb-leaderboard__CNyeeXt` is running.
-- Verifier: expected `GritLM/GritLM-7B`; Wattle wrote `Salesforce/SFR-Embedding-2_R`.
+- Status: failed in both synced Wattle attempts.
+- Verifier: expected `GritLM/GritLM-7B`; both Wattle attempts wrote `Salesforce/SFR-Embedding-2_R`.
 - Oracle contrast: checks out the MTEB results repo at a specific commit, loads the exact `MTEB(Scandinavian, v1)` benchmark, filters models with all tasks, and computes complete-task averages.
-- Wattle behavior: selected a plausible leaderboard winner but did not reproduce the exact dated result computation. The running retry is inspecting benchmark/task definitions so it can compute the same Scandinavian leaderboard inputs instead of guessing from model names.
+- Wattle behavior: selected a plausible leaderboard winner twice, including after inspecting benchmark/task definitions in the retry, but still did not reproduce the exact dated result computation.
 - Codex comparison: Codex passed this task, strengthening the conclusion that Wattle needs exact benchmark snapshot/completeness/aggregation reproduction rather than a broader leaderboard heuristic.
 - Raw lesson: benchmark/leaderboard tasks require exact dataset snapshot, benchmark name, completeness filters, and aggregation semantics.
 
@@ -225,10 +225,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `raman-fitting`
 
-- Status: failed.
+- Status: failed in two synced Wattle/Codex comparison attempts; Wattle retry `raman-fitting__PoyKvQR` is running.
 - Verifier: fitted G and 2D peak parameters were far from expected values.
 - Oracle contrast: converts decimal commas/tab format, converts wavelength nm to cm^-1, crops G and 2D peak regions, then fits Lorentzian peaks with SciPy.
-- Wattle behavior: produced JSON with fit parameters, but likely used the wrong x-axis transformation/crop/model setup.
+- Wattle behavior: produced JSON with fit parameters, but likely used the wrong x-axis transformation/crop/model setup. The running retry has confirmed the output JSON shape and is trying to fit only graphene-relevant spectral regions while preserving the raw data interpretation.
 - Codex comparison: Codex also failed this task, fitting broad wrong peaks with much larger gammas and offsets. This reinforces that scientific preprocessing/window selection must be explicit, not left to generic curve fitting.
 - Raw lesson: numerical science tasks need unit conversion and range checks before fitting; output plausibility is not enough.
 
@@ -497,18 +497,25 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 - Oracle contrast: exposes the required gRPC service interface and leaves the server process running for verifier RPCs.
 - Raw lesson: RPC service tasks pass when Wattle validates the exact protocol through generated client stubs and keeps the service alive after validation.
 
+### `mailman`
+
+- Status: both synced Wattle attempts passed.
+- Current evidence: retry `mailman__nhb67tc` configured `/etc/mailman3/mailman.cfg`, created `reading-group@local.edu`, generated Mailman command aliases, configured Postfix `main.cf` for `local.edu` local delivery and Mailman LMTP routing, set subscription/unsubscription policy, started services, and validated with `/app/eval.py`. The earlier pass `mailman__EPgf4zw` validated SMTP port 25, Mailman LMTP on `127.0.0.1:8024`, queue emptiness, and list settings.
+- Oracle contrast: leaves a working Mailman/Postfix service integration with the expected list/domain aliases and local delivery behavior.
+- Raw lesson: mail/service integration tasks pass when Wattle validates daemon liveness, generated routing maps, policy state, and the evaluator workflow together.
+
 ## Running Or Incomplete At Snapshot
 
-### `extract-moves-from-video` retry
+### `query-optimize` retry
 
-- Status: Wattle retry `extract-moves-from-video__Gd4fao8` is running.
-- Current evidence: prior Wattle attempt had only 63.37% command-transcript similarity, while Codex passed the comparison. The running retry is OCRing frequent frames and using move counters/prompts to reconstruct the sequence rather than relying on sparse screenshots.
-- Watch point: if the retry passes, compare its OCR/frame sampling and transcript reconstruction workflow against Codex and the failed sparse-screenshot approach.
+- Status: Wattle retry `query-optimize__w54u8pV` is running.
+- Current evidence: prior Wattle attempt `query-optimize__SznDBb2` passed after writing `/app/sol.sql`, validating identical output to the original query on the provided database, successful SQLite execution, and one-query/no-comments/semicolon formatting.
+- Watch point: if the retry fails, compare whether it skipped exact output equivalence, SQLite execution, or final SQL-format validation.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### `mteb-leaderboard` retry
+### `raman-fitting` retry
 
-- Status: Wattle retry `mteb-leaderboard__CNyeeXt` is running.
-- Current evidence: prior Wattle attempt picked `Salesforce/SFR-Embedding-2_R` while the verifier expected `GritLM/GritLM-7B`; Codex passed this comparison. The running retry is inspecting local MTEB benchmark/task definitions before recomputing the Scandinavian leaderboard.
-- Watch point: if the retry passes, compare whether exact benchmark snapshot/task completeness/aggregation reproduction replaced the failed broader leaderboard heuristic.
+- Status: Wattle retry `raman-fitting__PoyKvQR` is running.
+- Current evidence: previous Wattle and Codex attempts fitted broad/wrong peaks. The running retry has confirmed `/app/results.json` shape and is focusing on graphene-relevant spectral regions.
+- Watch point: if the retry passes, compare whether wavelength-to-Raman conversion, crop windows, and Lorentzian initialization replaced the prior generic fitting behavior.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
