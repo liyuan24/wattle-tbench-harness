@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T03:49:43Z`
+Snapshot used: `2026-06-17T03:51:44Z`
 
 This summary intentionally avoids task-specific fixes. It ranks general Wattle improvements by expected pass-rate impact, breadth across failures, and implementation practicality.
 
@@ -18,6 +18,7 @@ Observed in:
 - `financial-document-processor`: partial file moves and missing `summary.csv`.
 - `build-pov-ray`: executable worked, but required source/provenance artifacts were not verifier-visible.
 - `mcmc-sampling-stan`: plausible posterior mean files were produced, then later experimentation left bad verifier-visible outputs.
+- `sam-cell-seg`: segmentation geometry was accepted, but the serialized CSV coordinate fields used tuple syntax instead of verifier-accepted flat lists.
 
 General fix:
 
@@ -26,6 +27,7 @@ General fix:
   - forbidden extra files are absent when directory contents are constrained
   - services/ports/processes are still alive
   - output paths match exactly
+  - serialized output fields have the expected concrete types
   - validation artifacts are removed or written outside checked directories
 - The audit should be a separate final tool phase, not just natural-language confidence.
 
@@ -42,6 +44,7 @@ Observed in:
 - `torch-tensor-parallelism`: forward/syntax checks missed backward distributed gradient mismatch.
 - `pytorch-model-recovery`: TorchScript model saved with the wrong `forward(src, tgt)` interface, despite plausible model-recovery work.
 - `overfull-hbox`: no overfull boxes, but invalid edit set.
+- `sam-cell-seg`: all substantive image-mask tests passed, but exact serialized coordinate type failed.
 
 General fix:
 
@@ -53,6 +56,7 @@ General fix:
   - command-line interface
   - size limits
   - private-input format
+  - serialized file schema and field types after reloading from disk
   - multi-rank/backward/edge-case behavior
   - model/service function signatures
 - Final "done" should require those checks to pass, or explicitly state the unmet risk.
@@ -162,7 +166,7 @@ General fix:
 
 ## Priority 8: Keep Prompt Caching Healthy But Do Not Optimize It Blindly
 
-The current run's aggregate prompt-cache hit rate is 86.5%, which is much better than the earlier 49.2% signal. The cache issue no longer appears to be the dominant cause of failures in this snapshot.
+The current run's aggregate prompt-cache hit rate is 86.4%, which is much better than the earlier 49.2% signal. The cache issue no longer appears to be the dominant cause of failures in this snapshot.
 
 General fix:
 

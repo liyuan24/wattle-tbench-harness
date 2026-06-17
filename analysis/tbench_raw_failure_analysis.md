@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T03:49:43Z`
+Snapshot used: `2026-06-17T03:51:44Z`
 
 Counts at snapshot:
 
 - Passed: 50
-- Failed: 18
+- Failed: 19
 - Exceptions: 6
 - Running or incomplete: 2
-- Prompt-cache hit rate: 86.5%
+- Prompt-cache hit rate: 86.4%
 
 Deep evidence reports were regenerated under:
 
@@ -191,6 +191,14 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had two completed co
 - Wattle behavior: produced JSON with fit parameters, but likely used the wrong x-axis transformation/crop/model setup.
 - Raw lesson: numerical science tasks need unit conversion and range checks before fitting; output plausibility is not enough.
 
+### `sam-cell-seg`
+
+- Status: failed.
+- Verifier: eight tests passed, including script execution, CSV shape, non-rectangular masks, alignment, non-overlap, and single-contiguous-mask checks. The only failure was `test_coords_are_flat_lists`: row 0 `coords_x` parsed as a tuple instead of a list.
+- Oracle contrast: uses MobileSAM box prompts, resolves overlaps/contiguity, then writes `coords_x` and `coords_y` as flat list-like fields accepted by the verifier.
+- Wattle behavior: solved the substantive segmentation geometry but missed the exact CSV serialization contract for coordinate columns.
+- Raw lesson: Wattle needs final output-type/schema validation at the serialized artifact level, not just in-memory data structure validation.
+
 ### `torch-tensor-parallelism`
 
 - Status: failed.
@@ -225,9 +233,9 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had two completed co
 - Oracle contrast: uses query-only critical-point sweeps against `forward()` to recover rows of `A1` up to permutation and scale, then writes `/app/steal.py` and `/app/stolen_A1.npy`.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
 
-### `sam-cell-seg`
+### `nginx-request-logging`
 
 - Status: running at the snapshot.
-- Current evidence: Wattle had begun a MobileSAM-based mask conversion task, but no completed verifier result was synced yet.
-- Oracle contrast: installs the pinned MobileSAM implementation, uses the provided box masks as prompts, converts all masks to non-overlapping contiguous polylines, and writes an output CSV matching the input schema.
+- Current evidence: Wattle had installed/inspected Nginx, edited `/etc/nginx/nginx.conf`, wrote `/etc/nginx/conf.d/benchmark-site.conf`, and was still in progress with no completed verifier result synced yet.
+- Oracle contrast: installs Nginx, creates exact index and 404 pages, adds `log_format` and `limit_req_zone` in the `http` context, applies `limit_req` in the server block, removes the default site, validates `nginx -t`, restarts Nginx, and verifies localhost:8080.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
