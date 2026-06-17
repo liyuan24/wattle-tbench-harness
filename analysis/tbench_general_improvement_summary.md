@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T04:27:31Z`
+Snapshot used: `2026-06-17T04:29:13Z`
 
 This summary intentionally avoids task-specific fixes. It ranks general Wattle improvements by expected pass-rate impact, breadth across failures, and implementation practicality.
 
@@ -37,7 +37,7 @@ Several failures passed Wattle's own smoke tests but not the real verifier. The 
 
 Observed in:
 
-- `mteb-retrieve`: wrong MTEB wrapper/prompt semantics produced the wrong ranked document.
+- `mteb-retrieve`: wrong MTEB wrapper/prompt semantics produced the wrong ranked document; Codex passed the same task, reinforcing that exact API parity is achievable in the harness.
 - `mteb-leaderboard`: wrong leaderboard snapshot/aggregation semantics.
 - `train-fasttext`: internal validation did not match private verifier format/threshold.
 - `gpt2-codegolf`: implementation did not satisfy exact compile/path/CLI contract; Codex passed the same task, which points to Wattle's exact validation loop rather than an environment issue.
@@ -71,7 +71,7 @@ Benchmark/library tasks failed when Wattle approximated an API instead of matchi
 
 Observed in:
 
-- `mteb-retrieve`: `mteb.get_model`, model revision, `SciFact`, query/passage prompt types, and fifth-highest ranking all mattered.
+- `mteb-retrieve`: `mteb.get_model`, model revision, `SciFact`, query/passage prompt types, and fifth-highest ranking all mattered; Codex passing this comparison points to Wattle's semantic reproduction rather than an environment limitation.
 - `mteb-leaderboard`: results repo commit, benchmark name, full-task filtering, and averaging mattered.
 - `raman-fitting`: unit conversion and crop ranges mattered before fitting.
 - `db-wal-recovery`: SQLite WAL semantics and XOR decryption mattered before JSON extraction.

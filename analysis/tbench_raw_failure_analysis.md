@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T04:27:31Z`
+Snapshot used: `2026-06-17T04:29:13Z`
 
 Counts at snapshot:
 
@@ -18,7 +18,7 @@ Deep evidence reports were regenerated under:
 runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/
 ```
 
-The Codex comparison run `codex-compare-nonpassed-20260617` had three completed comparisons at this snapshot: Codex passed `gpt2-codegolf`, failed `torch-tensor-parallelism`, and timed out on `caffe-cifar-10`. Codex `mteb-retrieve` was still running. Most task notes remain grounded in Wattle logs, verifier failures, and Terminal-Bench oracle/tests.
+The Codex comparison run `codex-compare-nonpassed-20260617` had four completed comparisons at this snapshot: Codex passed `gpt2-codegolf` and `mteb-retrieve`, failed `torch-tensor-parallelism`, and timed out on `caffe-cifar-10`. Codex `configure-git-webserver` was still running. Most task notes remain grounded in Wattle logs, verifier failures, and Terminal-Bench oracle/tests.
 
 ## Confirmed Failures And Exceptions
 
@@ -165,6 +165,7 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had three completed 
 - Verifier: expected `MTEB: Massive Text Embedding Benchmark`; Wattle wrote `HumanEval: Benchmarking Python code generation via functional examples`.
 - Oracle contrast: uses `mteb.get_model("BAAI/bge-small-zh-v1.5", revision=...)`, encodes query with `task_name="SciFact"` and `PromptType.query`, encodes docs with `PromptType.passage`, then selects the 5th highest similarity.
 - Wattle behavior: inspected model/wrapper details but still wrote the wrong document.
+- Codex comparison: Codex passed this task in the comparison run, which reinforces that the failure is not the harness or task image but Wattle's exact MTEB API/revision/prompt-type/ranking reproduction.
 - Raw lesson: embedding tasks are sensitive to wrapper semantics, prompt type, task name, revision, and ranking convention; Wattle needs exact API parity with the prompt/oracle.
 
 ### `overfull-hbox`
@@ -253,7 +254,7 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had three completed 
 ### `gpt2-codegolf` retry
 
 - Status: running at the snapshot.
-- Current evidence: the first Wattle `gpt2-codegolf` trial remains a confirmed failure, but a second trial `gpt2-codegolf__kUprDk6` was running at the snapshot with a 3759-byte `/app/gpt2.c`, the requested compile command working with warnings only, and a narrow final artifact sanity check in progress for path, byte size, compile command, and checkpoint/BPE argument handling; no completed verifier result was synced yet for the retry.
+- Current evidence: the first Wattle `gpt2-codegolf` trial remains a confirmed failure, but a second trial `gpt2-codegolf__kUprDk6` was running at the snapshot with `/app/gpt2.c` interface/size/compile checks already passing and a narrow validation/fix cycle focused on tokenization and ID mapping; no completed verifier result was synced yet for the retry.
 - Oracle contrast: still requires a dependency-free `/app/gpt2.c` under 5000 bytes that compiles with `gcc -O3 -lm`, reads the checkpoint and BPE file, and emits exact argmax GPT-2 continuations for verifier prompts.
 - Watch point: keep the existing confirmed-failure lesson, but replace or augment it if the retry passes or fails with a different verifier signature.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
@@ -261,7 +262,7 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had three completed 
 ### `llm-inference-batching-scheduler` retry
 
 - Status: running at the snapshot.
-- Current evidence: one Wattle attempt for this task already passed, but another attempt `llm-inference-batching-scheduler__kgrrhCE` was running at the snapshot after writing candidate plan files and starting focused validation for schema, request coverage, shape constraints, and provided cost-model thresholds.
+- Current evidence: one Wattle attempt for this task already passed, but another attempt `llm-inference-batching-scheduler__kgrrhCE` was still marked running at the snapshot after writing both plan files and reporting local validation success against schema, request coverage, shape constraints, and provided cost-model thresholds; no completed verifier result was synced yet for the retry.
 - Oracle contrast: uses deterministic shape selection and dynamic programming to satisfy all request coverage, maximum-shape, cost, padding, latency, and sequential-time thresholds across both buckets.
 - Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
