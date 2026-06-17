@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T07:16:33Z`
+Snapshot used: `2026-06-17T07:26:48Z`
 
 Counts at snapshot:
 
-- Passed: 93
+- Passed: 94
 - Failed: 29
 - Exceptions: 9
 - Running or incomplete: 2
-- Prompt-cache hit rate: 84.9%
+- Prompt-cache hit rate: 84.8%
 
 Deep evidence reports were regenerated under:
 
@@ -18,7 +18,7 @@ Deep evidence reports were regenerated under:
 runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/
 ```
 
-The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-one completed comparisons at this snapshot: Codex passed `build-pov-ray`, `db-wal-recovery`, `extract-moves-from-video`, `financial-document-processor`, `gcode-to-text`, `gpt2-codegolf`, `mteb-leaderboard`, `mteb-retrieve`, and `protein-assembly`; failed `configure-git-webserver`, `extract-elf`, `filter-js-from-html`, `install-windows-3.11`, `overfull-hbox`, `polyglot-rust-c`, `raman-fitting`, `torch-tensor-parallelism`, `train-fasttext`, and `video-processing`; and timed out on `caffe-cifar-10` and `make-doom-for-mips`. Codex `polyglot-c-py` was running. Most task notes remain grounded in Wattle logs, verifier failures, and Terminal-Bench oracle/tests.
+The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two completed comparisons at this snapshot: Codex passed `build-pov-ray`, `db-wal-recovery`, `extract-moves-from-video`, `financial-document-processor`, `gcode-to-text`, `gpt2-codegolf`, `mteb-leaderboard`, `mteb-retrieve`, and `protein-assembly`; failed `configure-git-webserver`, `extract-elf`, `filter-js-from-html`, `install-windows-3.11`, `overfull-hbox`, `polyglot-c-py`, `polyglot-rust-c`, `raman-fitting`, `torch-tensor-parallelism`, `train-fasttext`, and `video-processing`; and timed out on `caffe-cifar-10` and `make-doom-for-mips`. No Codex comparisons were running at this snapshot. Most task notes remain grounded in Wattle logs, verifier failures, and Terminal-Bench oracle/tests.
 
 ## Confirmed Failures And Exceptions
 
@@ -194,6 +194,7 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-one compl
 - Verifier: expected only `main.py.c`; found an extra `cmain`.
 - Oracle contrast: creates only `polyglot/main.py.c`; compiled binaries are not left in the target directory.
 - Wattle behavior: created the correct source and validated it, but left build artifacts in the directory the verifier checks.
+- Codex comparison: Codex also failed with the same leftover `cmain` artifact, reinforcing that exact final inventory is a general agent failure mode.
 - Raw lesson: Wattle needs cleanup/final-state hygiene after validation, especially in tasks with exact directory contents.
 
 ### `polyglot-rust-c`
@@ -456,10 +457,17 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-one compl
 
 ### `qemu-alpine-ssh`
 
-- Status: one Wattle attempt passed and one retry is running.
-- Current evidence: passed attempt `qemu-alpine-ssh__2rXBcVb` left Alpine running in QEMU with SSH forwarded on `localhost:2222`, root password `password123`, and validated an SSH login to a root shell inside the VM.
+- Status: both synced Wattle attempts passed.
+- Current evidence: Wattle left Alpine running in QEMU with SSH forwarded on `localhost:2222`, root password `password123`, and validated an SSH login to a root shell inside the VM.
 - Oracle contrast: leaves a booted VM with reachable SSH, not only a configured disk or launch command.
 - Raw lesson: VM service tasks pass when Wattle validates the exact externally reachable login path and leaves the long-running process alive for the verifier.
+
+### `kv-store-grpc`
+
+- Status: one Wattle attempt passed and one retry is running.
+- Current evidence: passed attempt `kv-store-grpc__CUNNg6M` created `kv-store.proto`, generated Python gRPC stubs, launched `/app/server.py` on port 5328, and validated `SetVal`, `GetVal`, and missing-key behavior through a real gRPC client.
+- Oracle contrast: exposes the required gRPC service interface and leaves the server process running for verifier RPCs.
+- Raw lesson: RPC service tasks pass when Wattle validates the exact protocol through generated client stubs and keeps the service alive after validation.
 
 ## Running Or Incomplete At Snapshot
 
@@ -470,16 +478,9 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-one compl
 - Watch point: if the retry passes, compare its exact data conversion/evaluation command and model-size controls against both failed attempts.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### `qemu-alpine-ssh` retry
+### `kv-store-grpc` retry
 
-- Status: Wattle retry `qemu-alpine-ssh__EyRt9zU` is running.
-- Current evidence: one Wattle attempt already passed by booting Alpine under QEMU, forwarding host port 2222 to SSH, setting the root password, and validating an SSH login.
+- Status: Wattle retry `kv-store-grpc__oxcCNK6` is running.
+- Current evidence: one prior Wattle attempt already passed by creating the proto/stubs/server, starting the service on port 5328, and validating required RPC semantics.
 - Watch point: because a prior Wattle attempt passed, this retry should not change the failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
-
-### Codex `polyglot-c-py` comparison
-
-- Status: Codex comparison `polyglot-c-py__dqTiFJR` is running.
-- Current evidence: Wattle produced the correct polyglot source but left `cmain` beside `main.py.c`, causing exact-directory verification to fail. The same cleanup/final-inventory issue also affected `polyglot-rust-c`.
-- Watch point: if Codex passes, compare its validation artifact cleanup path; if it fails, strengthen the final-inventory audit recommendation.
-- Do not classify the Codex comparison outcome yet. It should be analyzed after a completed `result.json` is synced.

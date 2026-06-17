@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T07:16:33Z`
+Snapshot used: `2026-06-17T07:26:48Z`
 
 This summary intentionally avoids task-specific fixes. It ranks general Wattle improvements by expected pass-rate impact, breadth across failures, and implementation practicality.
 
@@ -12,7 +12,7 @@ Wattle frequently did useful work but failed because the final verifier-visible 
 
 Observed in:
 
-- `polyglot-c-py`: correct source, extra `cmain`.
+- `polyglot-c-py`: correct source, extra `cmain`; Codex also failed the comparison with the same leftover artifact.
 - `polyglot-rust-c`: correct source, extra `main` and `cmain` across three Wattle attempts; Codex also failed the comparison by leaving an extra `main`, so exact final inventory is a broad failure mode.
 - `configure-git-webserver`: smoke-tested successfully, then reset state so verifier saw 404; Codex also failed the comparison with HTTP 404, and a Wattle retry with a deployment hook/server still failed with HTTP 000.
 - `qemu-startup`: one Wattle attempt passed, but a retry timed out with the VM no longer running and required side artifacts missing, showing service liveness must be checked at final handoff.
@@ -179,7 +179,7 @@ General fix:
 
 ## Priority 8: Keep Prompt Caching Healthy But Do Not Optimize It Blindly
 
-The current run's aggregate prompt-cache hit rate is 84.9%, which is much better than the earlier 49.2% signal. The cache issue no longer appears to be the dominant cause of failures in this snapshot.
+The current run's aggregate prompt-cache hit rate is 84.8%, which is much better than the earlier 49.2% signal. The cache issue no longer appears to be the dominant cause of failures in this snapshot.
 
 General fix:
 
