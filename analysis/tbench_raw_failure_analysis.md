@@ -2,11 +2,11 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T04:07:04Z`
+Snapshot used: `2026-06-17T04:09:26Z`
 
 Counts at snapshot:
 
-- Passed: 57
+- Passed: 58
 - Failed: 20
 - Exceptions: 6
 - Running or incomplete: 2
@@ -241,9 +241,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had two completed co
 - Oracle contrast: installs PyStan 3.10.0 without R/RStan, translates the provided RStan Gaussian-process model and sampling hyperparameters to PyStan 3 semantics, sets `stan.build(..., random_seed=1)`, avoids storing large transformed matrices in draws, runs posterior sampling, and writes exact numeric posterior means to `alpha_est.csv`, `sigma_est.csv`, `rho_est.csv`, and `beta_est.csv`.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
 
-### `openssl-selfsigned-cert`
+### `constraints-scheduling`
 
 - Status: running at the snapshot.
-- Current evidence: Wattle had generated `/app/ssl/server.crt` and was assembling derived certificate files plus `/app/check_cert.py`; no completed verifier result was synced yet.
-- Oracle contrast: creates `/app/ssl`, generates a 2048-bit RSA key with restrictive permissions, creates a 365-day self-signed certificate for organization `DevOps Team` and common name `dev-internal.company.local`, writes combined PEM and verification files, and provides a Python script that loads the cert/key and prints the expected success details.
+- Current evidence: Wattle had selected Wednesday, January 17, 2024 from 11:00-12:00 UTC and written `/app/meeting_scheduled.ics`; no completed verifier result was synced yet.
+- Oracle contrast: parses the three read-only input calendars, enumerates valid meeting slots, applies the task's hard availability and conflict constraints, then writes a valid `Team Planning Meeting` VEVENT with the three attendees. The verifier independently checks calendar integrity, hard constraints, conflicts, minute-level earliest-valid behavior, Carol's Monday tie-breaker, Alice's morning preference, and Carol's late buffer rule.
+- Watch point: the selected slot may be valid in isolation, but the verifier requires no earlier valid minute slot before it. Do not classify yet; use the completed verifier result once synced.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
