@@ -2,13 +2,13 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T03:31:45Z`
+Snapshot used: `2026-06-17T03:37:28Z`
 
 Counts at snapshot:
 
-- Passed: 47
+- Passed: 48
 - Failed: 17
-- Exceptions: 5
+- Exceptions: 6
 - Running or incomplete: 2
 - Prompt-cache hit rate: 86.2%
 
@@ -18,7 +18,7 @@ Deep evidence reports were regenerated under:
 runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/
 ```
 
-The Codex comparison run `codex-compare-nonpassed-20260617` was running but had no completed comparison trials at this snapshot, so this document is grounded in Wattle logs, verifier failures, and Terminal-Bench oracle/tests.
+The Codex comparison run `codex-compare-nonpassed-20260617` had one completed comparison at this snapshot: Codex passed `gpt2-codegolf`. Other comparison tasks were still running, so most task notes are grounded in Wattle logs, verifier failures, and Terminal-Bench oracle/tests.
 
 ## Confirmed Failures And Exceptions
 
@@ -100,6 +100,7 @@ The Codex comparison run `codex-compare-nonpassed-20260617` was running but had 
 - Verifier: `gpt2.c` did not satisfy the full compile/run contract.
 - Oracle contrast: provides a dense under-5000-byte GPT-2 implementation with the exact expected CLI and checkpoint/vocab reading behavior.
 - Wattle behavior: created a small C implementation and smoke-tested it, but the verifier still rejected the implementation contract.
+- Codex comparison: Codex passed the same task in the comparison run, which suggests the harness/task is healthy and Wattle's miss is in exact contract execution rather than environment setup.
 - Raw lesson: code-golf/implementation tasks need verifier-like command reproduction, including exact file path, argv, size, compile flags, and output contract.
 
 ### `install-windows-3.11`
@@ -117,6 +118,14 @@ The Codex comparison run `codex-compare-nonpassed-20260617` was running but had 
 - Oracle contrast: applies a large MIPS build patch, supplies custom libc/runtime pieces, cross-compiles, and validates under the JS VM.
 - Wattle behavior: built a MIPS binary and generated a frame, but execution stopped on an unsupported instruction before reaching a stable verifier-ready state.
 - Raw lesson: emulator/cross-compile tasks need early ISA/runtime compatibility checks and a plan to minimize late-cycle debugging.
+
+### `mcmc-sampling-stan`
+
+- Status: exception, `AgentTimeoutError`.
+- Verifier: posterior alpha and beta means were astronomically wrong relative to expected ranges, despite Wattle reporting plausible mean files before timeout.
+- Oracle contrast: installs pinned RStan dependencies, uses a hierarchical binomial Stan model with the intended prior transformation, then runs a long reproducible sample to write posterior means.
+- Wattle behavior: generated the required files and an apparently good intermediate result, then changed the Stan model/rerun path and timed out with verifier-visible bad posterior files.
+- Raw lesson: probabilistic/scientific tasks need stable final artifact protection; once a verifier-plausible result is produced, later experiments should not overwrite it without passing the same checks.
 
 ### `mteb-leaderboard`
 
@@ -200,13 +209,16 @@ The Codex comparison run `codex-compare-nonpassed-20260617` was running but had 
 
 ## Running Or Incomplete At Snapshot
 
-### `fix-ocaml-gc`
+### `build-cython-ext`
 
 - Status: running at the snapshot.
+- Current evidence: Wattle was rerunning `python setup.py build_ext --inplace` after installing build tooling.
+- Oracle contrast: clone `pyknotid` at `0.5.3`, patch specific Python/NumPy/Cython incompatibilities, install pinned `setuptools` and `cython`, build in place, then install editable.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
 
-### `mcmc-sampling-stan`
+### `git-leak-recovery`
 
 - Status: running at the snapshot.
+- Current evidence: Wattle reported secret recovery, repo cleanup, reflog expiry, garbage collection, and no remaining `secret[...]` matches.
+- Oracle contrast: extracts `secret[...]` from dangling commits, writes `/app/secret.txt`, then prunes dangling commits so the secret is no longer present in Git metadata.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
-

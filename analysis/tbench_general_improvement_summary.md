@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T03:31:45Z`
+Snapshot used: `2026-06-17T03:37:28Z`
 
 This summary intentionally avoids task-specific fixes. It ranks general Wattle improvements by expected pass-rate impact, breadth across failures, and implementation practicality.
 
@@ -17,6 +17,7 @@ Observed in:
 - `configure-git-webserver`: smoke-tested successfully, then reset state so verifier saw 404.
 - `financial-document-processor`: partial file moves and missing `summary.csv`.
 - `build-pov-ray`: executable worked, but required source/provenance artifacts were not verifier-visible.
+- `mcmc-sampling-stan`: plausible posterior mean files were produced, then later experimentation left bad verifier-visible outputs.
 
 General fix:
 
@@ -37,7 +38,7 @@ Observed in:
 - `mteb-retrieve`: wrong MTEB wrapper/prompt semantics produced the wrong ranked document.
 - `mteb-leaderboard`: wrong leaderboard snapshot/aggregation semantics.
 - `train-fasttext`: internal validation did not match private verifier format/threshold.
-- `gpt2-codegolf`: implementation did not satisfy exact compile/path/CLI contract.
+- `gpt2-codegolf`: implementation did not satisfy exact compile/path/CLI contract; Codex passed the same task, which points to Wattle's exact validation loop rather than an environment issue.
 - `torch-tensor-parallelism`: forward/syntax checks missed backward distributed gradient mismatch.
 - `overfull-hbox`: no overfull boxes, but invalid edit set.
 
@@ -64,6 +65,7 @@ Observed in:
 - `mteb-leaderboard`: results repo commit, benchmark name, full-task filtering, and averaging mattered.
 - `raman-fitting`: unit conversion and crop ranges mattered before fitting.
 - `db-wal-recovery`: SQLite WAL semantics and XOR decryption mattered before JSON extraction.
+- `mcmc-sampling-stan`: prior parameterization and final posterior files mattered, not just script/file existence.
 
 General fix:
 
@@ -85,6 +87,7 @@ Observed in:
 - `make-doom-for-mips`: late emulator/runtime debugging consumed budget.
 - `install-windows-3.11`: did not leave required services running.
 - `train-fasttext`: timed out and still missed accuracy.
+- `mcmc-sampling-stan`: long sampling and late reruns consumed budget and left bad final artifacts.
 
 General fix:
 
@@ -176,4 +179,3 @@ General fix:
 8. Prompt-cache monitoring as a regression guard.
 
 The first two improvements should be implemented first because they cover the broadest set of failures and are likely to convert many "almost solved" tasks into passes without overfitting to any specific task.
-
