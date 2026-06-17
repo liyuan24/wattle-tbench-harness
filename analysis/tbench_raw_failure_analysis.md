@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T10:56:57Z`
+Snapshot used: `2026-06-17T11:07:11Z`
 
 Counts at snapshot:
 
-- Passed: 131
+- Passed: 134
 - Failed: 42
 - Exceptions: 13
 - Running or incomplete: 2
-- Prompt-cache hit rate: 85.1%
+- Prompt-cache hit rate: 85.0%
 
 Deep evidence reports were regenerated under:
 
@@ -306,22 +306,22 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `largest-eigenval`
 
-- Status: two completed Wattle attempts passed and one retry is running.
-- Current evidence: retry `largest-eigenval__Vd5wSwF` completed successfully after implementing `/app/eigen.py` with NumPy's LAPACK-backed private eigen ufunc, selecting the dominant eigenvalue by magnitude, returning the corresponding right eigenvector, and validating `/app/eval.py` correctness and speed against the reference. The earlier pass `largest-eigenval__A5bGYJK` used the same lower-overhead LAPACK path plus exact 1x1 and 2x2 fast paths. Running retry `largest-eigenval__pXaQN7X` has implemented a SciPy low-level LAPACK `dgeev` path with complex-vector reconstruction, NumPy fallback, direct `1x1` handling, and correctness/speed validation over generated matrices.
+- Status: all synced Wattle attempts passed.
+- Current evidence: retry `largest-eigenval__pXaQN7X` completed successfully after implementing a SciPy low-level LAPACK `dgeev` path with complex-vector reconstruction, NumPy fallback, direct `1x1` handling, and correctness/speed validation over random, identity, zero, triangular, and block matrices. Earlier attempts `largest-eigenval__Vd5wSwF` and `largest-eigenval__A5bGYJK` passed with NumPy LAPACK-backed paths, dominant-eigenvalue selection by magnitude, right-eigenvector returns, and `/app/eval.py` correctness and speed validation.
 - Oracle contrast: implements the dominant eigenpair function with exact correctness and performance constraints against the evaluation harness.
 - Raw lesson: this remains a positive example for pairing performance optimization with verifier-like correctness checks across matrix sizes; it does not change the general failure taxonomy.
 
 ### `portfolio-optimization`
 
-- Status: passed in both synced Wattle attempts.
-- Current evidence: retry `portfolio-optimization__3N3WX9B` completed successfully after implementing C-backed `portfolio_risk_c` and `portfolio_return_c`, converting Python inputs to contiguous NumPy `float64` arrays, preserving the public wrapper API, building the extension, and validating with `benchmark.py`. The earlier pass `portfolio-optimization__e5C3zxs` used the same C-backed risk/return implementation and validation path.
+- Status: all synced Wattle attempts passed.
+- Current evidence: retry `portfolio-optimization__CkMJU5V` completed successfully after implementing and validating the optimized C extension, preserving the public Python wrapper API, building with `python3 setup.py build_ext --inplace`, and passing `python3 benchmark.py`. Earlier attempts `portfolio-optimization__3N3WX9B` and `portfolio-optimization__e5C3zxs` passed with the same C-backed risk/return implementation and validation path.
 - Oracle contrast: implements fast C-backed portfolio risk and return functions while preserving the exact Python wrapper contract and benchmark correctness.
 - Raw lesson: this remains a positive example for exact wrapper-preserving optimization plus benchmark validation; it does not change the general failure taxonomy.
 
 ### `path-tracing-reverse`
 
-- Status: passed in both synced Wattle attempts.
-- Current evidence: retry `path-tracing-reverse__PfxM9GJ` completed successfully after writing standalone `/app/mystery.c`, compiling it with `gcc -static -o reversed mystery.c -lm`, confirming generated `image.ppm` matched the original output byte-for-byte, confirming the SHA256, and keeping compressed source size under 2k. The earlier pass `path-tracing-reverse__K2cVozH` used the same byte-for-byte image and stderr/progress validation.
+- Status: two completed Wattle attempts passed and one retry is running.
+- Current evidence: retry `path-tracing-reverse__PfxM9GJ` completed successfully after writing standalone `/app/mystery.c`, compiling it with `gcc -static -o reversed mystery.c -lm`, confirming generated `image.ppm` matched the original output byte-for-byte, confirming the SHA256, and keeping compressed source size under 2k. The earlier pass `path-tracing-reverse__K2cVozH` used the same byte-for-byte image and stderr/progress validation. Running retry `path-tracing-reverse__yNGZHkV` is inspecting constants from `/app/mystery` and preparing a tight fixed-ray-tracer implementation followed by byte-level PPM/stderr comparison.
 - Oracle contrast: reconstructs a compact C renderer that reproduces the hidden path-tracing output and progress behavior under the compressed-size constraint.
 - Raw lesson: this remains a positive example for exact behavioral reproduction plus compressed-source validation; it does not change the general failure taxonomy.
 
@@ -625,11 +625,11 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ## Running Or Incomplete At Snapshot
 
-### `largest-eigenval` retry
+### `path-tracing-reverse` retry
 
-- Status: Wattle retry `largest-eigenval__pXaQN7X` is running.
-- Current evidence: prior completed attempts passed after implementing a faster dominant-eigenpair path and validating correctness and speed against `/app/eval.py`. The running retry has implemented a SciPy low-level LAPACK `dgeev` path with complex-vector reconstruction, NumPy fallback, direct `1x1` handling, and validation over random, identity, zero, triangular, and block matrices.
-- Watch point: if the retry passes, keep this as positive evidence for combining verifier-like correctness checks with performance validation across edge-case matrix families.
+- Status: Wattle retry `path-tracing-reverse__yNGZHkV` is running.
+- Current evidence: prior completed attempts passed after writing standalone `/app/mystery.c`, compiling with the required static GCC command, matching generated `image.ppm` byte-for-byte, matching stderr/progress output, and keeping compressed source size below 2k. The running retry is inspecting constants from the existing binary and preparing a fixed-ray-tracer implementation followed by byte-level output comparison.
+- Watch point: if the retry passes, keep this as positive evidence for exact binary-behavior reproduction with final byte-level artifact validation.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
 ### `winning-avg-corewars` retry
