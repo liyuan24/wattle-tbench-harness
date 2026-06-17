@@ -2,13 +2,13 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T06:04:47Z`
+Snapshot used: `2026-06-17T06:15:02Z`
 
 Counts at snapshot:
 
-- Passed: 79
-- Failed: 23
-- Exceptions: 7
+- Passed: 81
+- Failed: 25
+- Exceptions: 8
 - Running or incomplete: 2
 - Prompt-cache hit rate: 85.5%
 
@@ -18,7 +18,7 @@ Deep evidence reports were regenerated under:
 runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/
 ```
 
-The Codex comparison run `codex-compare-nonpassed-20260617` had twelve completed comparisons at this snapshot: Codex passed `build-pov-ray`, `db-wal-recovery`, `gpt2-codegolf`, and `mteb-retrieve`; failed `configure-git-webserver`, `install-windows-3.11`, `overfull-hbox`, `polyglot-rust-c`, `torch-tensor-parallelism`, `train-fasttext`, and `video-processing`; and timed out on `caffe-cifar-10`. Codex `make-doom-for-mips` was running. Most task notes remain grounded in Wattle logs, verifier failures, and Terminal-Bench oracle/tests.
+The Codex comparison run `codex-compare-nonpassed-20260617` had thirteen completed comparisons at this snapshot: Codex passed `build-pov-ray`, `db-wal-recovery`, `gpt2-codegolf`, and `mteb-retrieve`; failed `configure-git-webserver`, `install-windows-3.11`, `overfull-hbox`, `polyglot-rust-c`, `torch-tensor-parallelism`, `train-fasttext`, and `video-processing`; and timed out on `caffe-cifar-10` and `make-doom-for-mips`. Codex `extract-moves-from-video` was running. Most task notes remain grounded in Wattle logs, verifier failures, and Terminal-Bench oracle/tests.
 
 ## Confirmed Failures And Exceptions
 
@@ -33,10 +33,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twelve completed
 
 ### `caffe-cifar-10`
 
-- Status: exception, `AgentTimeoutError`.
+- Status: exception, `AgentTimeoutError`, in both synced Wattle attempts.
 - Verifier: expected `/app/caffe/examples/cifar10/cifar10_quick_iter_500.caffemodel` and `/app/caffe/training_output.txt`; neither existed.
 - Oracle contrast: installs Caffe dependencies, checks out BVLC Caffe at `9b89154`, applies CPU/OpenCV/HDF5 compatibility patches, builds Caffe, runs CIFAR data prep, then runs exactly 500 iterations with output tee'd to `training_output.txt`.
-- Wattle behavior: spent the budget on setup/training attempts but did not complete the required model and output artifact.
+- Wattle behavior: the retry built CPU-only Caffe tools/examples and configured the solver for `max_iter: 500`, `snapshot: 500`, and CPU mode, but again timed out before producing the required caffemodel and `training_output.txt`.
 - Raw lesson: long build/train tasks need earlier task-plan compression, deadline-aware fallbacks, and explicit artifact checkpoints before continuing expensive work.
 
 ### `configure-git-webserver`
@@ -137,6 +137,7 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twelve completed
 - Verifier: no final passing result before timeout.
 - Oracle contrast: applies a large MIPS build patch, supplies custom libc/runtime pieces, cross-compiles, and validates under the JS VM.
 - Wattle behavior: built a MIPS binary and generated a frame, but execution stopped on an unsupported instruction before reaching a stable verifier-ready state.
+- Codex comparison: Codex also timed out. Its verifier output reached Doom initialization but still missed the expected graphics initialization text `I_InitGraphics: DOOM screen size: w x h: 320 x 200`.
 - Raw lesson: emulator/cross-compile tasks need early ISA/runtime compatibility checks and a plan to minimize late-cycle debugging.
 
 ### `mcmc-sampling-stan`
@@ -165,10 +166,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twelve completed
 
 ### `mteb-retrieve`
 
-- Status: failed.
+- Status: failed in both synced Wattle attempts.
 - Verifier: expected `MTEB: Massive Text Embedding Benchmark`; Wattle wrote `HumanEval: Benchmarking Python code generation via functional examples`.
 - Oracle contrast: uses `mteb.get_model("BAAI/bge-small-zh-v1.5", revision=...)`, encodes query with `task_name="SciFact"` and `PromptType.query`, encodes docs with `PromptType.passage`, then selects the 5th highest similarity.
-- Wattle behavior: inspected model/wrapper details but still wrote the wrong document.
+- Wattle behavior: inspected model/wrapper details but still wrote the wrong document in both attempts; retry `mteb-retrieve__Mr7e9Et` also synced the same unexpected result.
 - Codex comparison: Codex passed this task in the comparison run, which reinforces that the failure is not the harness or task image but Wattle's exact MTEB API/revision/prompt-type/ranking reproduction.
 - Raw lesson: embedding tasks are sensitive to wrapper semantics, prompt type, task name, revision, and ranking convention; Wattle needs exact API parity with the prompt/oracle.
 
@@ -329,6 +330,13 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twelve completed
 - Oracle contrast: constructs the exact probability vector satisfying both KL constraints within tolerance.
 - Raw lesson: this remains a positive example for exact numeric constraint validation with tolerance margins; it does not change the general failure taxonomy.
 
+### `custom-memory-heap-crash`
+
+- Status: passed in both synced Wattle attempts.
+- Current evidence: retry `custom-memory-heap-crash__3QLCZxW` completed successfully after modifying only `/app/user.cpp`, forcing libstdc++ facet registration before the custom heap is enabled, calling `__gnu_cxx::__freeres()` in cleanup, and validating Release, Debug, and Valgrind with zero reported errors. The earlier pass fixed the same release-only custom-heap cleanup crash.
+- Oracle contrast: fixes the release-only teardown crash without changing the protected allocator owner code.
+- Raw lesson: this remains a positive example for root-cause validation across build modes plus memory tooling; it does not change the general failure taxonomy.
+
 ### `regex-chess`
 
 - Status: passed in both synced Wattle attempts.
@@ -373,27 +381,34 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twelve completed
 - Oracle contrast: writes a multi-component Redcode warrior and validates against stone, vampire, paper, snake, and G2-Clear without modifying opponent files.
 - Raw lesson: when search does not find a fully validated candidate before timeout, Wattle should not leave placeholder/test artifacts as the verifier-visible final answer. It should either preserve the best fully validated deliverable or clearly fail without an invalid placeholder.
 
+### `pypi-server`
+
+- Status: one Wattle attempt failed and one retry passed.
+- Current evidence: failed attempt `pypi-server__5YR7FXj` produced a wheel and local simple index and locally validated `pip install`, but the verifier's `pip install --index-url http://localhost:8080/simple vectorops==0.1.0` returned non-zero. Retry `pypi-server__HoQwWjN` passed after using a `src/vectorops` package layout, placing the wheel under `pypi/simple/vectorops/`, and validating the server on port 8080.
+- Oracle contrast: serves a PyPI-compatible simple index on port 8080 with the expected package/version/function import contract.
+- Raw lesson: package-index tasks need verifier-exact index layout and install command validation, not only a local package build or manually tested alternate layout.
+
 ## Running Or Incomplete At Snapshot
 
-### `caffe-cifar-10` retry
+### `adaptive-rejection-sampler` retry
 
 - Status: running at the snapshot.
-- Current evidence: one Wattle attempt already timed out without producing `/app/caffe/examples/cifar10/cifar10_quick_iter_500.caffemodel` or `/app/caffe/training_output.txt`, and Codex also timed out on this task. Retry `caffe-cifar-10__srgqEfW` had progressed to checking built `tools`/`examples`, inspecting solver iteration controls, preparing CIFAR-10 through Caffe's expected scripts, and keeping training/test logging targeted at `/app/caffe/training_output.txt`.
-- Oracle contrast: builds Caffe with the required tools/examples, prepares CIFAR-10 data, and runs exactly 500 iterations while teeing output to the verifier-visible training log.
-- Watch point: if the retry passes, the likely differentiator is following the built-in Caffe targets and preserving the required artifacts; if it fails, it further reinforces long build/train deadline management.
+- Current evidence: one Wattle attempt for this task already passed after implementing `/app/ars.R`, generating `/app/normal_samples.txt`, and validating normal, exponential, invalid-input, and non-log-concavity behavior. Retry `adaptive-rejection-sampler__E68fkod` was running after discovering R was not installed and starting base R installation before adding the implementation and tests.
+- Oracle contrast: implements the adaptive rejection sampler in R with validation over target distributions and invalid inputs.
+- Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
 
-### `mteb-retrieve` retry
+### `configure-git-webserver` retry
 
 - Status: running at the snapshot.
-- Current evidence: the earlier Wattle attempt failed by writing `HumanEval: Benchmarking Python code generation via functional examples` instead of the expected `MTEB: Massive Text Embedding Benchmark`, while Codex passed this comparison. Retry `mteb-retrieve__Mr7e9Et` was still marked running after writing `/app/result.txt`, but had not yet synced a verifier result.
-- Oracle contrast: uses the exact MTEB model wrapper, revision, `SciFact` task name, query/passage prompt types, and fifth-highest cosine-similarity ranking.
-- Watch point: if this retry passes, it will strongly support the semantic-fidelity recommendation for benchmark/library wrappers; if it fails, inspect the synced `result.txt` content against the oracle ranking contract.
+- Current evidence: the earlier Wattle attempt and Codex both failed with verifier-visible HTTP 404 after the clone/push/curl flow. Retry `configure-git-webserver__NT2WPGk` was running after adding a `post-receive` deployment hook for pushes to `master` and starting the port 8080 static server with logs under `/tmp`.
+- Oracle contrast: leaves a bare repo, deploy hook, web root, and port 8080 server in a final state that the verifier's fresh workflow can use.
+- Watch point: if the retry passes, the differentiator is preserving the verifier's final workflow state; if it fails, inspect whether the hook, branch, web root, and server root are aligned.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
 
-### Codex `make-doom-for-mips` comparison
+### Codex `extract-moves-from-video` comparison
 
 - Status: running at the snapshot.
-- Current evidence: Wattle timed out on this task after late emulator/runtime debugging. Codex comparison `make-doom-for-mips__dtoidwG` had started but had not yet emitted assistant/tool evidence or a verifier result.
-- Watch point: if Codex passes, that will help isolate the specific MIPS runtime/build strategy Wattle missed. If Codex fails similarly, it reinforces this as a broad emulator/cross-compile budget and ISA-compatibility challenge.
+- Current evidence: Wattle's command transcript had only 63.37% similarity against the expected solution. Codex comparison `extract-moves-from-video__kDUDMob` had started but had not yet emitted assistant/tool evidence or a verifier result.
+- Watch point: if Codex passes, compare its extraction workflow to Wattle's plausible-but-wrong transcript generation; if Codex fails similarly, it reinforces the need for stronger video/OCR confidence checks.
 - Do not classify the Codex comparison outcome yet. It should be analyzed after a completed `result.json` is synced.

@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T06:04:47Z`
+Snapshot used: `2026-06-17T06:15:02Z`
 
 This summary intentionally avoids task-specific fixes. It ranks general Wattle improvements by expected pass-rate impact, breadth across failures, and implementation practicality.
 
@@ -14,7 +14,7 @@ Observed in:
 
 - `polyglot-c-py`: correct source, extra `cmain`.
 - `polyglot-rust-c`: correct source, extra `main` and `cmain`; Codex also failed the comparison by leaving an extra `main`, so exact final inventory is a broad failure mode.
-- `configure-git-webserver`: smoke-tested successfully, then reset state so verifier saw 404; Codex also failed the comparison with an HTTP 404, so the service/root-state contract is brittle.
+- `configure-git-webserver`: smoke-tested successfully, then reset state so verifier saw 404; Codex also failed the comparison with an HTTP 404, and a Wattle retry is focused on preserving the deployment hook/server final state.
 - `financial-document-processor`: partial file moves and missing `summary.csv`.
 - `build-pov-ray`: executable worked, but required source/provenance artifacts were not verifier-visible; Codex passed the comparison, so this is a Wattle final-state provenance miss rather than an apparent task/harness issue.
 - `mcmc-sampling-stan`: plausible posterior mean files were produced, then later experimentation left bad verifier-visible outputs.
@@ -95,7 +95,7 @@ Timeouts and partial long-running work are a recurring failure class.
 Observed in:
 
 - `caffe-cifar-10`: build/train did not finish required artifacts.
-- `make-doom-for-mips`: late emulator/runtime debugging consumed budget.
+- `make-doom-for-mips`: late emulator/runtime debugging consumed budget; Codex also timed out after partial Doom initialization without reaching the expected graphics initialization.
 - `install-windows-3.11`: did not leave required services running; Codex also failed after using a runtime image path different from the verifier-expected `/app/isos/win311.img`.
 - `train-fasttext`: timed out and still missed accuracy; Codex also completed below threshold, which keeps the lesson focused on fast oracle-like training paths plus verifier-matched validation rather than Wattle-only timeout handling.
 - `mcmc-sampling-stan`: long sampling and late reruns consumed budget and left bad final artifacts.
