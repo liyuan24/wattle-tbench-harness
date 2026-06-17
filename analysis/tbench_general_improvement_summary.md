@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T06:45:49Z`
+Snapshot used: `2026-06-17T06:56:03Z`
 
 This summary intentionally avoids task-specific fixes. It ranks general Wattle improvements by expected pass-rate impact, breadth across failures, and implementation practicality.
 
@@ -16,7 +16,7 @@ Observed in:
 - `polyglot-rust-c`: correct source, extra `main` and `cmain` across three Wattle attempts; Codex also failed the comparison by leaving an extra `main`, so exact final inventory is a broad failure mode.
 - `configure-git-webserver`: smoke-tested successfully, then reset state so verifier saw 404; Codex also failed the comparison with HTTP 404, and a Wattle retry with a deployment hook/server still failed with HTTP 000.
 - `financial-document-processor`: partial file moves and missing `summary.csv`.
-- `build-pov-ray`: executable worked, but required source/provenance artifacts were not verifier-visible; Codex passed the comparison, so this is a Wattle final-state provenance miss rather than an apparent task/harness issue.
+- `build-pov-ray`: the first Wattle attempt built a working executable but missed source/provenance artifacts; a retry passed after preserving official 2.2 archives/layout, and Codex also passed the comparison.
 - `mcmc-sampling-stan`: plausible posterior mean files were produced, then later experimentation left bad verifier-visible outputs.
 - `sam-cell-seg`: segmentation geometry was accepted, but the serialized CSV coordinate fields used tuple syntax instead of verifier-accepted flat lists.
 - `winning-avg-corewars`: a retry timed out and left an early placeholder/test warrior as the verifier-visible final file, even though no fully passing candidate had been validated.
@@ -74,7 +74,7 @@ Observed in:
 
 - `mteb-retrieve`: `mteb.get_model`, model revision, `SciFact`, query/passage prompt types, and fifth-highest ranking all mattered; Codex passing this comparison points to Wattle's semantic reproduction rather than an environment limitation.
 - `mteb-leaderboard`: results repo commit, benchmark name, full-task filtering, and averaging mattered; Codex passing the comparison points to Wattle's semantic reproduction rather than a task/harness limitation.
-- `raman-fitting`: unit conversion and crop ranges mattered before fitting.
+- `raman-fitting`: unit conversion and crop ranges mattered before fitting; Codex also failed with broad wrong peaks, so the improvement should enforce scientific preprocessing and window selection explicitly.
 - `db-wal-recovery`: SQLite WAL semantics and XOR decryption mattered before JSON extraction; Codex passed the comparison, so this is a Wattle semantic-fidelity miss rather than an apparent task/harness issue.
 - `mcmc-sampling-stan`: prior parameterization and final posterior files mattered, not just script/file existence.
 
@@ -155,8 +155,8 @@ Several outputs were syntactically valid but semantically wrong.
 Observed in:
 
 - `protein-assembly`: DNA sequence valid, protein component order wrong.
-- `extract-elf`: JSON valid, ELF memory/symbol content wrong.
-- `raman-fitting`: JSON valid, scientific fit wrong.
+- `extract-elf`: JSON valid, ELF memory/symbol content wrong; Codex also failed with 0% expected values, so full parser-backed binary extraction needs explicit support.
+- `raman-fitting`: JSON valid, scientific fit wrong; Codex failed similarly, reinforcing that generic curve fitting without domain windows is insufficient.
 - `torch-tensor-parallelism`: module valid, distributed gradients wrong.
 - `pytorch-model-recovery`: model artifact valid enough to save, but not callable through the verifier's expected interface.
 - `model-extraction-relu-logits`: recovered rows matched visible weights but not the verifier's hidden generated matrix.

@@ -2,11 +2,11 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T06:45:49Z`
+Snapshot used: `2026-06-17T06:56:03Z`
 
 Counts at snapshot:
 
-- Passed: 90
+- Passed: 92
 - Failed: 28
 - Exceptions: 8
 - Running or incomplete: 2
@@ -18,16 +18,16 @@ Deep evidence reports were regenerated under:
 runs/gcp/wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616/analysis/failure_analysis/tasks/
 ```
 
-The Codex comparison run `codex-compare-nonpassed-20260617` had sixteen completed comparisons at this snapshot: Codex passed `build-pov-ray`, `db-wal-recovery`, `extract-moves-from-video`, `gcode-to-text`, `gpt2-codegolf`, `mteb-leaderboard`, and `mteb-retrieve`; failed `configure-git-webserver`, `install-windows-3.11`, `overfull-hbox`, `polyglot-rust-c`, `torch-tensor-parallelism`, `train-fasttext`, and `video-processing`; and timed out on `caffe-cifar-10` and `make-doom-for-mips`. Codex `raman-fitting` was running. Most task notes remain grounded in Wattle logs, verifier failures, and Terminal-Bench oracle/tests.
+The Codex comparison run `codex-compare-nonpassed-20260617` had eighteen completed comparisons at this snapshot: Codex passed `build-pov-ray`, `db-wal-recovery`, `extract-moves-from-video`, `gcode-to-text`, `gpt2-codegolf`, `mteb-leaderboard`, and `mteb-retrieve`; failed `configure-git-webserver`, `extract-elf`, `install-windows-3.11`, `overfull-hbox`, `polyglot-rust-c`, `raman-fitting`, `torch-tensor-parallelism`, `train-fasttext`, and `video-processing`; and timed out on `caffe-cifar-10` and `make-doom-for-mips`. Codex `protein-assembly` was running. Most task notes remain grounded in Wattle logs, verifier failures, and Terminal-Bench oracle/tests.
 
 ## Confirmed Failures And Exceptions
 
 ### `build-pov-ray`
 
-- Status: failed.
+- Status: one Wattle attempt failed and one retry passed.
 - Verifier: expected POV-Ray 2.2 source marker `file_id.diz`; it was missing, indicating the wrong extraction/build layout or wrong source version.
 - Oracle contrast: downloads the exact `Official-2.2` `POVDOC`, `POVSCN`, and `POVSRC` archives, extracts them in `/app`, copies `machine/unix/*` into `source`, patches build files, and installs the resulting binary.
-- Wattle behavior: reported a successful build and render but left the source tree in a layout the verifier considered wrong.
+- Wattle behavior: the failed attempt reported a successful build and render but left the source tree in a layout the verifier considered wrong. Retry `build-pov-ray__w5rvtSs` passed after downloading official `POVSRC.TAR.Z` and `POVDOC.TAR.Z`, extracting to `/app/povray-2.2`, building under `/app/povray-2.2/build`, and validating the requested render command.
 - Codex comparison: Codex passed this task, strengthening the conclusion that Wattle's failure is not a task/harness issue but a final-state provenance audit miss.
 - Raw lesson: Wattle validated executable behavior without validating the verifier-visible provenance and required source artifacts.
 
@@ -79,6 +79,7 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had sixteen complete
 - Verifier: only 0% of expected values matched.
 - Oracle contrast: parses ELF headers, sections, symbol tables, memory words, function symbols, and address/function mappings using a full ELF parser.
 - Wattle behavior: emitted valid JSON with plausible numeric keys, but the data model did not match the expected ELF extraction contract.
+- Codex comparison: Codex also failed this task with 0.00% expected values, reinforcing that superficial JSON/numeric extraction is a broad trap for binary-format tasks.
 - Raw lesson: for binary formats, superficial output schema checks are insufficient; Wattle needs contract-derived structural checks against known sections/symbols.
 
 ### `extract-moves-from-video`
@@ -224,6 +225,7 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had sixteen complete
 - Verifier: fitted G and 2D peak parameters were far from expected values.
 - Oracle contrast: converts decimal commas/tab format, converts wavelength nm to cm^-1, crops G and 2D peak regions, then fits Lorentzian peaks with SciPy.
 - Wattle behavior: produced JSON with fit parameters, but likely used the wrong x-axis transformation/crop/model setup.
+- Codex comparison: Codex also failed this task, fitting broad wrong peaks with much larger gammas and offsets. This reinforces that scientific preprocessing/window selection must be explicit, not left to generic curve fitting.
 - Raw lesson: numerical science tasks need unit conversion and range checks before fitting; output plausibility is not enough.
 
 ### `sam-cell-seg`
@@ -428,6 +430,20 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had sixteen complete
 - Oracle contrast: builds the requested CompCert release at the required filesystem path and leaves the compiler invocable for verifier use.
 - Raw lesson: build-heavy tasks can pass when Wattle keeps to a narrow upstream release path, validates the exact required executable path, and confirms invocation from outside the build directory.
 
+### `schemelike-metacircular-eval`
+
+- Status: both synced Wattle attempts passed.
+- Current evidence: Wattle implemented `eval.scm`, preserved STDIN for interpreted programs, handled closures/environments/mutation/file I/O, compared direct `interp.py` output against `eval.scm` and nested self-interpretation, and removed generated callback artifacts.
+- Oracle contrast: implements a Scheme-level evaluator that can run target programs through the provided interpreter while preserving observable behavior.
+- Raw lesson: interpreter tasks benefit from differential validation against the baseline interpreter across the whole provided test corpus, plus cleanup of artifacts produced by tests.
+
+### `git-multibranch`
+
+- Status: one Wattle attempt passed and one retry is running.
+- Current evidence: passed attempt `git-multibranch__U6ApYrw` configured SSH remote `git@localhost:/git/project`, password auth, a bare repo, `post-receive` deployment for `main` and `dev`, and HTTPS nginx on port 8443, then cleaned validation-created refs/deployed payloads while preserving services and hooks.
+- Oracle contrast: leaves a Git/HTTPS service state that lets the verifier push branches and observe the correct branch-specific deployed content.
+- Raw lesson: service tasks can pass when Wattle validates the exact external workflow but then resets only validation payloads, not the required service/hook infrastructure.
+
 ## Running Or Incomplete At Snapshot
 
 ### `qemu-startup` retry
@@ -437,16 +453,16 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had sixteen complete
 - Watch point: because a prior Wattle attempt passed, this retry should not change the failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### `schemelike-metacircular-eval` retry
+### `git-multibranch` retry
 
-- Status: Wattle retry `schemelike-metacircular-eval__oCPHDYP` is running.
-- Current evidence: one prior Wattle attempt for this task already passed after implementing `eval.scm`, validating direct interpreter output against the self-interpreter, handling environment/closures/mutation/file I/O, and cleaning callback-test artifacts.
+- Status: Wattle retry `git-multibranch__pYxYnbz` is running.
+- Current evidence: one Wattle attempt for this task already passed after configuring the SSH Git remote, branch-specific post-receive deployment, HTTPS nginx on port 8443, and cleanup that preserved infrastructure but removed validation-created payloads. The running retry is applying the same requested SSH URL and HTTPS path setup.
 - Watch point: because a prior Wattle attempt passed, this retry should not change the failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### Codex `raman-fitting` comparison
+### Codex `protein-assembly` comparison
 
-- Status: Codex comparison `raman-fitting__7aY2JPi` is running.
-- Current evidence: Wattle's fit placed the G peak at x0=1654.26 instead of 1580.3 and the 2D peak at x0=3745.38 instead of 2670.08. The oracle fits the intended Raman peak windows with correct units/ranges before writing peak parameters.
-- Watch point: if Codex passes, compare its preprocessing/window selection and fitting objective to Wattle's broad-range fit; if it fails, keep the semantic-fidelity recommendation focused on scientific unit/range constraints.
+- Status: Codex comparison `protein-assembly__HrW2aBe` is running.
+- Current evidence: Wattle wrote a valid-looking `gblock.txt` but the translated fusion protein was not in the required flag-donor-dhfr-acceptor-snap order. The oracle validates named component order and biological constraints, not just DNA syntax.
+- Watch point: if Codex passes, compare how it grounds component identity/order before codon optimization; if it fails, strengthen the bio/design semantic-validation recommendation.
 - Do not classify the Codex comparison outcome yet. It should be analyzed after a completed `result.json` is synced.
