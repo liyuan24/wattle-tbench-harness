@@ -2,12 +2,12 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T08:12:58Z`
+Snapshot used: `2026-06-17T08:23:12Z`
 
 Counts at snapshot:
 
-- Passed: 97
-- Failed: 31
+- Passed: 98
+- Failed: 32
 - Exceptions: 11
 - Running or incomplete: 2
 - Prompt-cache hit rate: 85.4%
@@ -404,6 +404,13 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 - Oracle contrast: serves a PyPI-compatible simple index on port 8080 with the expected package/version/function import contract.
 - Raw lesson: package-index tasks need verifier-exact index layout and install command validation, not only a local package build or manually tested alternate layout.
 
+### `make-mips-interpreter`
+
+- Status: one Wattle attempt passed and one retry failed.
+- Current evidence: passed attempt `make-mips-interpreter__aCajDDM` implemented `/app/vm.js`, booted Doom through graphics initialization, saved `/tmp/frame.bmp`, and validated the BMP header, `640 x 400` resolution, and 32-bit depth. Retry `make-mips-interpreter__e9PC8ee` also wrote a valid-size BMP and reported graphics initialization, but the verifier did not find exact stdout `I_InitGraphics: DOOM screen size: w x h: 320 x 200` and measured frame similarity `0.8065` below the required `0.95`.
+- Oracle contrast: implements enough MIPS VM behavior to run DoomGeneric and emit the exact expected graphics-init trace and reference-like frame artifact.
+- Raw lesson: emulator/interpreter tasks need verifier-exact stdout and artifact-similarity checks; a booting program and valid image container are not sufficient proof.
+
 ## Newly Completed Passing Retries
 
 ### `cobol-modernization`
@@ -462,12 +469,12 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 - Oracle contrast: leaves a booted VM with reachable SSH, not only a configured disk or launch command.
 - Raw lesson: VM service tasks pass when Wattle validates the exact externally reachable login path and leaves the long-running process alive for the verifier.
 
-### `make-mips-interpreter`
+### `circuit-fibsqrt`
 
 - Status: one Wattle attempt passed and one retry is still running.
-- Current evidence: passed attempt `make-mips-interpreter__aCajDDM` implemented `/app/vm.js`, ran `node vm.js`, booted Doom through graphics initialization, saved `/tmp/frame.bmp`, and validated the BMP header, `640 x 400` resolution, and 32-bit depth.
-- Oracle contrast: implements enough MIPS VM behavior to run DoomGeneric and emit the expected frame artifact.
-- Raw lesson: emulator/interpreter tasks can pass when Wattle validates actual target-binary execution and the verifier-visible frame artifact, not only instruction-level smoke tests.
+- Current evidence: passed attempt `circuit-fibsqrt__HA3mGv6` created `/app/gates.txt` with 10,094 lines, validated the supplied simulator examples `sim 208 -> 377` and `sim 20000 -> 1407432322`, and checked 42 boundary/random inputs against a Python reference for `fib(isqrt(N)) mod 2^32`.
+- Oracle contrast: produces a gate network that matches the arithmetic contract under the simulator and line budget.
+- Raw lesson: circuit-generation tasks can pass when Wattle validates both official examples and independently generated edge/random cases against a compact reference.
 
 ### `torch-pipeline-parallelism`
 
@@ -499,9 +506,9 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 - Watch point: if the retry passes, compare its OCR/frame sampling and transcript reconstruction workflow against Codex and the failed sparse-screenshot approach.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### `make-mips-interpreter` retry
+### `circuit-fibsqrt` retry
 
-- Status: Wattle retry `make-mips-interpreter__e9PC8ee` is running.
-- Current evidence: prior Wattle attempt `make-mips-interpreter__aCajDDM` passed after validating a Doom frame artifact. The running retry is inspecting the ELF/repo contents and looking for a binutils/Node path because `file` is unavailable.
-- Watch point: because one Wattle attempt already passed, classify the retry only if it produces a distinct failure signature; otherwise treat the prior pass as positive evidence for executable-level validation on emulator tasks.
+- Status: Wattle retry `circuit-fibsqrt__aQM8Ahy` is running.
+- Current evidence: prior Wattle attempt `circuit-fibsqrt__HA3mGv6` passed with simulator examples and randomized reference checks. The running retry has started by inspecting simulator semantics and the existing example file.
+- Watch point: if the retry fails, compare whether it skipped the broad reference validation that made the first attempt robust.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
