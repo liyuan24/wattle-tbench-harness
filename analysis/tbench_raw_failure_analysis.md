@@ -2,11 +2,11 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T11:22:34Z`
+Snapshot used: `2026-06-17T11:37:57Z`
 
 Counts at snapshot:
 
-- Passed: 137
+- Passed: 139
 - Failed: 43
 - Exceptions: 13
 - Running or incomplete: 2
@@ -355,8 +355,8 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `regex-chess`
 
-- Status: two completed Wattle attempts passed and one retry is running.
-- Current evidence: retry `regex-chess__e3gJsr6` completed successfully after writing `/app/re.json` as a JSON list of regex/replacement pairs, validating the sample output, passing `/app/check.py`, satisfying the pair-count and size limits, and passing additional valid-position comparisons against `python-chess` for castling, queen promotion, and en-passant cases. The earlier pass `regex-chess__eBbYn7d` generated 6,863 pairs and passed the same checker. Running retry `regex-chess__Zv766pg` has inspected the checker behavior and is generating regex rules that expand FEN, emit candidate next positions, filter illegal king-in-check positions, and recompress.
+- Status: all synced Wattle attempts passed.
+- Current evidence: retry `regex-chess__Zv766pg` completed successfully after writing `/app/re.json`, matching the exact sample output, passing `/app/check.py`, validating castling, castling-through-check, promotion-to-queen, en-passant, and check-evasion cases, and satisfying file limits with 10,518 pairs and about 1.0 MB. Earlier attempts `regex-chess__e3gJsr6` and `regex-chess__eBbYn7d` passed with the same checker and file-constraint validation.
 - Oracle contrast: generates a regex/pattern inventory that makes the chess PGN checker pass while preserving the exact JSON interface expected by the tests.
 - Raw lesson: this remains a positive example for matching the verifier's normalization contract and then broadening validation over legal edge cases; it does not change the general failure taxonomy.
 
@@ -376,8 +376,8 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `feal-linear-cryptanalysis`
 
-- Status: passed in both synced Wattle attempts.
-- Current evidence: retry `feal-linear-cryptanalysis__eX5XQT8` completed successfully after recovering the 20-bit seeds, expanding round keys, validating encryption/decryption across all 32 known pairs, generating `/app/plaintexts.txt` from `/app/ciphertexts.txt`, and confirming 100 output lines. The earlier pass `feal-linear-cryptanalysis__9FwPG5V` recovered the same seeds and validated the same plaintext output.
+- Status: two completed Wattle attempts passed and one retry is running.
+- Current evidence: retry `feal-linear-cryptanalysis__eX5XQT8` completed successfully after recovering the 20-bit seeds, expanding round keys, validating encryption/decryption across all 32 known pairs, generating `/app/plaintexts.txt` from `/app/ciphertexts.txt`, and confirming 100 output lines. The earlier pass `feal-linear-cryptanalysis__9FwPG5V` recovered the same seeds and validated the same plaintext output. Running retry `feal-linear-cryptanalysis__mpaH5hc` is inspecting the cipher/decrypt implementations and provided pairs before deriving the key schedule, writing a focused recovery script, and producing `/app/plaintexts.txt`.
 - Oracle contrast: recovers the FEAL key material from known pairs and writes the exact decrypted plaintext list.
 - Raw lesson: this remains a positive example for end-to-end cryptanalytic validation against all known pairs plus final output cardinality; it does not change the general failure taxonomy.
 
@@ -632,9 +632,9 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 - Watch point: if the retry passes, keep this as positive evidence for combining compact source-size checks with independent image-similarity validation.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### `regex-chess` retry
+### `feal-linear-cryptanalysis` retry
 
-- Status: Wattle retry `regex-chess__Zv766pg` is running.
-- Current evidence: prior completed attempts passed after generating `/app/re.json` within size and pair-count limits, matching the sample output, passing `/app/check.py`, and validating special move cases against `python-chess`. The running retry has inspected checker behavior and is generating regex rules that expand FEN, emit candidate next positions, filter illegal king-in-check positions, and recompress; it is now running broader randomized validation on valid game-reachable white-to-move positions plus constructed special positions.
-- Watch point: if the retry passes, keep this as positive evidence for using an executable reference model to generate compact regex-rewrite artifacts under strict file constraints.
+- Status: Wattle retry `feal-linear-cryptanalysis__mpaH5hc` is running.
+- Current evidence: prior completed attempts passed after recovering the 20-bit seeds, validating encryption/decryption against all 32 known plaintext/ciphertext pairs, generating `/app/plaintexts.txt` from 100 ciphertexts, and confirming output cardinality. The running retry is inspecting the cipher/decrypt implementations and known pairs before deriving the key schedule and producing `/app/plaintexts.txt`.
+- Watch point: if the retry passes, keep this as positive evidence for end-to-end cryptanalytic validation against all known pairs plus final output cardinality.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
