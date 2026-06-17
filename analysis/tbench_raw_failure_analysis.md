@@ -2,11 +2,11 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T06:40:41Z`
+Snapshot used: `2026-06-17T06:45:49Z`
 
 Counts at snapshot:
 
-- Passed: 89
+- Passed: 90
 - Failed: 28
 - Exceptions: 8
 - Running or incomplete: 2
@@ -421,12 +421,19 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had sixteen complete
 - Oracle contrast: implements a headless terminal abstraction that behaves like an interactive terminal, not only a shell-command wrapper.
 - Raw lesson: when the task requires interactive behavior, Wattle succeeded by validating through a real PTY and testing interactive control flows, not just subprocess output.
 
+### `compile-compcert`
+
+- Status: both synced Wattle attempts passed.
+- Current evidence: Wattle built upstream CompCert tag `v3.13.1` under `/tmp/CompCert`, produced `/tmp/CompCert/ccomp`, installed the required runtime/config pieces, and validated the compiler through `ccomp -version` plus smoke C programs compiled from outside the source tree.
+- Oracle contrast: builds the requested CompCert release at the required filesystem path and leaves the compiler invocable for verifier use.
+- Raw lesson: build-heavy tasks can pass when Wattle keeps to a narrow upstream release path, validates the exact required executable path, and confirms invocation from outside the build directory.
+
 ## Running Or Incomplete At Snapshot
 
-### `compile-compcert` retry
+### `qemu-startup` retry
 
-- Status: Wattle retry `compile-compcert__Ypa3qhV` is running.
-- Current evidence: one prior Wattle attempt for this task already passed after downloading upstream CompCert `v3.13.1`, building it under `/tmp/CompCert`, validating `/tmp/CompCert/ccomp -version`, and compiling/running a smoke program through the absolute required path.
+- Status: Wattle retry `qemu-startup__DsGusbV` is running.
+- Current evidence: one prior Wattle attempt for this task already passed after launching QEMU in the background and validating that `telnet 127.0.0.1 6665` exposed an Alpine login prompt. The running retry is explicitly waiting for the exposed serial console login prompt.
 - Watch point: because a prior Wattle attempt passed, this retry should not change the failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
