@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T04:51:55Z`
+Snapshot used: `2026-06-17T04:53:42Z`
 
 Counts at snapshot:
 
@@ -10,7 +10,7 @@ Counts at snapshot:
 - Failed: 23
 - Exceptions: 6
 - Running or incomplete: 2
-- Prompt-cache hit rate: 85.2%
+- Prompt-cache hit rate: 85.3%
 
 Deep evidence reports were regenerated under:
 
@@ -289,7 +289,7 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had nine completed c
 ### `pytorch-model-cli` retry
 
 - Status: running at the snapshot.
-- Current evidence: one Wattle attempt for this task already passed after creating `/app/cli_tool`, `/app/weights.json`, and `/app/prediction.txt`, validating that `./cli_tool weights.json image.png` outputs only `2`, and confirming `prediction.txt` matches. Retry `pytorch-model-cli__Ppsm6C6` was running after writing `/app/weights.json`, validating the Python inference path, and converting `/app/cli_tool` into a small native launcher that preserves the same CLI arguments.
+- Current evidence: one Wattle attempt for this task already passed after creating `/app/cli_tool`, `/app/weights.json`, and `/app/prediction.txt`, validating that `./cli_tool weights.json image.png` outputs only `2`, and confirming `prediction.txt` matches. Retry `pytorch-model-cli__Ppsm6C6` was running after writing `/app/weights.json`, validating the Python inference path, converting `/app/cli_tool` into a small native launcher, and starting a final exact-command/artifact-content validation.
 - Oracle contrast: builds a CLI around the supplied image/model assets, writes the expected prediction artifact, and preserves the exact command interface.
 - Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
