@@ -2,11 +2,11 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T07:52:27Z`
+Snapshot used: `2026-06-17T07:57:35Z`
 
 Counts at snapshot:
 
-- Passed: 95
+- Passed: 96
 - Failed: 30
 - Exceptions: 10
 - Running or incomplete: 2
@@ -464,10 +464,17 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `torch-pipeline-parallelism`
 
-- Status: one Wattle attempt passed and one retry is running.
-- Current evidence: passed attempt `torch-pipeline-parallelism__4LS4kfs` implemented `train_step_pipeline_afab`, balanced contiguous layer partitioning, AFAB scheduling, P2P send/recv, loss scaling, backward gradient communication, and shape/target broadcasting for downstream stages.
+- Status: both synced Wattle attempts passed.
+- Current evidence: Wattle implemented `train_step_pipeline_afab`, balanced contiguous layer partitioning, AFAB scheduling, P2P send/recv, loss scaling, backward gradient communication, and shape/target broadcasting for downstream stages.
 - Oracle contrast: implements pipeline-parallel training semantics compatible with common Hugging Face LLaMA internals and distributed P2P behavior.
 - Raw lesson: distributed training tasks can pass when Wattle validates the exact forward/backward communication contract rather than only local module syntax.
+
+### `tune-mjcf`
+
+- Status: one Wattle attempt passed and one retry is running.
+- Current evidence: passed attempt `tune-mjcf__vkgf5hy` saved `/app/model.xml` with MuJoCo option `solver="PGS"`, preserved physical model properties, and validated `/app/eval.py` with final state difference 0.0000 and speedup 2.04x.
+- Oracle contrast: improves simulation runtime without changing the final full physics state beyond evaluator tolerance.
+- Raw lesson: performance-tuning tasks can pass when Wattle changes solver/computation settings while validating exact state equivalence and runtime target together.
 
 ### `kv-store-grpc`
 
@@ -485,9 +492,9 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 - Watch point: if the retry passes, compare its exact data conversion/evaluation command and model-size controls against both failed attempts.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### `torch-pipeline-parallelism` retry
+### `tune-mjcf` retry
 
-- Status: Wattle retry `torch-pipeline-parallelism__ALcQjZR` is running.
-- Current evidence: one prior Wattle attempt already passed by implementing `train_step_pipeline_afab` with distributed P2P communication and pipeline backward semantics. The running retry is adapting the implementation to common Hugging Face LLaMA internals across versions.
+- Status: Wattle retry `tune-mjcf__zDWrQcT` is running.
+- Current evidence: one prior Wattle attempt already passed by setting MuJoCo `solver="PGS"` and validating both speedup and final-state equivalence. The running retry is exploring non-physical-computation shortcuts first.
 - Watch point: because a prior Wattle attempt passed, this retry should not change the failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
