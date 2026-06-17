@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T06:15:02Z`
+Snapshot used: `2026-06-17T06:20:09Z`
 
 This summary intentionally avoids task-specific fixes. It ranks general Wattle improvements by expected pass-rate impact, breadth across failures, and implementation practicality.
 
@@ -14,7 +14,7 @@ Observed in:
 
 - `polyglot-c-py`: correct source, extra `cmain`.
 - `polyglot-rust-c`: correct source, extra `main` and `cmain`; Codex also failed the comparison by leaving an extra `main`, so exact final inventory is a broad failure mode.
-- `configure-git-webserver`: smoke-tested successfully, then reset state so verifier saw 404; Codex also failed the comparison with an HTTP 404, and a Wattle retry is focused on preserving the deployment hook/server final state.
+- `configure-git-webserver`: smoke-tested successfully, then reset state so verifier saw 404; Codex also failed the comparison with HTTP 404, and a Wattle retry with a deployment hook/server still failed with HTTP 000.
 - `financial-document-processor`: partial file moves and missing `summary.csv`.
 - `build-pov-ray`: executable worked, but required source/provenance artifacts were not verifier-visible; Codex passed the comparison, so this is a Wattle final-state provenance miss rather than an apparent task/harness issue.
 - `mcmc-sampling-stan`: plausible posterior mean files were produced, then later experimentation left bad verifier-visible outputs.

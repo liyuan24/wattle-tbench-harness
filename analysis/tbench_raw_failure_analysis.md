@@ -2,12 +2,12 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T06:15:02Z`
+Snapshot used: `2026-06-17T06:20:09Z`
 
 Counts at snapshot:
 
-- Passed: 81
-- Failed: 25
+- Passed: 83
+- Failed: 26
 - Exceptions: 8
 - Running or incomplete: 2
 - Prompt-cache hit rate: 85.5%
@@ -41,10 +41,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had thirteen complet
 
 ### `configure-git-webserver`
 
-- Status: failed.
-- Verifier: after its own clone/push/curl flow, the web server returned HTTP 404.
+- Status: failed in both synced Wattle attempts.
+- Verifier: after its own clone/push/curl flow, the first Wattle attempt returned HTTP 404 and the retry returned HTTP 000.
 - Oracle contrast: creates a bare repo at `/git/server`, deploys via `post-receive` to `/var/www/html`, and serves that root on port 8080.
-- Wattle behavior: validated a manual flow, then reset repo/web-root state so the verifier's fresh workflow did not see `hello.html`.
+- Wattle behavior: validated a manual flow, then reset repo/web-root state in the first attempt; the retry installed a hook and server but still did not leave the verifier's fresh workflow reachable.
 - Codex comparison: Codex also failed this task with the same verifier-visible HTTP 404 pattern, which suggests the task is easy to invalidate with small service/root-state mismatches.
 - Raw lesson: Wattle should preserve the final state required by the verifier, not reset after a smoke test unless the instruction explicitly requires reset.
 
@@ -330,6 +330,13 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had thirteen complet
 - Oracle contrast: constructs the exact probability vector satisfying both KL constraints within tolerance.
 - Raw lesson: this remains a positive example for exact numeric constraint validation with tolerance margins; it does not change the general failure taxonomy.
 
+### `adaptive-rejection-sampler`
+
+- Status: passed in both synced Wattle attempts.
+- Current evidence: retry `adaptive-rejection-sampler__E68fkod` completed successfully after installing R, implementing `/app/ars.R`, generating `/app/normal_samples.txt`, and running the formal `test()` function through `Rscript`. The earlier pass `adaptive-rejection-sampler__joi43Xi` validated normal, exponential, invalid-input, and non-log-concavity behavior.
+- Oracle contrast: implements the adaptive rejection sampler in R with validation over target distributions and invalid inputs.
+- Raw lesson: this remains a positive example for installing missing runtime dependencies and running the task's formal statistical validation; it does not change the general failure taxonomy.
+
 ### `custom-memory-heap-crash`
 
 - Status: passed in both synced Wattle attempts.
@@ -390,20 +397,20 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had thirteen complet
 
 ## Running Or Incomplete At Snapshot
 
-### `adaptive-rejection-sampler` retry
+### `cobol-modernization` retry
 
 - Status: running at the snapshot.
-- Current evidence: one Wattle attempt for this task already passed after implementing `/app/ars.R`, generating `/app/normal_samples.txt`, and validating normal, exponential, invalid-input, and non-log-concavity behavior. Retry `adaptive-rejection-sampler__E68fkod` was running after discovering R was not installed and starting base R installation before adding the implementation and tests.
-- Oracle contrast: implements the adaptive rejection sampler in R with validation over target distributions and invalid inputs.
+- Current evidence: one Wattle attempt for this task already passed after implementing `/app/program.py`, preserving COBOL fixed-width `.DAT` record layouts, and byte-for-byte comparing Python outputs against the original COBOL program from identical initial states. Retry `cobol-modernization__QVV6rkL` had started but had not yet emitted assistant/tool evidence.
+- Oracle contrast: reimplements the COBOL data-processing behavior in Python while preserving exact fixed-width data files and transaction semantics.
 - Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
 
-### `configure-git-webserver` retry
+### `crack-7z-hash` retry
 
 - Status: running at the snapshot.
-- Current evidence: the earlier Wattle attempt and Codex both failed with verifier-visible HTTP 404 after the clone/push/curl flow. Retry `configure-git-webserver__NT2WPGk` was running after adding a `post-receive` deployment hook for pushes to `master` and starting the port 8080 static server with logs under `/tmp`.
-- Oracle contrast: leaves a bare repo, deploy hook, web root, and port 8080 server in a final state that the verifier's fresh workflow can use.
-- Watch point: if the retry passes, the differentiator is preserving the verifier's final workflow state; if it fails, inspect whether the hook, branch, web root, and server root are aligned.
+- Current evidence: one Wattle attempt for this task already passed after writing `/app/solution.txt` containing `honeybear`. Retry `crack-7z-hash__YcfD75w` was running after extracting the archive hash, confirming the target path `secrets/secret_file.txt`, and starting a focused John-the-Ripper recovery using bundled resources.
+- Oracle contrast: recovers the 7z password and extracts only the target secret file content into the required solution artifact.
+- Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
 
 ### Codex `extract-moves-from-video` comparison
