@@ -2,11 +2,11 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T09:55:26Z`
+Snapshot used: `2026-06-17T10:05:41Z`
 
 Counts at snapshot:
 
-- Passed: 115
+- Passed: 120
 - Failed: 39
 - Exceptions: 13
 - Running or incomplete: 2
@@ -567,18 +567,46 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 - Oracle contrast: installs Nginx, adds the required `log_format` and `limit_req_zone` in `nginx.conf`, serves the expected static files on port 8080, writes logs to the exact benchmark paths, and leaves the service running.
 - Raw lesson: web-service configuration tasks pass when Wattle validates exact config file locations, generated content, syntax, process liveness, reachable port, and log side effects together.
 
+### `large-scale-text-editing`
+
+- Status: both synced Wattle attempts passed.
+- Current evidence: retry `large-scale-text-editing__3roufBo` created `/app/apply_macros.vim`, ran `vim -Nu NONE -n -Es /app/input.csv -S /app/apply_macros.vim`, exited 0, byte-compared `/app/input.csv` against `/app/expected.csv`, and kept the script at 182 bytes with three distinct non-empty macros. Earlier pass `large-scale-text-editing__L9yicwK` used the same headless Vim command and `cmp` validation.
+- Oracle contrast: defines three allowed Vim macros and applies them headlessly to transform the million-row CSV exactly.
+- Raw lesson: large text-transformation tasks pass when Wattle validates the exact command surface and byte-for-byte final artifact, not just sampled rows or inferred transformations.
+
+### `sqlite-db-truncate`
+
+- Status: both synced Wattle attempts passed.
+- Current evidence: retry `sqlite-db-truncate__P5vJ3Xz` recovered readable rows from `/app/trunc.db`, wrote `/app/recover.json`, and validated that it is JSON with 10 `word`/`value` objects and numeric non-bool values. Earlier pass `sqlite-db-truncate__uWTDFf9` validated the same recovered-row count and schema.
+- Oracle contrast: recovers rows directly from the truncated SQLite file bytes and emits the requested JSON artifact.
+- Raw lesson: corrupted-data recovery tasks pass when Wattle validates the persisted recovery artifact by reloading it and checking schema/count/type constraints.
+
+### `sanitize-git-repo`
+
+- Status: both synced Wattle attempts passed, with an additional synced pass now visible.
+- Current evidence: retry `sanitize-git-repo__QLsccgV` replaced AWS, GitHub, and Hugging Face secrets with the requested placeholders only in contaminated tracked files and validated no sensitive values remained. Earlier pass `sanitize-git-repo__r3Numch` made the same targeted replacements and scanned tracked files for all known secret literals.
+- Oracle contrast: replaces only detected secret values with consistent placeholders while leaving uncontaminated files unchanged.
+- Raw lesson: repository-sanitization tasks pass when Wattle combines broad secret scanning with an explicit changed-file scope audit and post-sanitization negative search.
+
+### `build-pmars`
+
+- Status: both synced Wattle attempts passed.
+- Current evidence: retry `build-pmars__VMbUdVQ` extracted Debian `pmars` source under `/app/pmars-0.9.4`, preserved Debian source artifacts, installed `/usr/local/bin/pmars`, built without X11 support, confirmed `ldd` had no X11 libraries, validated the requested battle output `Results: 12 30 8`, and passed debugger validation. Earlier pass `build-pmars__Wd2RSJt` used the same Debian-source/no-X11 path and validation.
+- Oracle contrast: fetches Debian source rather than unreliable upstream, disables X11 graphing, installs the headless binary, and validates both battle output and debugger behavior.
+- Raw lesson: native build tasks pass when Wattle validates provenance, dependency surface, install path, and the exact smoke command the verifier will exercise.
+
 ## Running Or Incomplete At Snapshot
 
-### `large-scale-text-editing` retry
+### `openssl-selfsigned-cert` retry
 
-- Status: Wattle retry `large-scale-text-editing__3roufBo` is running.
-- Current evidence: prior Wattle attempt `large-scale-text-editing__L9yicwK` passed after creating `/app/apply_macros.vim`, applying it headlessly with `vim -Nu NONE -n -Es /app/input.csv -S /app/apply_macros.vim`, and byte-comparing `/app/input.csv` against `/app/expected.csv`. The running retry is using the same exact headless Vim command and `cmp` validation.
-- Watch point: if the retry passes, keep this as positive evidence for exact command reproduction plus byte-for-byte output validation on large text transformations.
+- Status: Wattle retry `openssl-selfsigned-cert__isvBRTM` is running.
+- Current evidence: prior Wattle attempt `openssl-selfsigned-cert__ZaCu7Vf` passed after creating `/app/ssl/server.key`, `/app/ssl/server.crt`, `/app/ssl/server.pem`, `/app/ssl/verification.txt`, and `/app/check_cert.py`, with correct subject, validity, SHA-256 fingerprint, and key/PEM permissions. The running retry is doing final state checks on required files, certificate metadata, and script output.
+- Watch point: if the retry passes, keep this as positive evidence for exact cryptographic artifact metadata, permissions, and verifier-script validation.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### `sqlite-db-truncate` retry
+### `rstan-to-pystan` retry
 
-- Status: Wattle retry `sqlite-db-truncate__P5vJ3Xz` is running.
-- Current evidence: prior Wattle attempt `sqlite-db-truncate__uWTDFf9` passed after writing `/app/recover.json` with 10 recovered rows in the requested `word`/`value` format. The running retry has also written valid JSON with 10 recovered rows and is validating object keys and value types.
-- Watch point: if the retry passes, keep this as positive evidence for artifact-level JSON schema validation after recovering readable records from damaged storage.
+- Status: Wattle retry `rstan-to-pystan__eaDhx9s` is running.
+- Current evidence: prior Wattle attempt `rstan-to-pystan__TVwE9vy` passed after installing PyStan 3.10.0, creating `/app/pystan_analysis.py`, using `stan.build(..., random_seed=1)` with RStan-equivalent sampling settings, writing the four required posterior-mean CSV files, and validating row counts plus numeric-only contents.
+- Watch point: if the retry passes, keep this as positive evidence for preserving probabilistic-model hyperparameters and output schema while translating library APIs.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
