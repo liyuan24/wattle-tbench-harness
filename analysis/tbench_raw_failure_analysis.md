@@ -2,11 +2,11 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T09:50:19Z`
+Snapshot used: `2026-06-17T09:55:26Z`
 
 Counts at snapshot:
 
-- Passed: 112
+- Passed: 115
 - Failed: 39
 - Exceptions: 13
 - Running or incomplete: 2
@@ -155,11 +155,11 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `model-extraction-relu-logits`
 
-- Status: one Wattle attempt failed and one retry is running.
+- Status: one Wattle attempt failed and one retry passed.
 - Verifier: `stolen_A1.npy` existed, but row 11 of the verifier's original 30x10 matrix could not be matched up to scaling.
 - Oracle contrast: uses query-only ReLU critical-point sweeps that are robust to unknown hidden width and verifier-generated weights.
-- Wattle behavior: failed attempt produced a script and locally validated perfect recovery against the visible `/app/forward.py` internals, including a visible 20x10 `A1`, but the verifier used a different generated matrix and exposed incomplete row recovery. Running retry `model-extraction-relu-logits__ZuPA7xn` is adjusting the recovery/filtering step after re-running validation against the current script.
-- Raw lesson: model-extraction tasks need hidden-input robustness checks and should not rely on visible implementation constants as proof of correctness; validation should test generality over shape/seed variations where possible.
+- Wattle behavior: failed attempt produced a script and locally validated perfect recovery against the visible `/app/forward.py` internals, including a visible 20x10 `A1`, but the verifier used a different generated matrix and exposed incomplete row recovery. Retry `model-extraction-relu-logits__ZuPA7xn` passed after re-running `/app/steal.py`, saving `/app/stolen_A1.npy`, and validating recovered row directions against local `forward.A1`.
+- Raw lesson: model-extraction tasks need hidden-input robustness checks and should not rely on visible implementation constants as proof of correctness; the retry shows the task can be recovered when the query-based kink extraction is made complete enough for the verifier-generated matrix.
 
 ### `mteb-leaderboard`
 
@@ -560,18 +560,25 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 - Oracle contrast: applies the targeted one-line slot-advance fix in `shared_heap.c`.
 - Raw lesson: low-level runtime repair tasks pass when Wattle localizes the invariant violation, makes the smallest semantic fix, and validates through the exact requested build/test path rather than only compiling the touched file.
 
+### `nginx-request-logging`
+
+- Status: both synced Wattle attempts passed.
+- Current evidence: retry `nginx-request-logging__nTT8aiV` configured Nginx on localhost:8080, `/var/www/html`, `/etc/nginx/conf.d/benchmark-site.conf`, custom index/404 pages, benchmark access/error logs, quoted user-agent logging, rate limiting, and removed the default site; it syntax-tested/restarted Nginx and verified localhost/log creation. Earlier pass `nginx-request-logging__NKPwBRb` passed with the same service, logging, and custom-error-page contract.
+- Oracle contrast: installs Nginx, adds the required `log_format` and `limit_req_zone` in `nginx.conf`, serves the expected static files on port 8080, writes logs to the exact benchmark paths, and leaves the service running.
+- Raw lesson: web-service configuration tasks pass when Wattle validates exact config file locations, generated content, syntax, process liveness, reachable port, and log side effects together.
+
 ## Running Or Incomplete At Snapshot
 
-### `model-extraction-relu-logits` retry
+### `large-scale-text-editing` retry
 
-- Status: Wattle retry `model-extraction-relu-logits__ZuPA7xn` is running.
-- Current evidence: prior Wattle attempt failed because verifier row 11 of the generated hidden matrix was not recovered, even though visible `forward.A1` validation matched perfectly. The running retry is re-running `/app/steal.py`, comparing recovered rows to the current visible matrix, and adjusting the recovery/filtering step.
-- Watch point: if the retry passes, compare whether it added hidden-width/seed robustness instead of only fitting visible internals more tightly.
+- Status: Wattle retry `large-scale-text-editing__3roufBo` is running.
+- Current evidence: prior Wattle attempt `large-scale-text-editing__L9yicwK` passed after creating `/app/apply_macros.vim`, applying it headlessly with `vim -Nu NONE -n -Es /app/input.csv -S /app/apply_macros.vim`, and byte-comparing `/app/input.csv` against `/app/expected.csv`. The running retry is using the same exact headless Vim command and `cmp` validation.
+- Watch point: if the retry passes, keep this as positive evidence for exact command reproduction plus byte-for-byte output validation on large text transformations.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### `nginx-request-logging` retry
+### `sqlite-db-truncate` retry
 
-- Status: Wattle retry `nginx-request-logging__nTT8aiV` is running.
-- Current evidence: prior Wattle attempt `nginx-request-logging__NKPwBRb` passed after configuring Nginx on localhost:8080, writing the expected static root and custom 404 page, disabling the default site, and setting benchmark access/error logs. The running retry is syntax-testing Nginx, starting/restarting it, and verifying localhost:8080 plus log creation.
-- Watch point: if the retry passes, keep this as positive evidence for exact service configuration plus final liveness/log-path validation.
+- Status: Wattle retry `sqlite-db-truncate__P5vJ3Xz` is running.
+- Current evidence: prior Wattle attempt `sqlite-db-truncate__uWTDFf9` passed after writing `/app/recover.json` with 10 recovered rows in the requested `word`/`value` format. The running retry has also written valid JSON with 10 recovered rows and is validating object keys and value types.
+- Watch point: if the retry passes, keep this as positive evidence for artifact-level JSON schema validation after recovering readable records from damaged storage.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
