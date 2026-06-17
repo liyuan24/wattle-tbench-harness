@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T07:26:48Z`
+Snapshot used: `2026-06-17T07:37:04Z`
 
 Counts at snapshot:
 
-- Passed: 94
-- Failed: 29
+- Passed: 95
+- Failed: 30
 - Exceptions: 9
 - Running or incomplete: 2
-- Prompt-cache hit rate: 84.8%
+- Prompt-cache hit rate: 84.7%
 
 Deep evidence reports were regenerated under:
 
@@ -129,10 +129,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `install-windows-3.11`
 
-- Status: exception, `NonZeroAgentExitCodeError`.
-- Verifier: QEMU was not running and VNC port 5901 was not listening.
+- Status: one Wattle attempt exited non-zero and one retry failed.
+- Verifier: first attempt had no QEMU process and no VNC listener on 5901. Retry left QEMU/VNC/nginx/noVNC running with `/app/isos/win311.img`, but failed `test_windows_keys_with_visual_feedback`.
 - Oracle contrast: compiles/uses QEMU 5.2.0, starts the Windows image with the required legacy device flags, VNC `:1`, nginx/noVNC service, and monitor interfaces.
-- Wattle behavior: investigated boot flags but did not leave the required long-running VM services alive.
+- Wattle behavior: first attempt investigated boot flags but did not leave the required long-running VM services alive. Retry improved final liveness and path correctness but still missed keyboard/visual-feedback behavior.
 - Codex comparison: Codex also failed the verifier, with QEMU running against `/app/win311-runtime.img` instead of the expected `/app/isos/win311.img`, plus visual-feedback key tests failing.
 - Raw lesson: service tasks need a final liveness gate for all required processes/ports after any debugging restarts.
 
@@ -464,8 +464,8 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `kv-store-grpc`
 
-- Status: one Wattle attempt passed and one retry is running.
-- Current evidence: passed attempt `kv-store-grpc__CUNNg6M` created `kv-store.proto`, generated Python gRPC stubs, launched `/app/server.py` on port 5328, and validated `SetVal`, `GetVal`, and missing-key behavior through a real gRPC client.
+- Status: both synced Wattle attempts passed.
+- Current evidence: Wattle created `kv-store.proto`, generated Python gRPC stubs, launched `/app/server.py` on port 5328, and validated `SetVal`, `GetVal`, and missing-key behavior through a real gRPC client.
 - Oracle contrast: exposes the required gRPC service interface and leaves the server process running for verifier RPCs.
 - Raw lesson: RPC service tasks pass when Wattle validates the exact protocol through generated client stubs and keeps the service alive after validation.
 
@@ -478,9 +478,9 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 - Watch point: if the retry passes, compare its exact data conversion/evaluation command and model-size controls against both failed attempts.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### `kv-store-grpc` retry
+### `make-doom-for-mips` retry
 
-- Status: Wattle retry `kv-store-grpc__oxcCNK6` is running.
-- Current evidence: one prior Wattle attempt already passed by creating the proto/stubs/server, starting the service on port 5328, and validating required RPC semantics.
-- Watch point: because a prior Wattle attempt passed, this retry should not change the failure taxonomy unless it later fails with a new verifier signature.
+- Status: Wattle retry `make-doom-for-mips__weiQftA` is running.
+- Current evidence: prior Wattle and Codex attempts timed out after partial Doom startup under the MIPS VM. The running retry has confirmed the VM loads exactly `/app/doomgeneric_mips` and is checking ELF/syscall assumptions before compiling.
+- Watch point: if the retry passes, compare its early ISA/runtime compatibility checks and minimized build path against the prior late-debugging timeouts.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.

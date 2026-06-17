@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T07:26:48Z`
+Snapshot used: `2026-06-17T07:37:04Z`
 
 This summary intentionally avoids task-specific fixes. It ranks general Wattle improvements by expected pass-rate impact, breadth across failures, and implementation practicality.
 
@@ -99,7 +99,7 @@ Observed in:
 
 - `caffe-cifar-10`: build/train did not finish required artifacts.
 - `make-doom-for-mips`: late emulator/runtime debugging consumed budget; Codex also timed out after partial Doom initialization without reaching the expected graphics initialization.
-- `install-windows-3.11`: did not leave required services running; Codex also failed after using a runtime image path different from the verifier-expected `/app/isos/win311.img`.
+- `install-windows-3.11`: first Wattle attempt did not leave services running; retry fixed liveness/path but still failed visual feedback, while Codex also failed path/visual-feedback checks.
 - `train-fasttext`: timed out and still missed accuracy; Codex also completed below threshold, which keeps the lesson focused on fast oracle-like training paths plus verifier-matched validation rather than Wattle-only timeout handling.
 - `mcmc-sampling-stan`: long sampling and late reruns consumed budget and left bad final artifacts.
 
@@ -179,7 +179,7 @@ General fix:
 
 ## Priority 8: Keep Prompt Caching Healthy But Do Not Optimize It Blindly
 
-The current run's aggregate prompt-cache hit rate is 84.8%, which is much better than the earlier 49.2% signal. The cache issue no longer appears to be the dominant cause of failures in this snapshot.
+The current run's aggregate prompt-cache hit rate is 84.7%, which is much better than the earlier 49.2% signal. The cache issue no longer appears to be the dominant cause of failures in this snapshot.
 
 General fix:
 
