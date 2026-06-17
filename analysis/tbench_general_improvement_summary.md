@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T08:38:34Z`
+Snapshot used: `2026-06-17T08:48:49Z`
 
 This summary intentionally avoids task-specific fixes. It ranks general Wattle improvements by expected pass-rate impact, breadth across failures, and implementation practicality.
 
@@ -79,7 +79,7 @@ Observed in:
 
 - `mteb-retrieve`: `mteb.get_model`, model revision, `SciFact`, query/passage prompt types, and fifth-highest ranking all mattered; Codex passing this comparison points to Wattle's semantic reproduction rather than an environment limitation.
 - `mteb-leaderboard`: results repo commit, benchmark name, full-task filtering, and averaging mattered; two Wattle attempts picked the same plausible-but-wrong model while Codex passed, pointing to Wattle's semantic reproduction rather than a task/harness limitation.
-- `raman-fitting`: unit conversion and crop ranges mattered before fitting; Codex also failed with broad wrong peaks, so the improvement should enforce scientific preprocessing and window selection explicitly.
+- `raman-fitting`: unit conversion and crop ranges mattered before fitting; two Wattle attempts and Codex all fit wrong peaks, so the improvement should enforce scientific preprocessing and window selection explicitly.
 - `db-wal-recovery`: SQLite WAL semantics and XOR decryption mattered before JSON extraction; Codex passed the comparison, so this is a Wattle semantic-fidelity miss rather than an apparent task/harness issue.
 - `mcmc-sampling-stan`: prior parameterization and final posterior files mattered, not just script/file existence.
 
@@ -161,7 +161,7 @@ Observed in:
 
 - `protein-assembly`: DNA sequence valid, protein component order wrong; Codex passed the comparison, so component grounding/order validation is feasible under the same task/harness.
 - `extract-elf`: JSON valid, ELF memory/symbol content wrong; Codex also failed with 0% expected values, so full parser-backed binary extraction needs explicit support.
-- `raman-fitting`: JSON valid, scientific fit wrong; Codex failed similarly, reinforcing that generic curve fitting without domain windows is insufficient.
+- `raman-fitting`: JSON valid, scientific fit wrong across two Wattle attempts and Codex; repeated convergence to wrong peak centers reinforces that generic curve fitting without verified unit conversion and domain windows is insufficient.
 - `torch-tensor-parallelism`: module valid, distributed gradients wrong.
 - `pytorch-model-recovery`: model artifact valid enough to save, but not callable through the verifier's expected interface.
 - `model-extraction-relu-logits`: recovered rows matched visible weights but not the verifier's hidden generated matrix.

@@ -2,12 +2,12 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T08:38:34Z`
+Snapshot used: `2026-06-17T08:48:49Z`
 
 Counts at snapshot:
 
 - Passed: 100
-- Failed: 33
+- Failed: 34
 - Exceptions: 12
 - Running or incomplete: 2
 - Prompt-cache hit rate: 85.3%
@@ -75,10 +75,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `extract-elf`
 
-- Status: failed.
+- Status: failed in a synced Wattle attempt; retry `extract-elf__2EaaYvz` is running.
 - Verifier: only 0% of expected values matched.
 - Oracle contrast: parses ELF headers, sections, symbol tables, memory words, function symbols, and address/function mappings using a full ELF parser.
-- Wattle behavior: emitted valid JSON with plausible numeric keys, but the data model did not match the expected ELF extraction contract.
+- Wattle behavior: emitted valid JSON with plausible numeric keys, but the data model did not match the expected ELF extraction contract. The running retry is investigating PIE load-base conventions and rebased versus base-independent addresses.
 - Codex comparison: Codex also failed this task with 0.00% expected values, reinforcing that superficial JSON/numeric extraction is a broad trap for binary-format tasks.
 - Raw lesson: for binary formats, superficial output schema checks are insufficient; Wattle needs contract-derived structural checks against known sections/symbols.
 
@@ -225,10 +225,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `raman-fitting`
 
-- Status: failed in two synced Wattle/Codex comparison attempts; Wattle retry `raman-fitting__PoyKvQR` is running.
-- Verifier: fitted G and 2D peak parameters were far from expected values.
+- Status: failed in both synced Wattle attempts; Codex comparison also failed.
+- Verifier: expected G peak near `x0=1580.3`, `gamma=9.06`, `A=8382.69`, `offset=5561.03`, and 2D peak near `x0=2670.08`, `gamma=17.52`, `A=12314.42`, `offset=1239.09`. Wattle retry still produced peaks near `x0=1654.86` and `x0=3745.36`.
 - Oracle contrast: converts decimal commas/tab format, converts wavelength nm to cm^-1, crops G and 2D peak regions, then fits Lorentzian peaks with SciPy.
-- Wattle behavior: produced JSON with fit parameters, but likely used the wrong x-axis transformation/crop/model setup. The running retry has confirmed the output JSON shape and is trying to fit only graphene-relevant spectral regions while preserving the raw data interpretation.
+- Wattle behavior: produced JSON with fit parameters, but used the wrong x-axis transformation/crop/model setup across attempts; the retry's narrower-region attempt still converged to the same wrong observed peaks.
 - Codex comparison: Codex also failed this task, fitting broad wrong peaks with much larger gammas and offsets. This reinforces that scientific preprocessing/window selection must be explicit, not left to generic curve fitting.
 - Raw lesson: numerical science tasks need unit conversion and range checks before fitting; output plausibility is not enough.
 
@@ -513,9 +513,9 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 - Watch point: if the retry fails, compare whether it skipped exact output equivalence, SQLite execution, or final SQL-format validation.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### `raman-fitting` retry
+### `extract-elf` retry
 
-- Status: Wattle retry `raman-fitting__PoyKvQR` is running.
-- Current evidence: previous Wattle and Codex attempts fitted broad/wrong peaks. The running retry has confirmed `/app/results.json` shape and is focusing on graphene-relevant spectral regions.
-- Watch point: if the retry passes, compare whether wavelength-to-Raman conversion, crop windows, and Lorentzian initialization replaced the prior generic fitting behavior.
+- Status: Wattle retry `extract-elf__2EaaYvz` is running.
+- Current evidence: prior Wattle and Codex attempts matched 0.00% of expected values. The running retry is checking position-independent executable load-base conventions and rebased versus base-independent address output.
+- Watch point: if the retry passes, compare whether full ELF parser-backed extraction and address-convention checks replaced the failed plausible numeric JSON output.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
