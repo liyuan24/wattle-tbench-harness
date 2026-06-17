@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T09:09:18Z`
+Snapshot used: `2026-06-17T09:14:26Z`
 
 This summary intentionally avoids task-specific fixes. It ranks general Wattle improvements by expected pass-rate impact, breadth across failures, and implementation practicality.
 
@@ -16,7 +16,7 @@ Observed in:
 - `polyglot-rust-c`: correct source, extra `main` and `cmain` across three Wattle attempts; Codex also failed the comparison by leaving an extra `main`, so exact final inventory is a broad failure mode.
 - `configure-git-webserver`: smoke-tested successfully, then reset state so verifier saw 404; Codex also failed the comparison with HTTP 404, and a Wattle retry with a deployment hook/server still failed with HTTP 000.
 - `qemu-startup`: one Wattle attempt passed, but a retry timed out with the VM no longer running and required side artifacts missing, showing service liveness must be checked at final handoff.
-- `financial-document-processor`: partial file moves and missing `summary.csv`.
+- `financial-document-processor`: two Wattle attempts moved a partial set of files and left `summary.csv` missing.
 - `build-pov-ray`: the first Wattle attempt built a working executable but missed source/provenance artifacts; a retry passed after preserving official 2.2 archives/layout, and Codex also passed the comparison.
 - `mcmc-sampling-stan`: plausible posterior mean files were produced, then later experimentation left bad verifier-visible outputs.
 - `sam-cell-seg`: segmentation geometry was accepted, but the serialized CSV coordinate fields used tuple syntax instead of verifier-accepted flat lists.
@@ -140,7 +140,7 @@ Observed in:
 - `gcode-to-text`: two Wattle attempts failed; the first decoded a plausible sentence, while the retry produced a near-flag string with exact-character errors. Codex passed the comparison, so stronger rendering/OCR and character-level validation are feasible under the same environment.
 - `extract-moves-from-video`: one attempt had low command-sequence similarity, and the retry timed out with the verifier seeing no final `solution.txt`; Codex passed the comparison, so a stronger extraction workflow plus final artifact persistence is feasible under the same task/harness.
 - `video-processing`: two Wattle attempts and Codex all failed tight frame-boundary checks, so the issue is exact temporal calibration rather than only one implementation's heuristic.
-- `financial-document-processor`: manual/partial classification did not complete all files; Codex passed the comparison, so transaction-style staging and coverage validation are feasible.
+- `financial-document-processor`: repeated manual/partial classification did not complete all files or `summary.csv`; Codex passed the comparison, so transaction-style staging and coverage validation are feasible.
 
 General fix:
 

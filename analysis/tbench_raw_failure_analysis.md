@@ -2,13 +2,13 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T09:09:18Z`
+Snapshot used: `2026-06-17T09:14:26Z`
 
 Counts at snapshot:
 
-- Passed: 104
+- Passed: 105
 - Failed: 35
-- Exceptions: 12
+- Exceptions: 13
 - Running or incomplete: 2
 - Prompt-cache hit rate: 85.2%
 
@@ -102,10 +102,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `financial-document-processor`
 
-- Status: exception, `NonZeroAgentExitCodeError`; retry `financial-document-processor__QTBG3Nt` is running.
-- Verifier: invoices and `summary.csv` were missing or incomplete.
+- Status: exception, `NonZeroAgentExitCodeError`, in both synced Wattle attempts.
+- Verifier: invoices and `summary.csv` were missing or incomplete in both attempts; retry `financial-document-processor__QTBG3Nt` still left `/app/invoices/summary.csv` missing.
 - Oracle contrast: implements OCR/text extraction for images/PDFs, content-based invoice classification, moves every document, and writes a structured invoice summary.
-- Wattle behavior: began moving a hand-classified subset and then exited before completing destination directories and summary output. The running retry has not yet produced a completed result.
+- Wattle behavior: began moving hand-classified files and then exited before completing destination directories and summary output. Retry again reached the "move files and write CSV" phase, but verifier-visible state still lacked the summary.
 - Codex comparison: Codex passed this task, showing the transaction-style all-files-then-summary workflow is achievable in the same task environment.
 - Raw lesson: multi-file classification tasks need transaction-style staging: classify all files, validate total coverage, then move/write outputs atomically.
 
@@ -527,11 +527,11 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ## Running Or Incomplete At Snapshot
 
-### `financial-document-processor` retry
+### `filter-js-from-html` retry
 
-- Status: Wattle retry `financial-document-processor__QTBG3Nt` is running.
-- Current evidence: prior Wattle attempt exited non-zero after moving only a subset and leaving `summary.csv` missing, while Codex passed. The running retry has not yet synced detailed progress.
-- Watch point: if the retry passes, compare whether all-file classification, atomic moves, and summary CSV coverage replaced the earlier partial-move workflow.
+- Status: Wattle retry `filter-js-from-html__N8pMUvb` is running.
+- Current evidence: prior Wattle and Codex attempts missed XSS vectors and modified clean files. The running retry is making another robustness pass for style contents and meta refresh JavaScript URLs while trying to preserve unchanged text.
+- Watch point: if the retry passes, compare whether paired malicious-vector and clean-file preservation validation replaced the earlier narrow sanitizer sample.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
 ### `mcmc-sampling-stan` retry
