@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T03:57:00Z`
+Snapshot used: `2026-06-17T03:59:16Z`
 
 Counts at snapshot:
 
-- Passed: 53
+- Passed: 54
 - Failed: 20
 - Exceptions: 6
 - Running or incomplete: 2
-- Prompt-cache hit rate: 86.3%
+- Prompt-cache hit rate: 86.2%
 
 Deep evidence reports were regenerated under:
 
@@ -234,11 +234,11 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had two completed co
 
 ## Running Or Incomplete At Snapshot
 
-### `large-scale-text-editing`
+### `build-pmars`
 
 - Status: running at the snapshot.
-- Current evidence: Wattle was working on `/app/apply_macros.vim`; no completed verifier result was synced yet.
-- Oracle contrast: defines three distinct `setreg` macros under 200 total keystrokes, runs `:%normal! @a`, `@b`, `@c`, and transforms the million-row CSV byte-for-byte using only allowed Vim commands.
+- Current evidence: Wattle had unpacked Debian source at `/app/pmars-0.9.4`, inspected Debian build rules, and started compiling a non-X11 binary; no completed verifier result was synced yet.
+- Oracle contrast: enables Debian source repositories, fetches the Debian `pmars` source, removes X11 graphics flags and libraries from the source Makefile, builds the headless debugger-capable binary, and installs it to `/usr/local/bin/pmars`.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
 
 ### `sanitize-git-repo`
