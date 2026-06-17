@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T10:41:34Z`
+Snapshot used: `2026-06-17T10:51:49Z`
 
 Counts at snapshot:
 
-- Passed: 125
+- Passed: 130
 - Failed: 42
 - Exceptions: 13
 - Running or incomplete: 2
-- Prompt-cache hit rate: 85.0%
+- Prompt-cache hit rate: 85.1%
 
 Deep evidence reports were regenerated under:
 
@@ -271,8 +271,8 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `break-filter-js-from-html`
 
-- Status: passed in both synced Wattle attempts.
-- Current evidence: the retry `break-filter-js-from-html__wwLsocx` completed successfully after crafting `/app/out.html` that survives the provided filter and still triggers an automatic Chromium `alert(1)`.
+- Status: all synced Wattle attempts passed.
+- Current evidence: retry `break-filter-js-from-html__UQZyZ5A` completed successfully after creating `/app/out.html` and `/app/alert.html`, validating the same copy-filter-open flow as the provided test with `/app/filter.py`, and detecting automatic `alert(1)` in Chromium. Earlier attempts `break-filter-js-from-html__wwLsocx` and `break-filter-js-from-html__pPj3PwT` passed with different parser/browser differential payloads that survived filtering and triggered automatic alerts.
 - Oracle contrast: uses a malformed HTML comment that the filter mishandles but Chromium still parses into executable script.
 - Raw lesson: this remains a positive example for parser-differential adversarial validation; it does not change the general failure taxonomy.
 
@@ -285,22 +285,22 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `reshard-c4-data`
 
-- Status: passed in both synced Wattle attempts.
-- Current evidence: the retry `reshard-c4-data__WYFJgZy` completed successfully after passing focused validation: `uv sync`, syntax checks, CLI help checks, full `c4_sample` round-trip, directory entry and file-size limits, `diff -qr`, and an edge-case round-trip preserving `.reshard_*`-named original paths.
+- Status: all synced Wattle attempts passed.
+- Current evidence: retry `reshard-c4-data__waCkgeY` completed successfully after creating `/app/compress.py`, `/app/decompress.py`, `/app/pyproject.toml`, `/app/uv.lock`, and a uv environment; it validated `/app/c4_sample` compression/decompression round-trip, max 30 entries per directory, max file size `15000000` bytes, and exact restored-file comparison. Earlier attempts passed with the same round-trip, fanout, file-size, and `.reshard_*` edge-case validation.
 - Oracle contrast: writes `compress.py`, `decompress.py`, `pyproject.toml`, and uv metadata so the archive can be compressed and then reconstructed exactly in-place under the task's directory and file-size constraints.
 - Raw lesson: this remains a positive example for verifier-like artifact and round-trip validation under filesystem constraints; it does not change the general failure taxonomy.
 
 ### `merge-diff-arc-agi-task`
 
-- Status: passed in both synced Wattle attempts.
-- Current evidence: retry `merge-diff-arc-agi-task__6XScxMA` completed successfully after initializing `/app/repo`, fetching both bundles into `branch1` and `branch2`, merging, resolving `algo.py`, and validating all examples. The earlier attempt `merge-diff-arc-agi-task__ofUGtxY` also passed with the same branch setup and example validation.
+- Status: all synced Wattle attempts passed.
+- Current evidence: retry `merge-diff-arc-agi-task__dmQXSds` completed successfully after initializing `/app/repo`, fetching both bundles into `branch1` and `branch2`, checking out `branch1`, merging `branch2`, resolving `/app/repo/algo.py`, validating all three examples, committing the merge, and leaving a clean Git status with both branches present. Earlier attempts `merge-diff-arc-agi-task__6XScxMA` and `merge-diff-arc-agi-task__ofUGtxY` also passed with the same branch setup and example validation.
 - Oracle contrast: creates `branch1` and `branch2` from the bundles, uses branch1 as base, applies the branch2 state, then implements `algo.py` with a modulo-diagonal color mapping inferred from examples.
 - Raw lesson: this remains a positive example for exact repository-state setup plus verifier-like example validation; it does not change the general failure taxonomy.
 
 ### `pytorch-model-cli`
 
-- Status: passed in both synced Wattle attempts.
-- Current evidence: retry `pytorch-model-cli__Ppsm6C6` completed successfully after creating `/app/cli_tool`, `/app/weights.json`, and `/app/prediction.txt`, validating that `./cli_tool weights.json image.png` outputs only `2`, confirming `prediction.txt` contains only `2`, and checking that `/app/cli_tool` is an ELF executable. The earlier attempt `pytorch-model-cli__j8TEW5F` passed with the same exact CLI/output contract.
+- Status: two completed Wattle attempts passed and one retry is running.
+- Current evidence: retry `pytorch-model-cli__Ppsm6C6` completed successfully after creating `/app/cli_tool`, `/app/weights.json`, and `/app/prediction.txt`, validating that `./cli_tool weights.json image.png` outputs only `2`, confirming `prediction.txt` contains only `2`, and checking that `/app/cli_tool` is an ELF executable. The earlier attempt `pytorch-model-cli__j8TEW5F` passed with the same exact CLI/output contract. Running retry `pytorch-model-cli__h3Hw5Xx` has written `/app/weights.json` and is preparing to run the exact requested command and save only the digit to `prediction.txt`.
 - Oracle contrast: builds a CLI around the supplied image/model assets, writes the expected prediction artifact, and preserves the exact command interface.
 - Raw lesson: this remains a positive example for exact final command and artifact validation; it does not change the general failure taxonomy.
 
@@ -625,16 +625,16 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ## Running Or Incomplete At Snapshot
 
-### `break-filter-js-from-html` retry
+### `pytorch-model-cli` retry
 
-- Status: Wattle retry `break-filter-js-from-html__UQZyZ5A` is running.
-- Current evidence: prior Wattle attempts `break-filter-js-from-html__pPj3PwT` and `break-filter-js-from-html__wwLsocx` passed after crafting `/app/out.html` payloads that survived `/app/filter.py` and triggered automatic Chromium `alert(1)`. The running retry is testing browser-supported automatic navigation payloads that preserve the `/app/out.html` to filter-in-place to browser-open contract.
-- Watch point: if the retry passes, keep this as positive evidence for parser/browser differential validation with actual headless-browser execution.
+- Status: Wattle retry `pytorch-model-cli__h3Hw5Xx` is running.
+- Current evidence: prior completed attempts passed after creating an executable `/app/cli_tool`, `/app/weights.json`, and `/app/prediction.txt`, then validating that `./cli_tool weights.json image.png` and `prediction.txt` both contain only `2`. The running retry has written `/app/weights.json` and is preparing to run the same exact CLI/output contract.
+- Watch point: if the retry passes, keep this as positive evidence for exact command-interface and final-artifact validation.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### `reshard-c4-data` retry
+### `winning-avg-corewars` retry
 
-- Status: Wattle retry `reshard-c4-data__waCkgeY` is running.
-- Current evidence: prior Wattle attempts passed after implementing `/app/compress.py`, `/app/decompress.py`, `pyproject.toml`, uv environment setup, full round-trip validation on `/app/c4_sample`, directory fanout limits, file-size limits, and edge-case preservation of `.reshard_*`-named original paths. The running retry is tightening the 15,000,000-byte restore limit and bounded fanout behavior for larger similarly structured slices.
-- Watch point: if the retry passes, keep this as positive evidence for round-trip filesystem validation with explicit archive-structure constraints.
+- Status: Wattle retry `winning-avg-corewars__eL6NiVq` is running.
+- Current evidence: one Wattle attempt passed with required `pmars -b -r 100 -f` validation above all opponent thresholds, while another timed out after leaving a placeholder verifier-visible warrior. The running retry is inspecting opponent warriors and pMARS behavior before iterating on `my_warrior.red`.
+- Watch point: if the retry passes, compare whether it preserves a fully validated candidate instead of leaving a placeholder when search is incomplete.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
