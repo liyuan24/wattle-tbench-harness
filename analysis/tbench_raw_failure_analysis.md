@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T09:34:57Z`
+Snapshot used: `2026-06-17T09:45:11Z`
 
 Counts at snapshot:
 
-- Passed: 110
-- Failed: 37
+- Passed: 111
+- Failed: 38
 - Exceptions: 13
 - Running or incomplete: 2
-- Prompt-cache hit rate: 85.1%
+- Prompt-cache hit rate: 85.2%
 
 Deep evidence reports were regenerated under:
 
@@ -546,6 +546,13 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 - Oracle contrast: recovers the secret while purging it from Git metadata without damaging the visible repository state.
 - Raw lesson: Git forensics tasks pass when Wattle validates both recovery and complete metadata cleanup, including unreachable objects and state preservation.
 
+### `build-cython-ext`
+
+- Status: both synced Wattle attempts passed.
+- Current evidence: retry `build-cython-ext__TtASNXJ` cloned `pyknotid` 0.5.3 to `/app/pyknotid`, built and installed it into global Python with NumPy 2.3.0, verified the compiled extension modules import from global site-packages, and applied a NumPy >=2 compatibility shim for removed aliases. Earlier pass `build-cython-ext__vr64xLr` also patched Python/NumPy compatibility, built the Cython extensions, installed globally, preserved NumPy 2.3.0, and validated README/core-test behavior.
+- Oracle contrast: clones the requested upstream tag, applies minimal compatibility edits for current Python/NumPy/Cython behavior, builds extensions in their original package context, and installs the package into the system environment.
+- Raw lesson: dependency/build tasks pass when Wattle preserves the requested upstream version and package structure, validates from outside the checkout/global install path, and checks both extension loader type and end-user README behavior.
+
 ## Running Or Incomplete At Snapshot
 
 ### `fix-ocaml-gc` retry
@@ -555,9 +562,9 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 - Watch point: if the retry passes, keep this as positive evidence for root-cause localization plus exact requested testsuite validation.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### `build-cython-ext` retry
+### `sam-cell-seg` retry
 
-- Status: Wattle retry `build-cython-ext__TtASNXJ` is running.
-- Current evidence: prior Wattle attempt `build-cython-ext__vr64xLr` passed after cloning `pyknotid` 0.5.3, patching NumPy/Python compatibility, building Cython extensions against global NumPy 2.3.0, installing globally, and validating the README snippet plus allowed tests. The running retry has passed core tests from the patched source tree and is converting the editable source install into a normal global install.
-- Watch point: if the retry passes, keep this as positive evidence for dependency-compatibility patching plus validation from outside the checkout.
+- Status: Wattle retry `sam-cell-seg__7DkFdAV` is running.
+- Current evidence: prior Wattle attempt `sam-cell-seg__9URNaHD` solved the substantive segmentation geometry checks but failed because serialized CSV coordinate fields parsed as tuples rather than flat lists. The running retry is inspecting metadata/image dimensions without relying on unavailable local imports and is writing against the installed MobileSAM interface.
+- Watch point: if the retry passes, compare whether serialized artifact schema validation replaced in-memory shape validation.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
