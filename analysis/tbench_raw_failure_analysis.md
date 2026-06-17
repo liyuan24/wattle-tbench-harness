@@ -2,11 +2,11 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T05:59:40Z`
+Snapshot used: `2026-06-17T06:04:47Z`
 
 Counts at snapshot:
 
-- Passed: 78
+- Passed: 79
 - Failed: 23
 - Exceptions: 7
 - Running or incomplete: 2
@@ -322,6 +322,13 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twelve completed
 - Oracle contrast: writes a compact C image generator that reconstructs the target path-traced image closely enough under the compressed-size limit.
 - Raw lesson: this remains a positive example for compact generator validation against image similarity and source-size constraints; it does not change the general failure taxonomy.
 
+### `distribution-search`
+
+- Status: passed in both synced Wattle attempts.
+- Current evidence: retry `distribution-search__SxWGnVN` completed successfully after creating `/app/create_dist.py` and `/app/dist.npy`, validating shape `(150000,)`, dtype `float64`, positive finite probabilities summing to `0.99999999999999989`, and forward/backward KL divergences of `9.9999999999984439` and `9.9999999999966143`. The earlier pass `distribution-search__vH5iCnP` validated the same shape, probability, and KL constraints.
+- Oracle contrast: constructs the exact probability vector satisfying both KL constraints within tolerance.
+- Raw lesson: this remains a positive example for exact numeric constraint validation with tolerance margins; it does not change the general failure taxonomy.
+
 ### `regex-chess`
 
 - Status: passed in both synced Wattle attempts.
@@ -371,17 +378,17 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twelve completed
 ### `caffe-cifar-10` retry
 
 - Status: running at the snapshot.
-- Current evidence: one Wattle attempt already timed out without producing `/app/caffe/examples/cifar10/cifar10_quick_iter_500.caffemodel` or `/app/caffe/training_output.txt`, and Codex also timed out on this task. Retry `caffe-cifar-10__srgqEfW` was running Caffe's built-in `make tools examples` target to produce `build/tools/caffe.bin` and `build/examples/cifar10/convert_cifar_data.bin` under the expected source tree.
+- Current evidence: one Wattle attempt already timed out without producing `/app/caffe/examples/cifar10/cifar10_quick_iter_500.caffemodel` or `/app/caffe/training_output.txt`, and Codex also timed out on this task. Retry `caffe-cifar-10__srgqEfW` had progressed to checking built `tools`/`examples`, inspecting solver iteration controls, preparing CIFAR-10 through Caffe's expected scripts, and keeping training/test logging targeted at `/app/caffe/training_output.txt`.
 - Oracle contrast: builds Caffe with the required tools/examples, prepares CIFAR-10 data, and runs exactly 500 iterations while teeing output to the verifier-visible training log.
 - Watch point: if the retry passes, the likely differentiator is following the built-in Caffe targets and preserving the required artifacts; if it fails, it further reinforces long build/train deadline management.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
 
-### `distribution-search` retry
+### `mteb-retrieve` retry
 
 - Status: running at the snapshot.
-- Current evidence: one Wattle attempt for this task already passed after creating `/app/create_distribution.py` and `/app/dist.npy`, validating shape `(150000,)`, non-negative finite probabilities summing to `1.0`, and forward/backward KL divergences both within `0.001` of 10. Retry `distribution-search__SxWGnVN` had started but had not yet emitted assistant/tool evidence.
-- Oracle contrast: constructs the exact probability vector satisfying both KL constraints within tolerance.
-- Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
+- Current evidence: the earlier Wattle attempt failed by writing `HumanEval: Benchmarking Python code generation via functional examples` instead of the expected `MTEB: Massive Text Embedding Benchmark`, while Codex passed this comparison. Retry `mteb-retrieve__Mr7e9Et` was still marked running after writing `/app/result.txt`, but had not yet synced a verifier result.
+- Oracle contrast: uses the exact MTEB model wrapper, revision, `SciFact` task name, query/passage prompt types, and fifth-highest cosine-similarity ranking.
+- Watch point: if this retry passes, it will strongly support the semantic-fidelity recommendation for benchmark/library wrappers; if it fails, inspect the synced `result.txt` content against the oracle ranking contract.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
 
 ### Codex `make-doom-for-mips` comparison
