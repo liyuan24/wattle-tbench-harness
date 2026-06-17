@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T12:19:00Z`
+Snapshot used: `2026-06-17T12:24:08Z`
 
 Counts at snapshot:
 
 - Passed: 147
 - Failed: 46
-- Exceptions: 15
+- Exceptions: 16
 - Running or incomplete: 2
-- Prompt-cache hit rate: 85.1%
+- Prompt-cache hit rate: 85.2%
 
 Deep evidence reports were regenerated under:
 
@@ -429,10 +429,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `crack-7z-hash`
 
-- Status: two completed Wattle attempts passed and one retry is running.
-- Current evidence: completed attempts `crack-7z-hash__3cRohUv` and `crack-7z-hash__YcfD75w` recovered the password and wrote `/app/solution.txt` with the expected secret content `honeybear`; the retry also confirmed the target path `secrets/secret_file.txt` before finishing. Running retry `crack-7z-hash__nP5CPFd` has generated a 7z hash, is using John with `/app/john/run/password.lst`, and is continuing through a parser/decrypt/extract path.
+- Status: two Wattle attempts passed and one retry timed out.
+- Current evidence: completed attempts `crack-7z-hash__3cRohUv` and `crack-7z-hash__YcfD75w` recovered the password and wrote `/app/solution.txt` with the expected secret content `honeybear`; the retry also confirmed the target path `secrets/secret_file.txt` before finishing. Retry `crack-7z-hash__nP5CPFd` timed out after exploring a direct AES/CRC validation path and left no `/app/solution.txt`, so the verifier failed only on the missing required artifact.
 - Oracle contrast: recovers the 7z password and extracts only the target secret file content into the required solution artifact.
-- Raw lesson: targeted artifact extraction and a minimal final answer file work well when Wattle keeps the verifier-visible deliverable narrow.
+- Raw lesson: targeted artifact extraction and a minimal final answer file work well when Wattle keeps the verifier-visible deliverable narrow; late low-level reconstruction paths need a deadline fallback that preserves or creates the required output artifact.
 
 ### `headless-terminal`
 
@@ -632,16 +632,16 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ## Running Or Incomplete At Snapshot
 
-### `crack-7z-hash` retry
+### `hf-model-inference` retry
 
-- Status: Wattle retry `crack-7z-hash__nP5CPFd` is running.
-- Current evidence: prior completed attempts passed by recovering `honeybear` and writing only the secret file content to `/app/solution.txt`. The running retry has created `/tmp/secrets_hash.txt`, tried John against `/app/john/run/password.lst`, and is now attempting bounded direct AES/CRC validation over likely archive passwords.
-- Watch point: if the retry passes, keep this as positive evidence for minimal verifier-visible output and targeted extraction.
+- Status: Wattle retry `hf-model-inference__ksnosZg` is running.
+- Current evidence: prior completed attempts passed after downloading the sentiment model to `/app/model_cache/sentiment_model`, creating a Flask API on port 5000, and validating positive/error responses. The running retry's background process exited without binding the port, with an empty log, and it is now running `/app/sentiment_service.py` in the foreground to capture the import/startup error.
+- Watch point: check whether the service binds `0.0.0.0:5000`, survives into verifier execution, and returns the same sentiment/error schema as the passing attempts.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
 ### `polyglot-rust-c` retry
 
 - Status: Wattle retry `polyglot-rust-c__6Fc3Lbb` is running.
-- Current evidence: prior completed attempts failed because Wattle validated the polyglot source by compiling it in the verifier-checked directory and left `main`/`cmain` artifacts beside `main.rs`. The running retry has not produced enough synced evidence to judge whether it preserves the exact final inventory.
+- Current evidence: prior completed attempts failed because Wattle validated the polyglot source by compiling it in the verifier-checked directory and left `main`/`cmain` artifacts beside `main.rs`. The running retry has written `/app/polyglot/main.rs` and is iterating on Rust/C++ comment fencing, but it has not yet produced a completed result to judge final inventory cleanup.
 - Watch point: check whether validation build products are created outside `/app/polyglot` or cleaned before final handoff.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
