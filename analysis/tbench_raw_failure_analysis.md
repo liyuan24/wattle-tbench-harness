@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T07:37:04Z`
+Snapshot used: `2026-06-17T07:52:27Z`
 
 Counts at snapshot:
 
 - Passed: 95
 - Failed: 30
-- Exceptions: 9
+- Exceptions: 10
 - Running or incomplete: 2
-- Prompt-cache hit rate: 84.7%
+- Prompt-cache hit rate: 85.5%
 
 Deep evidence reports were regenerated under:
 
@@ -138,10 +138,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `make-doom-for-mips`
 
-- Status: exception, `AgentTimeoutError`.
-- Verifier: no final passing result before timeout.
+- Status: exception, `AgentTimeoutError`, in both synced Wattle attempts.
+- Verifier: retry still missed expected VM stdout `I_InitGraphics: DOOM screen size: w x h: 320 x 200` and produced a frame similarity score 0.7339 below the 0.95 requirement.
 - Oracle contrast: applies a large MIPS build patch, supplies custom libc/runtime pieces, cross-compiles, and validates under the JS VM.
-- Wattle behavior: built a MIPS binary and generated a frame, but execution stopped on an unsupported instruction before reaching a stable verifier-ready state.
+- Wattle behavior: first attempt built a MIPS binary and generated a frame, but execution stopped on an unsupported instruction. Retry produced `/app/doomgeneric_mips`, reached partial Doom startup, and wrote `/tmp/frame.bmp`, but still missed the expected graphics-init milestone and reference-like frame.
 - Codex comparison: Codex also timed out. Its verifier output reached Doom initialization but still missed the expected graphics initialization text `I_InitGraphics: DOOM screen size: w x h: 320 x 200`.
 - Raw lesson: emulator/cross-compile tasks need early ISA/runtime compatibility checks and a plan to minimize late-cycle debugging.
 
@@ -462,6 +462,13 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 - Oracle contrast: leaves a booted VM with reachable SSH, not only a configured disk or launch command.
 - Raw lesson: VM service tasks pass when Wattle validates the exact externally reachable login path and leaves the long-running process alive for the verifier.
 
+### `torch-pipeline-parallelism`
+
+- Status: one Wattle attempt passed and one retry is running.
+- Current evidence: passed attempt `torch-pipeline-parallelism__4LS4kfs` implemented `train_step_pipeline_afab`, balanced contiguous layer partitioning, AFAB scheduling, P2P send/recv, loss scaling, backward gradient communication, and shape/target broadcasting for downstream stages.
+- Oracle contrast: implements pipeline-parallel training semantics compatible with common Hugging Face LLaMA internals and distributed P2P behavior.
+- Raw lesson: distributed training tasks can pass when Wattle validates the exact forward/backward communication contract rather than only local module syntax.
+
 ### `kv-store-grpc`
 
 - Status: both synced Wattle attempts passed.
@@ -478,9 +485,9 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 - Watch point: if the retry passes, compare its exact data conversion/evaluation command and model-size controls against both failed attempts.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### `make-doom-for-mips` retry
+### `torch-pipeline-parallelism` retry
 
-- Status: Wattle retry `make-doom-for-mips__weiQftA` is running.
-- Current evidence: prior Wattle and Codex attempts timed out after partial Doom startup under the MIPS VM. The running retry has confirmed the VM loads exactly `/app/doomgeneric_mips` and is checking ELF/syscall assumptions before compiling.
-- Watch point: if the retry passes, compare its early ISA/runtime compatibility checks and minimized build path against the prior late-debugging timeouts.
+- Status: Wattle retry `torch-pipeline-parallelism__ALcQjZR` is running.
+- Current evidence: one prior Wattle attempt already passed by implementing `train_step_pipeline_afab` with distributed P2P communication and pipeline backward semantics. The running retry is adapting the implementation to common Hugging Face LLaMA internals across versions.
+- Watch point: because a prior Wattle attempt passed, this retry should not change the failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
