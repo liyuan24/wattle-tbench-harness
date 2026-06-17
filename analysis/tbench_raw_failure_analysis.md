@@ -2,11 +2,11 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T03:54:21Z`
+Snapshot used: `2026-06-17T03:57:00Z`
 
 Counts at snapshot:
 
-- Passed: 51
+- Passed: 53
 - Failed: 20
 - Exceptions: 6
 - Running or incomplete: 2
@@ -241,9 +241,9 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had two completed co
 - Oracle contrast: defines three distinct `setreg` macros under 200 total keystrokes, runs `:%normal! @a`, `@b`, `@c`, and transforms the million-row CSV byte-for-byte using only allowed Vim commands.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
 
-### `sparql-university`
+### `sanitize-git-repo`
 
 - Status: running at the snapshot.
-- Current evidence: Wattle had written `/app/solution.sparql` and was editing the query after discovering `rdflib` was unavailable locally; no completed verifier result was synced yet.
-- Oracle contrast: separates the EU-department eligibility condition from the returned country aggregation, counts currently enrolled distinct students by department using the 2025-08-16 date, and returns the exact professor/country groups expected by the tests.
+- Current evidence: Wattle had completed setup/install work for sanitizing `/app/dclm`; no completed verifier result was synced yet.
+- Oracle contrast: performs targeted regex replacements for AWS access keys, AWS secrets, GitHub tokens, and HuggingFace tokens in the contaminated files, preserves the required placeholder strings, and leaves unrelated files unchanged.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
