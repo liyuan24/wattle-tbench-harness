@@ -2,11 +2,11 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T05:54:32Z`
+Snapshot used: `2026-06-17T05:59:40Z`
 
 Counts at snapshot:
 
-- Passed: 77
+- Passed: 78
 - Failed: 23
 - Exceptions: 7
 - Running or incomplete: 2
@@ -315,6 +315,13 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twelve completed
 - Oracle contrast: reconstructs a compact C renderer that reproduces the hidden path-tracing output and progress behavior under the compressed-size constraint.
 - Raw lesson: this remains a positive example for exact behavioral reproduction plus compressed-source validation; it does not change the general failure taxonomy.
 
+### `path-tracing`
+
+- Status: passed in both synced Wattle attempts.
+- Current evidence: retry `path-tracing__dhCWrsR` completed successfully after writing `/app/image.c`, compiling it, generating `reconstructed.ppm`, keeping compressed source at `3 19 644` from `cat image.c | gzip | wc`, validating output dimensions `2400x1800`, and reaching local relative-L2-style similarity `0.9929`. The earlier pass `path-tracing__iZaeUpX` also generated `/app/reconstructed.ppm`, stayed under 2k compressed, and reached high normalized-L2 similarity.
+- Oracle contrast: writes a compact C image generator that reconstructs the target path-traced image closely enough under the compressed-size limit.
+- Raw lesson: this remains a positive example for compact generator validation against image similarity and source-size constraints; it does not change the general failure taxonomy.
+
 ### `regex-chess`
 
 - Status: passed in both synced Wattle attempts.
@@ -369,11 +376,11 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twelve completed
 - Watch point: if the retry passes, the likely differentiator is following the built-in Caffe targets and preserving the required artifacts; if it fails, it further reinforces long build/train deadline management.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
 
-### `path-tracing` retry
+### `distribution-search` retry
 
 - Status: running at the snapshot.
-- Current evidence: one Wattle attempt for this task already passed after writing `/app/image.c`, compiling it, generating `/app/reconstructed.ppm`, staying under the compressed-size limit, and achieving high local normalized-L2 similarity against `/app/image.ppm`. Retry `path-tracing__dhCWrsR` was running an error-map loop to find the largest mismatch, likely in checker/shadow/lighting constants, then make a focused edit and rerun exact validation.
-- Oracle contrast: writes a compact C image generator that reconstructs the target path-traced image closely enough under the compressed-size limit.
+- Current evidence: one Wattle attempt for this task already passed after creating `/app/create_distribution.py` and `/app/dist.npy`, validating shape `(150000,)`, non-negative finite probabilities summing to `1.0`, and forward/backward KL divergences both within `0.001` of 10. Retry `distribution-search__SxWGnVN` had started but had not yet emitted assistant/tool evidence.
+- Oracle contrast: constructs the exact probability vector satisfying both KL constraints within tolerance.
 - Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
 
