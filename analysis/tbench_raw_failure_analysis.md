@@ -2,14 +2,14 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T04:55:32Z`
+Snapshot used: `2026-06-17T04:58:11Z`
 
 Counts at snapshot:
 
 - Passed: 68
 - Failed: 23
 - Exceptions: 6
-- Running or incomplete: 1
+- Running or incomplete: 2
 - Prompt-cache hit rate: 85.4%
 
 Deep evidence reports were regenerated under:
@@ -293,10 +293,18 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had nine completed c
 
 ## Running Or Incomplete At Snapshot
 
+### `largest-eigenval` retry
+
+- Status: running at the snapshot.
+- Current evidence: one Wattle attempt for this task already passed after implementing `/app/eigen.py::find_dominant_eigenvalue_and_eigenvector`, using NumPy's lower-overhead LAPACK path plus exact fast paths for 1x1 and 2x2 matrices, and validating eigenpair correctness and speedups with `python eval.py`. Retry `largest-eigenval__Vd5wSwF` was running after a 60-second low-level LAPACK experiment timed out while trying to reduce wrapper overhead further.
+- Oracle contrast: implements the dominant eigenpair function with exact correctness and performance constraints against the evaluation harness.
+- Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
+- Do not classify yet. It should be analyzed after a completed `result.json` is synced.
+
 ### `winning-avg-corewars` retry
 
 - Status: running at the snapshot.
-- Current evidence: one Wattle attempt for this task already passed with verifier-style `pmars -b -r 100 -f` validation above all required win thresholds. Retry `winning-avg-corewars__KJ5akir` was running a bounded `/tmp/search_corewar.py` scoring loop while explicitly preserving final output as only `my_warrior.red` and matching the requested pMARS interface.
+- Current evidence: one Wattle attempt for this task already passed with verifier-style `pmars -b -r 100 -f` validation above all required win thresholds. Retry `winning-avg-corewars__KJ5akir` was running a focused `/tmp/nonce_search.py` scoring loop that writes disposable `/tmp` candidates while explicitly preserving final output as only `my_warrior.red` and matching the requested pMARS interface.
 - Oracle contrast: writes a multi-component Redcode warrior and validates against stone, vampire, paper, snake, and G2-Clear without modifying opponent files.
 - Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
