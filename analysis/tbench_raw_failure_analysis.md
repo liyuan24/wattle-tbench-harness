@@ -2,11 +2,11 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T09:29:49Z`
+Snapshot used: `2026-06-17T09:34:57Z`
 
 Counts at snapshot:
 
-- Passed: 109
+- Passed: 110
 - Failed: 37
 - Exceptions: 13
 - Running or incomplete: 2
@@ -539,6 +539,13 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 - Oracle contrast: performs a chosen-plaintext differential attack and validates recovered key material against randomized FEAL keys.
 - Raw lesson: cryptanalysis tasks pass when Wattle validates recovered secrets across many randomized keys under the verifier's runtime budget.
 
+### `git-leak-recovery`
+
+- Status: both synced Wattle attempts passed.
+- Current evidence: retry `git-leak-recovery__NDYYD3j` recovered the secret into `/app/secret.txt`, expired reflogs, pruned unreachable Git objects, validated no `secret[...]` pattern remained anywhere in `/app/repo`, confirmed reachable refs and object database were clean, and preserved unrelated repo content. Earlier pass `git-leak-recovery__KefH6Ny` validated unchanged `HEAD`, reachable commit messages, worktree status, no secret matches, and no dangling objects.
+- Oracle contrast: recovers the secret while purging it from Git metadata without damaging the visible repository state.
+- Raw lesson: Git forensics tasks pass when Wattle validates both recovery and complete metadata cleanup, including unreachable objects and state preservation.
+
 ## Running Or Incomplete At Snapshot
 
 ### `fix-ocaml-gc` retry
@@ -548,9 +555,9 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 - Watch point: if the retry passes, keep this as positive evidence for root-cause localization plus exact requested testsuite validation.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
 
-### `git-leak-recovery` retry
+### `build-cython-ext` retry
 
-- Status: Wattle retry `git-leak-recovery__NDYYD3j` is running.
-- Current evidence: prior Wattle attempt `git-leak-recovery__KefH6Ny` passed after writing `/app/secret.txt`, expiring reflogs, pruning unreachable Git objects, preserving `HEAD`/reachable history/worktree status, and verifying no remaining `secret[...]` matches or dangling objects. The running retry has recovered the secret and written `/app/secret.txt`.
-- Watch point: if the retry fails, compare whether it skipped full Git metadata cleanup or repository-state preservation.
+- Status: Wattle retry `build-cython-ext__TtASNXJ` is running.
+- Current evidence: prior Wattle attempt `build-cython-ext__vr64xLr` passed after cloning `pyknotid` 0.5.3, patching NumPy/Python compatibility, building Cython extensions against global NumPy 2.3.0, installing globally, and validating the README snippet plus allowed tests. The running retry has passed core tests from the patched source tree and is converting the editable source install into a normal global install.
+- Watch point: if the retry passes, keep this as positive evidence for dependency-compatibility patching plus validation from outside the checkout.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
