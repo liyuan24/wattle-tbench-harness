@@ -2,13 +2,13 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T11:43:05Z`
+Snapshot used: `2026-06-17T11:53:21Z`
 
 Counts at snapshot:
 
-- Passed: 140
+- Passed: 141
 - Failed: 43
-- Exceptions: 13
+- Exceptions: 14
 - Running or incomplete: 2
 - Prompt-cache hit rate: 85.1%
 
@@ -36,7 +36,7 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 - Status: two synced Wattle attempts ended with `AgentTimeoutError`, and one retry is running.
 - Verifier: expected `/app/caffe/examples/cifar10/cifar10_quick_iter_500.caffemodel` and `/app/caffe/training_output.txt`; neither existed.
 - Oracle contrast: installs Caffe dependencies, checks out BVLC Caffe at `9b89154`, applies CPU/OpenCV/HDF5 compatibility patches, builds Caffe, runs CIFAR data prep, then runs exactly 500 iterations with output tee'd to `training_output.txt`.
-- Wattle behavior: the completed retry built CPU-only Caffe tools/examples and configured the solver for `max_iter: 500`, `snapshot: 500`, and CPU mode, but timed out before producing the required caffemodel and `training_output.txt`. Running retry `caffe-cifar-10__ZUbhad7` is correcting the build invocation to use Caffe's actual `tools` and `examples` targets while preserving the requested output/model paths; the latest synced build attempt hit missing generated `caffe/proto/caffe.pb.h` headers.
+- Wattle behavior: the completed retry built CPU-only Caffe tools/examples and configured the solver for `max_iter: 500`, `snapshot: 500`, and CPU mode, but timed out before producing the required caffemodel and `training_output.txt`. Running retry `caffe-cifar-10__ZUbhad7` is correcting the build invocation to use Caffe's actual `tools` and `examples` targets while preserving the requested output/model paths; after a parallel build ran out of memory, it is resuming with a single compiler job before data/training validation.
 - Raw lesson: long build/train tasks need earlier task-plan compression, deadline-aware fallbacks, and explicit artifact checkpoints before continuing expensive work.
 
 ### `configure-git-webserver`
@@ -172,10 +172,10 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `mteb-retrieve`
 
-- Status: failed in both synced Wattle attempts.
+- Status: failed in both completed Wattle attempts, and one retry is running.
 - Verifier: expected `MTEB: Massive Text Embedding Benchmark`; Wattle wrote `HumanEval: Benchmarking Python code generation via functional examples`.
 - Oracle contrast: uses `mteb.get_model("BAAI/bge-small-zh-v1.5", revision=...)`, encodes query with `task_name="SciFact"` and `PromptType.query`, encodes docs with `PromptType.passage`, then selects the 5th highest similarity.
-- Wattle behavior: inspected model/wrapper details but still wrote the wrong document in both attempts; retry `mteb-retrieve__Mr7e9Et` also synced the same unexpected result.
+- Wattle behavior: inspected model/wrapper details but still wrote the wrong document in both completed attempts; retry `mteb-retrieve__Mr7e9Et` also synced the same unexpected result. Running retry `mteb-retrieve__He9Lf9t` has started but has not yet synced tool/assistant evidence beyond its running status.
 - Codex comparison: Codex passed this task in the comparison run, which reinforces that the failure is not the harness or task image but Wattle's exact MTEB API/revision/prompt-type/ranking reproduction.
 - Raw lesson: embedding tasks are sensitive to wrapper semantics, prompt type, task name, revision, and ranking convention; Wattle needs exact API parity with the prompt/oracle.
 
@@ -327,8 +327,8 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ### `path-tracing`
 
-- Status: two completed Wattle attempts passed and one retry is running.
-- Current evidence: retry `path-tracing__dhCWrsR` completed successfully after writing `/app/image.c`, compiling it, generating `reconstructed.ppm`, keeping compressed source at `3 19 644` from `cat image.c | gzip | wc`, validating output dimensions `2400x1800`, and reaching local relative-L2-style similarity `0.9929`. The earlier pass `path-tracing__iZaeUpX` also generated `/app/reconstructed.ppm`, stayed under 2k compressed, and reached high normalized-L2 similarity. Running retry `path-tracing__fp6agpu` is fitting camera, checker plane, sphere, and lighting parameters from pixel samples before implementing a compact `image.c` and validating with an independent similarity script.
+- Status: mixed control-flow outcome: two Wattle attempts passed, and one retry ended with `AgentTimeoutError` but left a verifier-passing artifact.
+- Current evidence: retry `path-tracing__fp6agpu` timed out after writing `/app/image.c`, but it had already compiled and run with `gcc -static -o image image.c -lm && ./image`, produced `reconstructed.ppm`, stayed under 2k compressed source (`4 16 572`), did not read `/app/image.ppm`, and synced with reward `1.0` and no verifier failures. Earlier attempts `path-tracing__dhCWrsR` and `path-tracing__iZaeUpX` passed after writing compact generators, validating dimensions, compressed size, and high image similarity.
 - Oracle contrast: writes a compact C image generator that reconstructs the target path-traced image closely enough under the compressed-size limit.
 - Raw lesson: this remains a positive example for compact generator validation against image similarity and source-size constraints; it does not change the general failure taxonomy.
 
@@ -625,16 +625,16 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had twenty-two compl
 
 ## Running Or Incomplete At Snapshot
 
-### `path-tracing` retry
-
-- Status: Wattle retry `path-tracing__fp6agpu` is running.
-- Current evidence: prior completed attempts passed after writing compact `/app/image.c`, compiling it, generating `reconstructed.ppm`, staying under the 2k compressed-source limit, validating dimensions, and checking high image similarity. The running retry is fitting camera, checker plane, sphere, and lighting parameters from pixel samples before implementing a compact `image.c` and validating with an independent similarity script.
-- Watch point: if the retry passes, keep this as positive evidence for combining compact source-size checks with independent image-similarity validation.
-- Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
-
 ### `caffe-cifar-10` retry
 
 - Status: Wattle retry `caffe-cifar-10__ZUbhad7` is running.
-- Current evidence: prior completed attempts timed out before producing `/app/caffe/examples/cifar10/cifar10_quick_iter_500.caffemodel` and `/app/caffe/training_output.txt`. The running retry is correcting the Caffe build invocation to use the actual `tools` and `examples` targets while preserving the requested output/model paths; the latest synced build attempt hit missing generated `caffe/proto/caffe.pb.h` headers.
+- Current evidence: prior completed attempts timed out before producing `/app/caffe/examples/cifar10/cifar10_quick_iter_500.caffemodel` and `/app/caffe/training_output.txt`. The running retry is correcting the Caffe build invocation to use the actual `tools` and `examples` targets while preserving the requested output/model paths; after a parallel build ran out of memory, it is resuming with `make -j1 tools examples`.
 - Watch point: if the retry passes, compare whether it front-loads generated protobuf headers, exact Caffe target builds, and artifact checkpoints before the expensive 500-iteration training step.
+- Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
+
+### `mteb-retrieve` retry
+
+- Status: Wattle retry `mteb-retrieve__He9Lf9t` is running.
+- Current evidence: prior completed Wattle attempts both wrote `HumanEval: Benchmarking Python code generation via functional examples` instead of the expected `MTEB: Massive Text Embedding Benchmark`, while the Codex comparison passed the same task. The running Wattle retry has started but has not yet synced detailed tool evidence.
+- Watch point: if the retry passes, compare whether it uses the exact MTEB wrapper/model revision, `SciFact`, prompt semantics, and fifth-highest ranking contract rather than generic embedding similarity.
 - Do not classify the retry outcome yet. It should be analyzed after a completed `result.json` is synced.
