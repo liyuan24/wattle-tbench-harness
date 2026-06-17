@@ -2,7 +2,7 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T10:05:41Z`
+Snapshot used: `2026-06-17T10:10:49Z`
 
 This summary intentionally avoids task-specific fixes. It ranks general Wattle improvements by expected pass-rate impact, breadth across failures, and implementation practicality.
 
@@ -52,7 +52,7 @@ Observed in:
 - `filter-js-from-html`: two Wattle attempts and Codex missed XSS vectors and modified clean files, showing sanitizer tasks need paired adversarial and clean-preservation regression checks.
 - `sam-cell-seg`: one attempt passed substantive image-mask checks but failed exact serialized coordinate type; a retry still failed that schema check and also missed a mask-alignment IoU threshold.
 - `model-extraction-relu-logits`: one failed attempt validated against visible model internals, but hidden verifier weights exposed incomplete recovery; a retry passed after improving the query-based recovery path.
-- `dna-insert`: local validation reported matching primer Tm values, but the verifier reconstructed the primer pair in a different orientation and found the Tm delta above threshold.
+- `dna-insert`: repeated attempts reported matching primer Tm values locally, but the verifier reconstructed the primer pair in a different orientation and found the Tm delta above threshold.
 - `dna-assembly`: local validation reported all primer-pair Tm differences within threshold, but the verifier found a 5.071125 C delta against a 5 C limit.
 
 General fix:
@@ -166,7 +166,7 @@ Observed in:
 - `torch-tensor-parallelism`: module valid, distributed gradients wrong.
 - `pytorch-model-recovery`: model artifact valid enough to save, but not callable through the verifier's expected interface.
 - `model-extraction-relu-logits`: one failed attempt recovered rows that matched visible weights but not the verifier's hidden generated matrix; the later pass keeps the lesson focused on hidden-shape/seed robustness.
-- `dna-insert`: primer sequences were syntactically valid and encoded the insert, but the annealing-arm orientation and Tm contract were not verifier-equivalent.
+- `dna-insert`: repeated primer sequences were syntactically valid and encoded the insert, but the annealing-arm orientation and Tm contract were not verifier-equivalent.
 - `dna-assembly`: primer inventory and assembly intent were plausible, but the exact Golden Gate reconstruction and annealing Tm margin still failed.
 
 General fix:
