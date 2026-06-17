@@ -2,15 +2,15 @@
 
 Generated from the GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
 
-Snapshot used: `2026-06-17T05:08:26Z`
+Snapshot used: `2026-06-17T05:18:40Z`
 
 Counts at snapshot:
 
-- Passed: 71
+- Passed: 72
 - Failed: 23
 - Exceptions: 6
 - Running or incomplete: 2
-- Prompt-cache hit rate: 85.1%
+- Prompt-cache hit rate: 85.5%
 
 Deep evidence reports were regenerated under:
 
@@ -305,20 +305,27 @@ The Codex comparison run `codex-compare-nonpassed-20260617` had nine completed c
 - Oracle contrast: implements fast C-backed portfolio risk and return functions while preserving the exact Python wrapper contract and benchmark correctness.
 - Raw lesson: this remains a positive example for exact wrapper-preserving optimization plus benchmark validation; it does not change the general failure taxonomy.
 
+### `path-tracing-reverse`
+
+- Status: passed in both synced Wattle attempts.
+- Current evidence: retry `path-tracing-reverse__PfxM9GJ` completed successfully after writing standalone `/app/mystery.c`, compiling it with `gcc -static -o reversed mystery.c -lm`, confirming generated `image.ppm` matched the original output byte-for-byte, confirming the SHA256, and keeping compressed source size under 2k. The earlier pass `path-tracing-reverse__K2cVozH` used the same byte-for-byte image and stderr/progress validation.
+- Oracle contrast: reconstructs a compact C renderer that reproduces the hidden path-tracing output and progress behavior under the compressed-size constraint.
+- Raw lesson: this remains a positive example for exact behavioral reproduction plus compressed-source validation; it does not change the general failure taxonomy.
+
 ## Running Or Incomplete At Snapshot
 
-### `path-tracing-reverse` retry
+### `regex-chess` retry
 
 - Status: running at the snapshot.
-- Current evidence: one Wattle attempt for this task already passed after writing `/app/mystery.c`, compiling it statically, comparing generated `image.ppm` and stderr/progress output byte-for-byte against `/app/mystery`, and verifying the compressed source stayed under the size limit. Retry `path-tracing-reverse__PfxM9GJ` was running after deciding to reproduce the renderer formula rather than embed the generated image, and had started size/compressibility checks on `image.ppm`.
-- Oracle contrast: reconstructs a compact C renderer that reproduces the hidden path-tracing output and progress behavior under the compressed-size constraint.
+- Current evidence: one Wattle attempt for this task already passed after generating `/app/re.json`, validating exact required sample output, running `python3 /app/check.py`, and satisfying file constraints with 6,863 pairs. Retry `regex-chess__e3gJsr6` was running after inspecting the repository/checker and preparing to generate and validate `/app/re.json` against the expected interface.
+- Oracle contrast: generates a regex/pattern inventory that makes the chess PGN checker pass while preserving the exact JSON interface expected by the tests.
 - Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
 
 ### `winning-avg-corewars` retry
 
 - Status: running at the snapshot.
-- Current evidence: one Wattle attempt for this task already passed with verifier-style `pmars -b -r 100 -f` validation above all required win thresholds. Retry `winning-avg-corewars__KJ5akir` had moved from broader search to a compact adaptive warrior path, testing the exact `my_warrior.red` with required pMARS-style commands while preserving final output as only that file.
+- Current evidence: one Wattle attempt for this task already passed with verifier-style `pmars -b -r 100 -f` validation above all required win thresholds. Retry `winning-avg-corewars__KJ5akir` was running a narrow validation loop over compact strategy selectors, with the intent to write `my_warrior.red` only after a candidate clears the exact five fixed 100-round commands.
 - Oracle contrast: writes a multi-component Redcode warrior and validates against stone, vampire, paper, snake, and G2-Clear without modifying opponent files.
 - Watch point: because a prior Wattle attempt passed, this running retry should not change the general failure taxonomy unless it later fails with a new verifier signature.
 - Do not classify yet. It should be analyzed after a completed `result.json` is synced.
