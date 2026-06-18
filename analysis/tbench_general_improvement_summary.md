@@ -1,32 +1,6 @@
 # Terminal-Bench 2.0 General Wattle Improvement Summary
 
-Generated from the completed GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
-
-Final snapshot used: `2026-06-17T18:01:39Z`
-
-This summary intentionally avoids task-specific fixes. It ranks general Wattle improvements by expected pass-rate impact, breadth across failures, and implementation practicality.
-
-Update from the targeted final-reminder run `wattle-final-reminder-targeted-gcp-1attempt-20260617`:
-
-- Wattle now injects a lightweight post-tool internal reminder that asks the model to verify whether the user's request is actually complete before the next action or final answer.
-- That reminder was evaluated on 10 previously failure-prone tasks, one attempt each, on GCP amd64.
-- The targeted run scored 5 / 10 by verifier reward, with 91.3% prompt-cache hit rate.
-- The reminder appears to improve straightforward final validation failures: `winning-avg-corewars`, `qemu-startup`, `build-pov-ray`, and `mcmc-sampling-stan` all passed after the agent performed more concrete final checks.
-- `financial-document-processor` passed the verifier but exposed a separate Wattle `view_image` attachment-lifetime crash after files were moved. That `view_image` issue has since been fixed in Wattle.
-- The remaining failures show that the reminder is not enough when the model validates a temporary state, leaves validation/build artifacts behind, checks syntax instead of reloaded output schema, or lacks source evidence for semantic extraction.
-
-
-Final run shape:
-
-- Trials: 267 / 267
-- Tasks: 89, with exactly 3 attempts each
-- Passed attempts: 174
-- Failed attempts: 61
-- Exception attempts: 32
-- Harbor mean reward: 66.29%
-- Prompt-cache hit rate: 85.5%
-
-## Validation Cohorts By Improvement Category
+## 2026-06-17 17:25:07 PDT Update: Validation Cohorts By Improvement Category
 
 Use these cohorts when validating future Wattle changes. A targeted validation
 run should include at least the primary tasks for the category being improved,
@@ -158,6 +132,32 @@ Primary validation scope:
 Targeted-run evidence:
 
 - The targeted final-reminder run had 91.3% prompt-cache hit rate.
+
+Generated from the completed GCP amd64 Wattle run `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`.
+
+Final snapshot used: `2026-06-17T18:01:39Z`
+
+This summary intentionally avoids task-specific fixes. It ranks general Wattle improvements by expected pass-rate impact, breadth across failures, and implementation practicality.
+
+Update from the targeted final-reminder run `wattle-final-reminder-targeted-gcp-1attempt-20260617`:
+
+- Wattle now injects a lightweight post-tool internal reminder that asks the model to verify whether the user's request is actually complete before the next action or final answer.
+- That reminder was evaluated on 10 previously failure-prone tasks, one attempt each, on GCP amd64.
+- The targeted run scored 5 / 10 by verifier reward, with 91.3% prompt-cache hit rate.
+- The reminder appears to improve straightforward final validation failures: `winning-avg-corewars`, `qemu-startup`, `build-pov-ray`, and `mcmc-sampling-stan` all passed after the agent performed more concrete final checks.
+- `financial-document-processor` passed the verifier but exposed a separate Wattle `view_image` attachment-lifetime crash after files were moved. That `view_image` issue has since been fixed in Wattle.
+- The remaining failures show that the reminder is not enough when the model validates a temporary state, leaves validation/build artifacts behind, checks syntax instead of reloaded output schema, or lacks source evidence for semantic extraction.
+
+
+Final run shape:
+
+- Trials: 267 / 267
+- Tasks: 89, with exactly 3 attempts each
+- Passed attempts: 174
+- Failed attempts: 61
+- Exception attempts: 32
+- Harbor mean reward: 66.29%
+- Prompt-cache hit rate: 85.5%
 
 ## Priority 1: Add Final-State Contract Validation
 
