@@ -26,6 +26,139 @@ Final run shape:
 - Harbor mean reward: 66.29%
 - Prompt-cache hit rate: 85.5%
 
+## Validation Cohorts By Improvement Category
+
+Use these cohorts when validating future Wattle changes. A targeted validation
+run should include at least the primary tasks for the category being improved,
+plus a few overlap tasks from adjacent categories because many failures have
+more than one cause.
+
+### Final-State Contract Validation
+
+Primary tasks:
+
+- `polyglot-c-py`
+- `polyglot-rust-c`
+- `configure-git-webserver`
+- `qemu-startup`
+- `financial-document-processor`
+- `build-pov-ray`
+- `mcmc-sampling-stan`
+- `sam-cell-seg`
+- `winning-avg-corewars`
+- `extract-moves-from-video`
+
+Targeted-run evidence:
+
+- Improved or passed after the reminder: `winning-avg-corewars`, `qemu-startup`, `build-pov-ray`, `mcmc-sampling-stan`
+- Verifier passed but exposed a Wattle runtime bug: `financial-document-processor`
+- Still failed: `configure-git-webserver`, `polyglot-c-py`, `polyglot-rust-c`, `sam-cell-seg`, `extract-moves-from-video`
+
+### Verifier-Like Check Reproduction
+
+Primary tasks:
+
+- `mteb-retrieve`
+- `mteb-leaderboard`
+- `train-fasttext`
+- `gpt2-codegolf`
+- `make-mips-interpreter`
+- `torch-tensor-parallelism`
+- `pytorch-model-recovery`
+- `overfull-hbox`
+- `filter-js-from-html`
+- `sam-cell-seg`
+- `model-extraction-relu-logits`
+- `dna-insert`
+- `dna-assembly`
+
+Targeted-run evidence:
+
+- Still failed from shallow or incomplete verifier reproduction: `sam-cell-seg`, `polyglot-c-py`, `polyglot-rust-c`
+
+### External Benchmark, Library, And Format Semantics
+
+Primary tasks:
+
+- `mteb-retrieve`
+- `mteb-leaderboard`
+- `raman-fitting`
+- `db-wal-recovery`
+- `mcmc-sampling-stan`
+
+Targeted-run evidence:
+
+- Improved: `mcmc-sampling-stan`
+
+### Deadline And Long-Running Work Management
+
+Primary tasks:
+
+- `caffe-cifar-10`
+- `make-doom-for-mips`
+- `install-windows-3.11`
+- `train-fasttext`
+- `mcmc-sampling-stan`
+- `crack-7z-hash`
+
+Targeted-run evidence:
+
+- Improved: `mcmc-sampling-stan`
+
+### Cleanup-Aware Validation
+
+Primary tasks:
+
+- `polyglot-c-py`
+- `polyglot-rust-c`
+
+Targeted-run evidence:
+
+- Still failed in both `polyglot-c-py` and `polyglot-rust-c`: validation outputs were left in verifier-checked directories.
+
+### Data, Media, And OCR/Extraction Confidence
+
+Primary tasks:
+
+- `gcode-to-text`
+- `extract-moves-from-video`
+- `video-processing`
+- `sam-cell-seg`
+- `financial-document-processor`
+
+Targeted-run evidence:
+
+- Improved artifact completion: `financial-document-processor`
+- Still failed from missing/weak source evidence or insufficient semantic validation: `extract-moves-from-video`, `sam-cell-seg`
+
+### Domain-Specific Semantic Checks
+
+Primary tasks:
+
+- `protein-assembly`
+- `extract-elf`
+- `raman-fitting`
+- `torch-tensor-parallelism`
+- `pytorch-model-recovery`
+- `model-extraction-relu-logits`
+- `dna-insert`
+- `dna-assembly`
+
+Targeted-run evidence:
+
+- No dedicated task from this cohort was re-run in the final-reminder targeted run.
+
+### Prompt Cache Regression Monitoring
+
+Primary validation scope:
+
+- Full-batch runs for aggregate cache rate
+- Long-context trials such as `extract-moves-from-video`, `make-doom-for-mips`, `make-mips-interpreter`, `path-tracing-reverse`, `mteb-leaderboard`, `mailman`, and `build-cython-ext`
+
+Targeted-run evidence:
+
+- The targeted final-reminder run had 91.3% prompt-cache hit rate.
+
 ## Priority 1: Add Final-State Contract Validation
 
 Wattle frequently did useful work but failed because the final verifier-visible state was wrong.
