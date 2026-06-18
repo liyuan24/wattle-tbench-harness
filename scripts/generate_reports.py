@@ -32,7 +32,7 @@ def main() -> int:
     _write_csv(out_dir / "per_task.csv", per_task)
     _write_json(out_dir / "per_task.json", per_task)
     _write_json(out_dir / "aggregate.json", aggregate)
-    _write_markdown(out_dir / "summary.md", aggregate)
+    _write_markdown(out_dir / "summary.md", aggregate, trials)
 
     print(f"Wrote reports to {out_dir}")
     print(f"Trials: {len(trials)}")
@@ -53,6 +53,13 @@ def _iter_trials(results_dir: Path) -> list[dict[str, Any]]:
         rewards = verifier_result.get("rewards") or {}
         exception_info = data.get("exception_info")
         metadata = agent_result.get("metadata") or {}
+        trial_dir = path.parent
+        verifier_failures = _extract_verifier_failures(trial_dir)
+        exception_traceback = _exception_field(
+            exception_info,
+            "traceback",
+            "exception_traceback",
+        )
 
         reward = _number_or_none(rewards.get("reward"))
         score_reward = reward if reward is not None else 0.0
@@ -68,6 +75,25 @@ def _iter_trials(results_dir: Path) -> list[dict[str, Any]]:
             "resolved": reward == 1.0 if reward is not None else None,
             "exception_type": _exception_field(exception_info, "type", "exception_type"),
             "exception_message": _exception_field(exception_info, "message", "exception_message"),
+            "failure_summary": _failure_summary(
+                reward=reward,
+                exception_type=_exception_field(exception_info, "type", "exception_type"),
+                exception_message=_exception_field(exception_info, "message", "exception_message"),
+                verifier_failures=verifier_failures,
+            ),
+            "failed_tests": "; ".join(failure["name"] for failure in verifier_failures),
+            "verifier_failure_snippets": "\n---\n".join(
+                failure["snippet"] for failure in verifier_failures if failure["snippet"]
+            ),
+            "agent_exit_status": _read_text_file(
+                trial_dir / "agent" / "wattle-exit-status.txt",
+                max_chars=200,
+            ),
+            "agent_output_tail": _read_text_tail(
+                trial_dir / "agent" / "wattle-output.log",
+                max_chars=2000,
+            ),
+            "exception_traceback_tail": _clip_text(exception_traceback, max_chars=2000),
             "n_input_tokens": int(agent_result.get("n_input_tokens") or 0),
             "n_cache_tokens": int(agent_result.get("n_cache_tokens") or 0),
             "n_output_tokens": int(agent_result.get("n_output_tokens") or 0),
@@ -153,7 +179,11 @@ def _build_aggregate(
     }
 
 
-def _write_markdown(path: Path, aggregate: dict[str, Any]) -> None:
+def _write_markdown(
+    path: Path,
+    aggregate: dict[str, Any],
+    trials: list[dict[str, Any]],
+) -> None:
     lines = [
         "# Harbor Terminal-Bench Report",
         "",
@@ -175,6 +205,25 @@ def _write_markdown(path: Path, aggregate: dict[str, Any]) -> None:
     lines.extend(["", "Exception summary:", ""])
     for name, count in aggregate["exceptions"].items():
         lines.append(f"- `{name}`: {count}")
+    failures = [row for row in trials if row["score_reward"] < 1.0]
+    if failures:
+        lines.extend(
+            [
+                "",
+                "Recent failure details:",
+                "",
+                "| Task | Trial | Reward | Exception | Failed Tests | Summary |",
+                "|---|---|---:|---|---|---|",
+            ]
+        )
+        for row in failures[:25]:
+            reward = row["reward"]
+            reward_text = "" if reward is None else f"{reward:.3f}"
+            lines.append(
+                f"| {_md_cell(row['task_name'])} | {_md_cell(row['trial_name'])} | "
+                f"{reward_text} | {_md_cell(row['exception_type'] or '')} | "
+                f"{_md_cell(row['failed_tests'])} | {_md_cell(row['failure_summary'])} |"
+            )
     lines.append("")
     path.write_text("\n".join(lines), encoding="utf-8")
 
@@ -198,6 +247,113 @@ def _read_json(path: Path) -> Any | None:
         return json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return None
+
+
+def _extract_verifier_failures(trial_dir: Path) -> list[dict[str, str]]:
+    ctrf = _read_json(trial_dir / "verifier" / "ctrf.json")
+    if not isinstance(ctrf, dict):
+        return []
+    tests = (((ctrf.get("results") or {}).get("tests")) if ctrf.get("results") else None)
+    if not isinstance(tests, list):
+        return []
+
+    failures: list[dict[str, str]] = []
+    for test in tests:
+        if not isinstance(test, dict):
+            continue
+        status = str(test.get("status") or test.get("raw_status") or "").lower()
+        if "fail" not in status and "error" not in status:
+            continue
+        name = str(test.get("name") or test.get("file_path") or "unknown")
+        trace = str(test.get("trace") or "")
+        message = str(test.get("message") or "")
+        snippet = _failure_trace_snippet(trace) or message
+        failures.append({"name": name, "snippet": _clip_text(snippet, max_chars=1000)})
+    return failures
+
+
+def _failure_trace_snippet(trace: str) -> str:
+    if not trace:
+        return ""
+    lines = [line.rstrip() for line in trace.splitlines()]
+    interesting = [
+        line
+        for line in lines
+        if line.lstrip().startswith((">", "E "))
+        or "AssertionError" in line
+        or "assert " in line
+    ]
+    if interesting:
+        return "\n".join(interesting[-8:])
+    return "\n".join(lines[-12:])
+
+
+def _failure_summary(
+    *,
+    reward: float | None,
+    exception_type: str | None,
+    exception_message: str | None,
+    verifier_failures: list[dict[str, str]],
+) -> str:
+    if exception_type:
+        exception_summary = "Exception: " + " ".join(
+            part for part in [exception_type, exception_message] if part
+        )
+        return _clip_text(exception_summary, max_chars=500)
+    if verifier_failures:
+        first = verifier_failures[0]
+        snippet = _summary_line(first["snippet"])
+        return "Verifier failed: " + " - ".join(
+            part for part in [first["name"], snippet] if part
+        )
+    if reward is None:
+        return "Missing verifier reward"
+    if reward < 1.0:
+        return f"Verifier reward {reward:.3f}"
+    return ""
+
+
+def _summary_line(text: str) -> str:
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    for prefix in ("E ", ">"):
+        for line in lines:
+            if line.startswith(prefix):
+                return line
+    for line in lines:
+        if "assert " in line:
+            return line
+    return lines[-1] if lines else ""
+
+
+def _read_text_file(path: Path, *, max_chars: int) -> str:
+    try:
+        return _clip_text(path.read_text(encoding="utf-8").strip(), max_chars=max_chars)
+    except OSError:
+        return ""
+
+
+def _read_text_tail(path: Path, *, max_chars: int) -> str:
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace").strip()
+    except OSError:
+        return ""
+    if len(text) <= max_chars:
+        return text
+    return text[-max_chars:]
+
+
+def _clip_text(text: str | None, *, max_chars: int) -> str:
+    if not text:
+        return ""
+    stripped = text.strip()
+    if len(stripped) <= max_chars:
+        return stripped
+    return stripped[: max_chars - 15].rstrip() + "\n[... clipped]"
+
+
+def _md_cell(value: Any) -> str:
+    text = "" if value is None else str(value)
+    return "`" + text.replace("|", "\\|").replace("\n", " ")[:200] + "`"
 
 
 def _job_name_from_trial_path(path: Path) -> str:
