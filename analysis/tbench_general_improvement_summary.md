@@ -6,6 +6,15 @@ Final snapshot used: `2026-06-17T18:01:39Z`
 
 This summary intentionally avoids task-specific fixes. It ranks general Wattle improvements by expected pass-rate impact, breadth across failures, and implementation practicality.
 
+Update from the targeted final-reminder run `wattle-final-reminder-targeted-gcp-1attempt-20260617`:
+
+- Wattle now injects a lightweight post-tool internal reminder that asks the model to verify whether the user's request is actually complete before the next action or final answer.
+- That reminder was evaluated on 10 previously failure-prone tasks, one attempt each, on GCP amd64.
+- The targeted run scored 5 / 10 by verifier reward, with 91.3% prompt-cache hit rate.
+- The reminder appears to improve straightforward final validation failures: `winning-avg-corewars`, `qemu-startup`, `build-pov-ray`, and `mcmc-sampling-stan` all passed after the agent performed more concrete final checks.
+- `financial-document-processor` passed the verifier but exposed a separate Wattle `view_image` attachment-lifetime crash after files were moved. That `view_image` issue has since been fixed in Wattle.
+- The remaining failures show that the reminder is not enough when the model validates a temporary state, leaves validation/build artifacts behind, checks syntax instead of reloaded output schema, or lacks source evidence for semantic extraction.
+
 
 Final run shape:
 
@@ -21,6 +30,8 @@ Final run shape:
 
 Wattle frequently did useful work but failed because the final verifier-visible state was wrong.
 
+Status after targeted follow-up: partially improved. The post-tool reminder is a useful lightweight product change, and it converted several final-validation-sensitive tasks into passes. It should remain enabled. The remaining gap is not "remember to validate" in general; it is "validate the exact final delivered state after cleanup." Wattle still needs a stronger final-state habit that checks the consumer-visible files, directories, services, and serialized schemas that remain after validation artifacts are removed.
+
 Observed in:
 
 - `polyglot-c-py`: correct source, extra `cmain`; Codex also failed the comparison with the same leftover artifact.
@@ -34,9 +45,19 @@ Observed in:
 - `winning-avg-corewars`: one retry timed out and left an early placeholder/test warrior as the verifier-visible final file, while later retries passed only after preserving a fully validated warrior, showing the general need for final validated-artifact handoff.
 - `extract-moves-from-video`: retry's last logged tool wrote `/app/solution.txt`, but after timeout the verifier saw no such file, so final artifact persistence was not guaranteed.
 
+Targeted follow-up evidence:
+
+- `winning-avg-corewars` passed after the model repeatedly checked the exact required `pmars -b -r 100 -f my_warrior.red warriors/<opponent>.red` command shape and preserved the final warrior file.
+- `qemu-startup` passed after the model left QEMU running and verified a fresh telnet login prompt before finalizing.
+- `build-pov-ray` passed after preserving official POV-Ray 2.2 source/provenance artifacts and running the requested render sanity command.
+- `mcmc-sampling-stan` passed after preserving the final posterior mean files and checking the required model/script/RStan artifacts.
+- `configure-git-webserver` still failed because the model validated a temporary clone/push/curl state, then deleted the pushed commit and web-root content. The verifier then saw HTTP 404. This is the clearest example that "validation happened" is not equivalent to "the final state is valid."
+- `polyglot-c-py` and `polyglot-rust-c` still failed because compile/run validation left `cmain`, `main`, `__pycache__`, or symlinks in the exact directory that had a single-file requirement.
+
 General fix:
 
-- Before final response, Wattle should run a lightweight "final state audit" derived from the task instruction. The clean implementation path is a Stop-hook-style lifecycle gate: when the model has no next tool call and would otherwise end the turn, run the audit and, if it blocks, inject a grounded continuation prompt into the same turn.
+- Wattle should keep the implemented post-tool internal reminder as a low-cost always-on nudge.
+- Before final response, Wattle should derive a lightweight final-state checklist from the task instruction and the actions it actually performed.
 - The audit should check that required files exist.
 - The audit should check that forbidden extra files are absent when directory contents are constrained.
 - The audit should check that services, ports, and processes are still alive.
@@ -44,11 +65,14 @@ General fix:
 - The audit should check that output paths match exactly.
 - The audit should check that serialized output fields have the expected concrete types after reloading from disk.
 - The audit should check that validation artifacts are removed or written outside verifier-checked directories.
-- The audit should be a separate final tool phase, not just natural-language confidence.
+- The audit should run against the actual final delivered state after cleanup, not against a temporary validation state that is later mutated.
+- A later hook framework can enforce this at the end-turn boundary, but the immediate product direction is still general day-to-day final-state discipline rather than benchmark-mode rules.
 
 ## Priority 2: Infer And Reproduce Verifier-Like Checks
 
 Several failures passed Wattle's own smoke tests but not the real verifier. The issue was not lack of effort; it was validating the wrong contract.
+
+Status after targeted follow-up: still high priority. The post-tool reminder increased the number of checks, but some checks remained too shallow. `sam-cell-seg` syntax-checked and grepped for expected API usage, but did not run a representative CSV read/parse path, so tuple-valued coordinate fields escaped. The two polyglot tasks ran executable checks but did not reproduce the verifier's directory inventory check.
 
 Observed in:
 
@@ -81,6 +105,7 @@ General fix:
   - multi-rank/backward/edge-case behavior
   - model/service function signatures
 - Final "done" should require those checks to pass, or explicitly state the unmet risk.
+- For file formats and CSV/JSON-like outputs, Wattle should validate by reloading the artifact with the same parser family a downstream consumer is likely to use, then assert concrete types and shape.
 
 ## Priority 3: Preserve Oracle/API Semantics For External Benchmarks And Libraries
 
@@ -131,6 +156,8 @@ General fix:
 
 Wattle often created temporary files in the same directories the verifier checked.
 
+Status after targeted follow-up: still not fixed. The targeted run reproduced this pattern in both polyglot tasks even with the post-tool reminder enabled.
+
 Observed in:
 
 - `polyglot-c-py`
@@ -141,11 +168,14 @@ General fix:
 
 - Validation commands should default to temporary output directories or `/tmp`.
 - When validating inside target directories is necessary, Wattle should record generated paths and clean them before final response.
-- Wattle should run a post-cleanup validation that checks the deliverable still works without extra files.
+- Wattle should run a post-cleanup validation that checks both the deliverable behavior and the final directory inventory.
+- If the requested command normally writes into the target directory, Wattle should prefer compiler/interpreter flags that place temporary outputs outside the target directory, or clean them and then validate the constrained inventory.
 
 ## Priority 6: Improve Data/Media Extraction Confidence
 
 Some failures came from accepting plausible extracted content too early.
+
+Status after targeted follow-up: still unresolved. The post-tool reminder improved disclosure but not source recovery. In `extract-moves-from-video`, Wattle stated that YouTube blocked direct download/transcription and that it could not fully verify the command sequence, but the final answer still produced a low-similarity `/app/solution.txt`.
 
 Observed in:
 
@@ -165,6 +195,7 @@ General fix:
   - total input-file coverage
   - classification totals
 - If outputs are near-boundary, Wattle should explicitly test adjacent candidates.
+- If source evidence is inaccessible, Wattle should treat the result as best-effort and preserve the artifact only if useful, while making the verification boundary explicit. It should not let "format exists" substitute for semantic correctness.
 
 ## Priority 7: Strengthen Domain-Specific Semantic Checks
 
@@ -196,6 +227,8 @@ General fix:
 
 The completed run's aggregate prompt-cache hit rate is 85.5%, which is much better than the earlier 49.2% signal. The cache issue no longer appears to be the dominant cause of failures in the final run.
 
+The targeted final-reminder run had a 91.3% cache hit rate. This confirms prompt caching is healthy after the earlier fixes and should be monitored as a regression signal, not treated as the main blocker for quality.
+
 General fix:
 
 - Keep the current prompt-cache improvements.
@@ -204,13 +237,15 @@ General fix:
 
 ## Suggested Implementation Order
 
-1. Final-state contract audit.
-2. Verifier-like validation checklist and mandatory final validation phase.
-3. Semantic fidelity mode for named libraries/benchmarks/formats.
-4. Deadline-aware checkpointing and fallback mode for long tasks.
-5. Cleanup-aware validation execution.
-6. Media/data extraction confidence checks.
-7. Domain-specific intermediate semantic assertions.
-8. Prompt-cache monitoring as a regression guard.
+1. Keep the post-tool final-completion reminder enabled.
+2. Fix `view_image` attachment lifetime so moved/deleted viewed files do not break later provider requests. This has been completed in Wattle after the targeted run exposed it.
+3. Add final-state contract validation focused on the actual delivered state after cleanup.
+4. Add verifier-like validation checklist generation, including negative assertions and schema reload checks.
+5. Add cleanup-aware validation execution.
+6. Add semantic fidelity mode for named libraries/benchmarks/formats.
+7. Add deadline-aware checkpointing and fallback mode for long tasks.
+8. Add media/data extraction confidence checks.
+9. Add domain-specific intermediate semantic assertions.
+10. Keep prompt-cache monitoring as a regression guard.
 
-The first two improvements should be implemented first because they cover the broadest set of failures and are likely to convert many "almost solved" tasks into passes without overfitting to any specific task.
+The most important remaining quality gap is final-state validation after cleanup. The targeted run shows that Wattle now often remembers to validate, but it can still validate the wrong state or only the executable behavior while missing directory inventory and reloaded schema contracts.
