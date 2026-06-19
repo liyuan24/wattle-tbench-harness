@@ -1,5 +1,117 @@
 # Terminal-Bench 2.0 General Wattle Improvement Summary
 
+## Evaluation Status Log
+
+This section is the chronological working log for Wattle quality changes and
+targeted Terminal-Bench validation. Keep the current status snapshot first, then
+add log entries in oldest-to-newest order with an exact timestamp, the change
+being evaluated, task outcomes, and the current next focus.
+
+Current status snapshot:
+
+- Final-validation and cleanup reminder: working for the known exact-directory
+  cleanup failures.
+- Passed since the cleanup/final-artifact reminder: `polyglot-c-py`,
+  `polyglot-rust-c`.
+- Known unresolved tasks now, based on the evaluation history in this document:
+  `caffe-cifar-10`, `configure-git-webserver`, `db-wal-recovery`,
+  `dna-assembly`, `dna-insert`, `extract-moves-from-video`,
+  `filter-js-from-html`, `gcode-to-text`, `gpt2-codegolf`,
+  `install-windows-3.11`, `make-doom-for-mips`, `mteb-leaderboard`,
+  `mteb-retrieve`, `protein-assembly`, `pytorch-model-recovery`,
+  `raman-fitting`, `sam-cell-seg`, `train-fasttext`, `video-processing`.
+- Next recommended focus: verifier-like validation cohort
+  (`sam-cell-seg`, `overfull-hbox`, `gpt2-codegolf`, `mteb-retrieve`,
+  `dna-insert`, `torch-tensor-parallelism`) plus a focused investigation of
+  `configure-git-webserver` service final-state preservation.
+
+### 2026-06-17 18:01:39 UTC: Baseline Full Run Snapshot
+
+Run label: `wattle-gpt55-tbench20-amd64-gcp-3attempt-20260616`
+
+- Trials: 267 / 267.
+- Tasks: 89, with exactly 3 attempts each.
+- Passed attempts: 174.
+- Failed attempts: 61.
+- Exception attempts: 32.
+- Harbor mean reward: 66.29%.
+- Prompt-cache hit rate: 85.5%.
+
+### 2026-06-17 17:25:07 PDT: Final Reminder Targeted Evaluation
+
+Run label: `wattle-final-reminder-targeted-gcp-1attempt-20260617`
+
+- Result: 5 / 10 passed by verifier reward.
+- Passed or improved: `build-pov-ray`, `financial-document-processor`,
+  `mcmc-sampling-stan`, `qemu-startup`, `winning-avg-corewars`.
+- Still failed: `configure-git-webserver`, `extract-moves-from-video`,
+  `polyglot-c-py`, `polyglot-rust-c`, `sam-cell-seg`.
+- Product conclusion: the lightweight post-tool reminder improved simple final
+  validation failures, but did not reliably make Wattle validate the exact final
+  delivered state after cleanup.
+
+### 2026-06-18 15:00:19 PDT: Final-Validation And Cleanup Reminder Follow-Up
+
+Current evaluation status for the final delivered-state / cleanup reminder:
+
+- `polyglot-c-py`: passed.
+- `polyglot-rust-c`: passed.
+- `configure-git-webserver`: failed.
+
+Known still failing / unresolved now:
+
+- `caffe-cifar-10`: still unresolved; long Caffe build/training attempts timed
+  out or failed to leave the required trained model and log artifacts.
+- `configure-git-webserver`: still fails now; the cleanup/final-artifact
+  reminder did not resolve it. The remaining issue appears to be preserving the
+  verifier-visible Git/web service state after validation, not simply removing
+  temporary artifacts.
+- `db-wal-recovery`: still unresolved; Wattle extracted the base database state
+  instead of applying the encrypted WAL update.
+- `dna-assembly`: still unresolved; primer design remained near/failing the
+  verifier-equivalent Tm/orientation contract.
+- `dna-insert`: still unresolved; local Tm checks did not match the verifier's
+  reverse-primer reconstruction/orientation.
+- `extract-moves-from-video`: still unresolved; source/video extraction remained
+  semantically weak or failed to leave a verifier-visible final artifact.
+- `filter-js-from-html`: still unresolved; sanitizer attempts missed generated
+  XSS vectors and modified clean files.
+- `gcode-to-text`: still unresolved; OCR/geometry recovery produced plausible or
+  near-flag text but not the exact expected flag.
+- `gpt2-codegolf`: still unresolved; local compile/smoke checks did not satisfy
+  the exact verifier CLI/path/semantic output contract.
+- `install-windows-3.11`: still unresolved; later attempts improved service
+  liveness but still failed visual feedback / keyboard behavior.
+- `make-doom-for-mips`: still unresolved; attempts reached partial startup but
+  missed the required graphics-init milestone and reference-like frame.
+- `mteb-leaderboard`: still unresolved; Wattle selected a plausible leaderboard
+  winner instead of reproducing the exact benchmark snapshot/completeness logic.
+- `mteb-retrieve`: still unresolved; Wattle used the wrong MTEB wrapper/prompt
+  semantics and returned the wrong document.
+- `protein-assembly`: still unresolved; output DNA looked valid but component
+  identity/order did not match the verifier contract.
+- `pytorch-model-recovery`: still unresolved; saved TorchScript model had the
+  wrong forward interface.
+- `raman-fitting`: still unresolved; fitting used the wrong preprocessing /
+  unit conversion / peak windows.
+- `sam-cell-seg`: still unresolved; output schema and later mask-alignment
+  checks remained failing.
+- `train-fasttext`: still unresolved; attempts timed out or fell just below the
+  private accuracy threshold.
+- `video-processing`: still unresolved; frame-boundary predictions remained
+  outside tight verifier ranges.
+
+Interpretation:
+
+- The cleanup/final-artifact reminder appears to address the exact-directory
+  artifact problem that previously caused both polyglot tasks to fail.
+- `configure-git-webserver` remains unresolved. This is no longer primarily a
+  simple leftover-artifact cleanup issue; the remaining focus should be service
+  final-state preservation and verifier-equivalent external workflow validation.
+- The next recommended validation focus is the verifier-like validation cohort:
+  `sam-cell-seg`, `overfull-hbox`, `gpt2-codegolf`, `mteb-retrieve`,
+  `dna-insert`, and `torch-tensor-parallelism`.
+
 ## 2026-06-17 17:25:07 PDT Update: Validation Cohorts By Improvement Category
 
 Use these cohorts when validating future Wattle changes. A targeted validation
@@ -25,8 +137,9 @@ Primary tasks:
 Targeted-run evidence:
 
 - Improved or passed after the reminder: `winning-avg-corewars`, `qemu-startup`, `build-pov-ray`, `mcmc-sampling-stan`
+- Passed after the cleanup/final-artifact reminder follow-up: `polyglot-c-py`, `polyglot-rust-c`
 - Verifier passed but exposed a Wattle runtime bug: `financial-document-processor`
-- Still failed: `configure-git-webserver`, `polyglot-c-py`, `polyglot-rust-c`, `sam-cell-seg`, `extract-moves-from-video`
+- Still failed: `configure-git-webserver`, `sam-cell-seg`, `extract-moves-from-video`
 
 ### Verifier-Like Check Reproduction
 
@@ -88,7 +201,8 @@ Primary tasks:
 
 Targeted-run evidence:
 
-- Still failed in both `polyglot-c-py` and `polyglot-rust-c`: validation outputs were left in verifier-checked directories.
+- Earlier final-reminder targeted run still failed in both `polyglot-c-py` and `polyglot-rust-c`: validation outputs were left in verifier-checked directories.
+- Follow-up after the cleanup/final-artifact reminder passed both `polyglot-c-py` and `polyglot-rust-c`.
 
 ### Data, Media, And OCR/Extraction Confidence
 
@@ -163,12 +277,12 @@ Final run shape:
 
 Wattle frequently did useful work but failed because the final verifier-visible state was wrong.
 
-Status after targeted follow-up: partially improved. The post-tool reminder is a useful lightweight product change, and it converted several final-validation-sensitive tasks into passes. It should remain enabled. The remaining gap is not "remember to validate" in general; it is "validate the exact final delivered state after cleanup." Wattle still needs a stronger final-state habit that checks the consumer-visible files, directories, services, and serialized schemas that remain after validation artifacts are removed.
+Current status: partially improved. The post-tool reminder and later cleanup/final-artifact reminder are useful lightweight product changes. The cleanup/final-artifact follow-up passed `polyglot-c-py` and `polyglot-rust-c`, which were the clearest exact-directory artifact failures. `configure-git-webserver` still fails, so the remaining final-state work is service-state preservation and verifier-equivalent external workflow validation, not just cleanup of temporary files.
 
-Observed in:
+Baseline failures observed in:
 
-- `polyglot-c-py`: correct source, extra `cmain`; Codex also failed the comparison with the same leftover artifact.
-- `polyglot-rust-c`: correct source, extra `main` and `cmain` across all synced Wattle attempts; Codex also failed the comparison by leaving an extra `main`, so exact final inventory is a broad failure mode.
+- `polyglot-c-py`: correct source, extra `cmain`; Codex also failed the comparison with the same leftover artifact. Current status after cleanup/final-artifact reminder follow-up: passed.
+- `polyglot-rust-c`: correct source, extra `main` and `cmain` across all synced Wattle attempts; Codex also failed the comparison by leaving an extra `main`, so exact final inventory is a broad failure mode. Current status after cleanup/final-artifact reminder follow-up: passed.
 - `configure-git-webserver`: smoke-tested successfully, then reset state so verifier saw 404; Codex also failed the comparison with HTTP 404, and Wattle retries with a deployment hook/server plus a managed persistent service still failed with verifier-visible HTTP 000.
 - `qemu-startup`: two Wattle attempts passed by leaving the VM and telnet prompt alive, but one retry timed out with the VM no longer running and required side artifacts missing, showing service liveness must be checked at final handoff.
 - `financial-document-processor`: two Wattle attempts moved a partial set of files and left `summary.csv` missing.
@@ -184,8 +298,10 @@ Targeted follow-up evidence:
 - `qemu-startup` passed after the model left QEMU running and verified a fresh telnet login prompt before finalizing.
 - `build-pov-ray` passed after preserving official POV-Ray 2.2 source/provenance artifacts and running the requested render sanity command.
 - `mcmc-sampling-stan` passed after preserving the final posterior mean files and checking the required model/script/RStan artifacts.
-- `configure-git-webserver` still failed because the model validated a temporary clone/push/curl state, then deleted the pushed commit and web-root content. The verifier then saw HTTP 404. This is the clearest example that "validation happened" is not equivalent to "the final state is valid."
-- `polyglot-c-py` and `polyglot-rust-c` still failed because compile/run validation left `cmain`, `main`, `__pycache__`, or symlinks in the exact directory that had a single-file requirement.
+- Earlier final-reminder targeted run: `configure-git-webserver` still failed because the model validated a temporary clone/push/curl state, then deleted the pushed commit and web-root content. The verifier then saw HTTP 404. This is the clearest example that "validation happened" is not equivalent to "the final state is valid."
+- Earlier final-reminder targeted run: `polyglot-c-py` and `polyglot-rust-c` still failed because compile/run validation left `cmain`, `main`, `__pycache__`, or symlinks in the exact directory that had a single-file requirement.
+- Cleanup/final-artifact reminder follow-up: `polyglot-c-py` and `polyglot-rust-c` passed.
+- Cleanup/final-artifact reminder follow-up: `configure-git-webserver` failed and remains the active final-state task to investigate.
 
 General fix:
 
@@ -289,12 +405,12 @@ General fix:
 
 Wattle often created temporary files in the same directories the verifier checked.
 
-Status after targeted follow-up: still not fixed. The targeted run reproduced this pattern in both polyglot tasks even with the post-tool reminder enabled.
+Current status: improved for the known exact-directory cleanup failures. The earlier final-reminder targeted run reproduced this pattern in both polyglot tasks even with the post-tool reminder enabled, but the later cleanup/final-artifact reminder follow-up passed `polyglot-c-py` and `polyglot-rust-c`.
 
 Observed in:
 
-- `polyglot-c-py`
-- `polyglot-rust-c`: Wattle and Codex both left compiled artifacts in the verifier-checked directory.
+- `polyglot-c-py`: baseline failed from extra validation/build artifacts in the verifier-checked directory; current follow-up passed.
+- `polyglot-rust-c`: baseline failed from extra validation/build artifacts in the verifier-checked directory; current follow-up passed.
 - likely other compile/smoke-test tasks where artifacts were harmless to humans but harmful to exact tests
 
 General fix:
