@@ -44,6 +44,7 @@ class WattleAgent(BaseInstalledAgent):
         max_tokens: int | str | None = None,
         provider_request_timeout_seconds: int | float | str | None = None,
         stream_idle_timeout_seconds: int | float | str | None = None,
+        goal_mode: bool | str = False,
         source_dir: str | None = None,
         wattle_auth_path: str | None = None,
         codex_auth_path: str | None = None,
@@ -67,6 +68,7 @@ class WattleAgent(BaseInstalledAgent):
         )
         if self.stream_idle_timeout_seconds is None:
             self.stream_idle_timeout_seconds = self.provider_request_timeout_seconds
+        self.goal_mode = _parse_bool(goal_mode)
         self.source_dir = _resolve_optional_path(source_dir or os.environ.get("WATTLE_SOURCE_DIR"))
         self.wattle_auth_path = _resolve_optional_path(
             wattle_auth_path or os.environ.get("WATTLE_AUTH_PATH")
@@ -235,7 +237,8 @@ command -v wattle >/dev/null
             cmd.append("--thinking")
         if self.effort:
             cmd.extend(["--effort", self.effort])
-        cmd.extend(["-p", instruction])
+        prompt = f"/goal {instruction}" if self.goal_mode else instruction
+        cmd.extend(["-p", prompt])
 
         timeout_export = ""
         if self.provider_request_timeout_seconds is not None:
@@ -300,6 +303,7 @@ command -v wattle >/dev/null
             "max_tokens": self.max_tokens,
             "provider_request_timeout_seconds": self.provider_request_timeout_seconds,
             "stream_idle_timeout_seconds": self.stream_idle_timeout_seconds,
+            "goal_mode": self.goal_mode,
             "agent_timeout_sec": self.agent_timeout_sec,
             "run_deadline_env": "WATTLE_RUN_DEADLINE_EPOCH_MS",
             "session_files": [str(path) for path in session_files],

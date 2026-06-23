@@ -50,6 +50,7 @@ def test_harbor_command_uses_terminal_bench_2_and_custom_agent() -> None:
         exclude_task_name=[],
         extra_harbor_arg=[],
         force_build=True,
+        goal_mode=False,
         harbor_bin=Path("/bin/harbor"),
         include_task_name=["break-filter-js-from-html"],
         max_tokens=None,
@@ -99,6 +100,7 @@ def test_harbor_command_can_use_codex_agent_without_wattle_kwargs() -> None:
         exclude_task_name=[],
         extra_harbor_arg=[],
         force_build=True,
+        goal_mode=False,
         harbor_bin=Path("/bin/harbor"),
         include_task_name=["train-fasttext"],
         job_name=None,
@@ -148,6 +150,7 @@ def test_harbor_command_omits_force_build_by_default() -> None:
         exclude_task_name=[],
         extra_harbor_arg=[],
         force_build=False,
+        goal_mode=False,
         harbor_bin=Path("/bin/harbor"),
         include_task_name=["mteb-retrieve"],
         max_tokens=None,
@@ -176,6 +179,48 @@ def test_harbor_command_omits_force_build_by_default() -> None:
     command = build_harbor_command(args=args, run=run, job_dir=Path("/tmp/job"))
 
     assert "--force-build" not in command
+
+
+def test_harbor_command_passes_wattle_goal_mode() -> None:
+    args = argparse.Namespace(
+        agent="wattle",
+        agent_env=[],
+        agent_timeout_multiplier=None,
+        dataset="terminal-bench@2.0",
+        debug=False,
+        effort="high",
+        exclude_task_name=[],
+        extra_harbor_arg=[],
+        force_build=False,
+        goal_mode=True,
+        harbor_bin=Path("/bin/harbor"),
+        include_task_name=["mteb-retrieve"],
+        max_tokens=None,
+        n_attempts=1,
+        n_concurrent=1,
+        n_tasks=None,
+        no_delete=False,
+        source_dir=Path("/src/wattle"),
+        task=[],
+        timeout_multiplier=None,
+        verifier_timeout_multiplier=None,
+        wattle_stream_idle_timeout_sec=None,
+        wattle_auth_path=Path("/home/user/.wattle/auth.json"),
+        codex_auth_path=Path("/home/user/.codex/auth.json"),
+        codex_config_path=Path("/home/user/.codex/config.toml"),
+        wattle_provider_request_timeout_sec=None,
+    )
+    run = HarborRun(
+        name="wattle-deepseek-deepseek-v4-pro-high",
+        job_name="wattle-deepseek-deepseek-v4-pro-high",
+        model="deepseek/deepseek-v4-pro",
+        provider="deepseek",
+        model_name="deepseek-v4-pro",
+    )
+
+    command = build_harbor_command(args=args, run=run, job_dir=Path("/tmp/job"))
+
+    assert "goal_mode=true" in command
 
 
 def test_resumed_artifact_path_keeps_missing_file_name(tmp_path: Path) -> None:

@@ -188,9 +188,10 @@ cd ~/repos/wattle-tbench-harness
 ./run_tbench.py \
   --model codex/gpt-5.5 \
   --effort high \
-  --n-attempts 1 \
+  --n-attempts 5 \
   --n-concurrent 2 \
   --source-dir ~/repos/wattle \
+  --run-label wattle-gpt55-tbench20-amd64-gcp-5trial-$(date +%Y%m%d) \
   --tmux
 ```
 
@@ -211,7 +212,7 @@ cd ~/repos/wattle-tbench-harness
 ./run_tbench.py \
   --model codex/gpt-5.5 \
   --effort high \
-  --n-attempts 1 \
+  --n-attempts 5 \
   --n-concurrent 2 \
   --source-dir ~/repos/wattle \
   --resume \
@@ -266,6 +267,32 @@ runs/gcp/<label>/reports/per_trial.csv
 runs/gcp/<label>/analysis/incremental/summary.md
 runs/gcp/<label>/analysis/incremental/snapshot.json
 ```
+
+Validate the synced run against the machine-checkable official submission
+rules before constructing the final `submissions/terminal-bench/2.0/...`
+directory:
+
+```bash
+python scripts/validate_official_submission_run.py runs/gcp/<label>
+```
+
+The official submission structure is:
+
+```text
+submissions/
+  terminal-bench/
+    2.0/
+      <agent>__<model>/
+        metadata.yaml
+        <job-folder>/
+          config.json
+          <trial-1>/result.json
+          <trial-2>/result.json
+          ...
+```
+
+For now, construct only the job folder from the Harbor job directory after the
+five-trial benchmark is complete; fill `metadata.yaml` later.
 
 Sync a specific older run:
 

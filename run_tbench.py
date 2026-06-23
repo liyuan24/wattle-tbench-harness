@@ -270,6 +270,8 @@ def build_harbor_command(
                 f"effort={args.effort}",
             ]
         )
+        if args.goal_mode:
+            command.extend(["--ak", "goal_mode=true"])
         if args.max_tokens is not None:
             command.extend(["--ak", f"max_tokens={args.max_tokens}"])
         if args.wattle_provider_request_timeout_sec is not None:
@@ -429,6 +431,11 @@ def parse_args() -> argparse.Namespace:
         help="Wattle provider/model or bare Codex model. Defaults by --agent.",
     )
     parser.add_argument("--effort", choices=sorted(EFFORTS), default="high")
+    parser.add_argument(
+        "--goal-mode",
+        action="store_true",
+        help="Run Wattle prompts through headless /goal mode.",
+    )
     parser.add_argument("--dataset", default=DEFAULT_DATASET)
     parser.add_argument("--task", action="append", default=[], help="Harbor registry task id.")
     parser.add_argument(
@@ -520,7 +527,10 @@ def main() -> int:
         label = f"{timestamp}-{run.name}"
     batch_dir = args.output_dir / label
     if args.resume and not batch_dir.exists():
-        print(f"[error] --resume requested, but output directory does not exist: {batch_dir}", file=sys.stderr)
+        print(
+            f"[error] --resume requested, but output directory does not exist: {batch_dir}",
+            file=sys.stderr,
+        )
         return 2
     if batch_dir.exists() and not args.resume:
         print(f"[error] Output directory already exists: {batch_dir}", file=sys.stderr)

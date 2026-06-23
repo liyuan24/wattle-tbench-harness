@@ -44,6 +44,18 @@ def test_wattle_command_can_override_stream_idle_timeout() -> None:
     assert "WATTLE_STREAM_IDLE_TIMEOUT_SECONDS=45.0" in command
 
 
+def test_wattle_command_wraps_prompt_in_goal_mode() -> None:
+    agent = WattleAgent(
+        logs_dir=Path("."),
+        model_name="deepseek/deepseek-v4-pro",
+        goal_mode=True,
+    )
+
+    command = agent._build_wattle_command("solve it")
+
+    assert "-p '/goal solve it'" in command
+
+
 def test_wattle_command_omits_max_tokens_by_default() -> None:
     agent = WattleAgent(logs_dir=Path("."), model_name="deepseek/deepseek-v4-pro")
 
